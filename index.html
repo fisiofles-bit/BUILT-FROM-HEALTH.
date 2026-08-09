@@ -278,7 +278,7 @@ async function loadAll(){
   state.tareaCats=(tc.data||[]).map(function(x){return x.nombre;});
   var cf=await sb.from('config').select('*').eq('id',1).single();
   var c=cf.data||{};
-  state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto'};
+  state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto',saldoBanco:(c.saldo_banco!=null?Number(c.saldo_banco):0)};
   var sr=await sb.from('factura_series').select('*');
   state.series={}; (sr.data||[]).forEach(function(r){ state.series[r.serie+'|'+r.anio]=r.ultimo; });
   loaded=true;
@@ -297,7 +297,7 @@ async function save(){
     var cats=state.tareaCats||[];
     if(cats.length){ await sb.from('tarea_categorias').upsert(cats.map(function(n){return {nombre:n};})); }
     var em=state.emisor||{};
-    await sb.from('config').update({emisor_nombre:em.nombre||null,emisor_nif:em.nif||null,emisor_direccion:em.direccion||null,emisor_email:em.email||null,emisor_iban:em.iban||null,iva_default:(em.ivaDefault||0),tipo_default:(em.tipoDefault||'auto')}).eq('id',1);
+    await sb.from('config').update({emisor_nombre:em.nombre||null,emisor_nif:em.nif||null,emisor_direccion:em.direccion||null,emisor_email:em.email||null,emisor_iban:em.iban||null,iva_default:(em.ivaDefault||0),tipo_default:(em.tipoDefault||'auto'),saldo_banco:(em.saldoBanco||0)}).eq('id',1);
   }catch(e){ console.error(e); }
   saving=false;
   if(saveQueued){ saveQueued=false; save(); }
@@ -405,7 +405,7 @@ let tareaSemana=new Date(); let tFormFecha=null;
 function render(){
   const m=document.getElementById('main');
   if(tab==='resumen') m.innerHTML=viewResumen();
-  else if(tab==='finanzas') m.innerHTML=viewFinanzas();
+  else if(tab==='finanzas'){ m.innerHTML=viewFinanzas(); cargarSaldoStripe(); }
   else if(tab==='altas') m.innerHTML=viewAltas();
   else if(tab==='videollamadas') m.innerHTML=viewVideo();
   else if(tab==='crm') m.innerHTML=viewCRM();
@@ -416,6 +416,17 @@ function render(){
   else if(tab==='datos') m.innerHTML=viewDatos();
 }
 
+async function cargarSaldoStripe(){
+  var el=document.getElementById('saldo-stripe'); if(!el) return;
+  try{ var r=await sb.functions.invoke('stripe-balance'); if(r&&r.data&&r.data.ok){ el.textContent=eur(r.data.total); } else { el.textContent='—'; } }catch(e){ el.textContent='—'; }
+}
+async function guardarSaldoBanco(){
+  var v=parseFloat((document.getElementById('saldo-banco-inp')||{}).value)||0;
+  if(!state.emisor) state.emisor={};
+  state.emisor.saldoBanco=v;
+  try{ await sb.from('config').update({saldo_banco:v}).eq('id',1); }catch(e){ console.error(e); }
+  render();
+}
 function viewResumen(){
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
   const enMes=f=>{const d=new Date(f.fecha);return d.getMonth()===mm&&d.getFullYear()===yy;};
@@ -505,6 +516,13 @@ function viewFinanzas(){
   <div class="page-head"><div><div class="eyebrow">Contabilidad</div><h1>Finanzas</h1>
   <p>Registra ingresos y gastos, etiquétalos y filtra por mes. El balance se recalcula según el filtro.</p></div>
   <button class="btn" onclick="toggleForm('f-form')">+ Movimiento</button></div>
+
+  <div class="panel"><div class="panel-head"><h3>Saldos</h3><span class="muted-mini">Stripe automático · banco manual</span></div><div class="panel-body">
+    <div class="kpis" style="margin:0">
+      <div class="kpi b-stripe-kpi"><div class="label">Saldo en Stripe</div><div class="val mono" id="saldo-stripe">…</div><div class="sub">disponible + pendiente</div></div>
+      <div class="kpi"><div class="label">Saldo en banco (Abanca)</div><div class="val mono"><input id="saldo-banco-inp" type="number" step="0.01" value="${(state.emisor&&state.emisor.saldoBanco)||0}" style="width:120px;background:#0E1013;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:4px 8px"> €</div><div class="sub"><button class="btn ghost sm" onclick="guardarSaldoBanco()">Guardar</button></div></div>
+    </div>
+  </div></div>
   <div class="kpis">
     <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono">${eur(ing)}</div><div class="sub">${scope}</div></div>
     <div class="kpi neg"><div class="label">Gastos</div><div class="val mono">${eur(gas)}</div><div class="sub">${scope}</div></div>

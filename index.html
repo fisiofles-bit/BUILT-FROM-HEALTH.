@@ -86,6 +86,26 @@ tr:hover td{background:#1C2026}
 .b-ink{background:#24282E;color:#C6CDD5}
 .b-gray{background:#22262B;color:#8A94A0}
 .b-green{background:rgba(52,211,153,.16);color:#6EE7B7}
+.ev-venc.urg{background:rgba(232,147,12,.22);color:#F2B657}
+.b-abanca{background:rgba(37,99,235,.18);color:#7FB0FF}
+.b-stripe{background:rgba(124,92,255,.20);color:#C4B5FD}
+.b-hotmart{background:rgba(226,59,78,.16);color:#FF8A97}
+.urg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
+.urg-alta{background:#FF6B7A}
+.urg-media{background:#F2B657}
+.urg-baja{background:#34D399}
+.crm-stage{border-bottom:1px solid var(--line)}
+.crm-stage:last-child{border-bottom:0}
+.crm-stage-h{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;padding:10px 20px 6px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.crm-stage-h span{background:#22262B;border-radius:20px;padding:1px 8px;margin-left:4px;font-size:12px}
+.crm-card{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 20px;flex-wrap:wrap}
+.crm-card:hover{background:#1C2026}
+.crm-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.crm-val{color:var(--accent-press);font-family:'Space Mono',monospace;font-size:13px}
+.crm-actions{display:flex;align-items:center;gap:8px}
+.crm-actions select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#0E1013;color:var(--text)}
+.buscador{font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#0E1013;color:var(--text);width:100%;max-width:340px}
+.buscador:focus{outline:2px solid var(--accent-tint);border-color:var(--accent)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:16px 20px;background:#12151A;border-bottom:1px solid var(--line)}
 .form-grid.hidden{display:none}
 .field{display:flex;flex-direction:column;gap:5px}
@@ -169,6 +189,7 @@ tr:hover td{background:#1C2026}
 .cal-cell .dnum{font-size:13px;font-weight:600;color:var(--muted)}
 .cal-cell.today .dnum{background:var(--accent);color:var(--on-accent);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
 .ev-chip{font-size:11px;background:rgba(0,178,255,.16);color:#7FD6FF;border-radius:5px;padding:2px 5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.ev-venc{font-size:11px;background:rgba(167,139,250,.20);color:#C4B5FD;border-radius:5px;padding:2px 5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .info{background:#12151A;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:14px;color:var(--muted);line-height:1.6}
 .info b{color:var(--text)}
 .info ol{margin:8px 0 0 18px}
@@ -192,6 +213,7 @@ tr:hover td{background:#1C2026}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -204,6 +226,7 @@ tr:hover td{background:#1C2026}
   <button class="nav-btn" data-tab="finanzas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lbl">Finanzas</span></button>
   <button class="nav-btn" data-tab="altas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span class="lbl">Altas</span></button>
   <button class="nav-btn" data-tab="videollamadas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="lbl">Videollamadas</span></button>
+  <button class="nav-btn" data-tab="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span class="lbl">CRM</span></button>
   <button class="nav-btn" data-tab="calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="lbl">Calendario</span></button>
   <button class="nav-btn" data-tab="tareas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="lbl">Tareas</span></button>
   <button class="nav-btn" data-tab="equipo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Equipo</span></button>
@@ -230,16 +253,17 @@ const SB_URL='https://vxxhkuizeceutbowxcmq.supabase.co';
 const SB_KEY='sb_publishable_czwCWuPJQYKiZzvHRaQlVQ_Z9EsbAP3';
 const sb=window.supabase.createClient(SB_URL, SB_KEY);
 let loaded=false;
-let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[] };
+let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[] };
 
 const SPECS={
-  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email']]},
-  finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice']]},
+  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente']]},
+  finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas']]},
-  tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool']]},
+  tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia']]},
   equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas']]},
-  facturas:{table:'facturas',cols:[['numero','numero'],['fecha','fecha'],['tipo','tipo'],['periodo','periodo'],['concepto','concepto'],['clienteNombre','cliente_nombre'],['clienteNif','cliente_nif'],['clienteDir','cliente_dir'],['base','base','num'],['ivaPct','iva_pct','num'],['ivaCuota','iva_cuota','num'],['irpfPct','irpf_pct','num'],['irpfCuota','irpf_cuota','num'],['total','total','num'],['origen','origen_id'],['estado','estado']]}
+  facturas:{table:'facturas',cols:[['numero','numero'],['fecha','fecha'],['tipo','tipo'],['periodo','periodo'],['concepto','concepto'],['clienteNombre','cliente_nombre'],['clienteNif','cliente_nif'],['clienteDir','cliente_dir'],['base','base','num'],['ivaPct','iva_pct','num'],['ivaCuota','iva_cuota','num'],['irpfPct','irpf_pct','num'],['irpfCuota','irpf_cuota','num'],['total','total','num'],['origen','origen_id'],['estado','estado']]},
+  leads:{table:'leads',cols:[['nombre','nombre'],['email','email'],['telefono','telefono'],['fuente','fuente'],['etapa','etapa'],['valor','valor','num'],['tipo','tipo'],['asignado','asignado_id'],['notas','notas']]}
 };
 function rowToDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1]; var v=r[a]; if(v===undefined||v==='') v=null; o[d]=v; } return o; }
 function rowFromDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1],t=cols[i][2]; var v=r[d]; if(t==='num') v=(v==null?0:Number(v)); else if(t==='bool') v=!!v; else v=(v==null?'':v); o[a]=v; } return o; }
@@ -286,7 +310,71 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const hoy=()=>new Date().toISOString().slice(0,10);
 function fFecha(d){ if(!d) return '—'; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; }
 function diasDesde(d){ if(!d) return null; var t=new Date(d+'T00:00:00').getTime(); if(isNaN(t)) return null; return Math.floor((Date.now()-t)/86400000); }
+function diasHasta(d){ if(!d) return null; var t=new Date(d+'T00:00:00').getTime(); if(isNaN(t)) return null; return Math.ceil((t-Date.now())/86400000); }
+function filtrarAltas(q){ q=(q||'').toLowerCase().trim(); document.querySelectorAll('.alta-row').forEach(function(tr){ tr.style.display=(!q||((tr.getAttribute('data-n')||'').indexOf(q)>=0))?'':'none'; }); }
+var selFacturas={};
+function toggleSelFac(id,ch){ if(ch) selFacturas[id]=true; else delete selFacturas[id]; render(); }
+async function emitirSeleccionadas(){
+  var ids=Object.keys(selFacturas).filter(function(k){return selFacturas[k];});
+  var sel=(state.facturas||[]).filter(function(f){return f.estado!=='emitida'&&ids.indexOf(f.id)>=0;});
+  if(!sel.length){ alert('No hay borradores seleccionados.'); return; }
+  if(!confirm('¿Emitir '+sel.length+' factura(s) seleccionada(s) por orden de fecha? Los números quedarán fijados.')) return;
+  sel.sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
+  for(var i=0;i<sel.length;i++){ var f=sel[i]; var anio=parseInt((f.fecha||hoy()).slice(0,4),10); var r=await sb.rpc('next_factura_numero',{p_serie:f.tipo,p_anio:anio}); if(!r.error&&r.data){ f.numero=r.data; f.estado='emitida'; if(!state.series) state.series={}; state.series[f.tipo+'|'+anio]=parseInt(String(r.data).split('/')[0],10); } }
+  selFacturas={}; save(); render();
+}
+function chartEvolucion(){
+  var now=new Date(); var months=[];
+  for(var i=5;i>=0;i--){ var d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({y:d.getFullYear(), m:d.getMonth()}); }
+  var ing=months.map(function(mo){ return (state.finanzas||[]).filter(function(fx){var d=new Date(fx.fecha); return fx.tipo==='ingreso'&&d.getMonth()===mo.m&&d.getFullYear()===mo.y;}).reduce(function(a,fx){return a+ +fx.importe;},0); });
+  var gas=months.map(function(mo){ return (state.finanzas||[]).filter(function(fx){var d=new Date(fx.fecha); return fx.tipo==='gasto'&&d.getMonth()===mo.m&&d.getFullYear()===mo.y;}).reduce(function(a,fx){return a+ +fx.importe;},0); });
+  var labels=months.map(function(mo){ return meses[mo.m].slice(0,3); });
+  return lineChart([{name:'Ingresos',color:'#33C1FF',values:ing},{name:'Gastos',color:'#FF6B7A',values:gas}], labels);
+}
+function lineChart(series, labels){
+  var W=640,H=220,padL=52,padR=16,padT=14,padB=26;
+  var all=[]; series.forEach(function(s){ all=all.concat(s.values); });
+  var max=Math.max.apply(null, all.concat([0])); if(max<=0) max=1;
+  var n=labels.length;
+  function X(i){ return padL+(W-padL-padR)*(n<=1?0:(i/(n-1))); }
+  function Y(v){ return padT+(H-padT-padB)*(1-v/max); }
+  var grid=''; var ticks=4;
+  for(var t=0;t<=ticks;t++){ var gv=max*t/ticks; var gy=Y(gv); grid+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="var(--line)" stroke-width="1"/><text x="'+(padL-8)+'" y="'+(gy+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+Math.round(gv)+'</text>'; }
+  var xlabels=labels.map(function(l,i){ return '<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(l)+'</text>'; }).join('');
+  var paths=series.map(function(s){ var pts=s.values.map(function(v,i){ return X(i)+','+Y(v); }).join(' '); var dots=s.values.map(function(v,i){ return '<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3" fill="'+s.color+'"/>'; }).join(''); return '<polyline points="'+pts+'" fill="none" stroke="'+s.color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+dots; }).join('');
+  var legend=series.map(function(s){ return '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:'+s.color+';display:inline-block"></span>'+esc(s.name)+'</span>'; }).join('');
+  return '<div style="padding:16px 20px">'+legend+'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;margin-top:8px">'+grid+paths+xlabels+'</svg></div>';
+}
 function marcarContacto(id){ var a=state.altas.find(function(x){return x.id===id;}); if(a){ a.ultimoContacto=hoy(); save(); render(); } }
+function pagoEstado(a){
+  if(a.estado!=='activo') return null;
+  var now=new Date(), mm=now.getMonth(), yy=now.getFullYear();
+  var pagado=(state.finanzas||[]).some(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==a.id) return false; var d=new Date(fx.fecha); return d.getMonth()===mm&&d.getFullYear()===yy; });
+  if(pagado) return {txt:'Pagado', cls:'b-green', impago:false};
+  var dia=parseInt(a.diaCobro,10);
+  if(dia && now.getDate()>dia) return {txt:'Impago', cls:'b-red', impago:true};
+  if(dia) return {txt:'Se cobra el '+dia, cls:'b-amber', impago:false};
+  return {txt:'Pendiente', cls:'b-gray', impago:false};
+}
+function cobrosRows(){
+  var act=(state.altas||[]).filter(function(x){return x.estado==='activo';});
+  act.sort(function(a,b){ var ea=pagoEstado(a)||{}, eb=pagoEstado(b)||{}; return (ea.impago?0:1)-(eb.impago?0:1); });
+  if(!act.length) return '<div class="empty" style="padding:24px"><b>Sin clientes activos</b></div>';
+  return act.map(function(a){ var e=pagoEstado(a)||{txt:'—',cls:'b-gray'}; return '<div class="seg-row"><span class="seg-name">'+esc(a.nombre)+'</span><span class="badge '+e.cls+'">'+esc(e.txt)+'</span></div>'; }).join('');
+}
+function recsDelDia(ds){
+  var out=[];
+  (state.altas||[]).forEach(function(a){
+    if(a.estado!=='activo'||!a.fechaVencimiento) return;
+    var v=new Date(a.fechaVencimiento+'T00:00:00'); if(isNaN(v.getTime())) return;
+    var m1=new Date(v); m1.setMonth(m1.getMonth()-1);
+    var d7=new Date(v); d7.setDate(d7.getDate()-7);
+    if(ymd(v)===ds) out.push({txt:'Vence '+a.nombre, urg:true});
+    else if(ymd(m1)===ds) out.push({txt:'Vence '+a.nombre+' (1 mes)', urg:false});
+    else if(ymd(d7)===ds) out.push({txt:'Vence '+a.nombre+' (7 días)', urg:true});
+  });
+  return out;
+}
 function segRows(){
   var act=(state.altas||[]).filter(function(x){return x.estado==='activo';});
   act.sort(function(a,b){var da=diasDesde(a.ultimoContacto),db=diasDesde(b.ultimoContacto);da=(da===null?99999:da);db=(db===null?99999:db);return db-da;});
@@ -310,6 +398,8 @@ function catColor(name){const cats=state.tareaCats||[];let i=cats.indexOf(name);
 const ROLES=['Entrenador','Nutricionista','Fisio','Closer','Setter','Admin','Otro'];
 function miembroNombre(id){const m=(state.equipo||[]).find(x=>x.id===id);return m?m.nombre:'';}
 function clienteNombre(id){const c=(state.altas||[]).find(x=>x.id===id);return c?c.nombre:'';}
+function fuenteCls(x){x=(x||'').toLowerCase();if(x==='abanca')return 'b-abanca';if(x==='stripe')return 'b-stripe';if(x==='hotmart')return 'b-hotmart';return 'b-gray';}
+function urgRank(t){var u=(t&&t.urgencia)||'media';return u==='alta'?0:(u==='media'?1:2);}
 function val(id){const e=document.getElementById(id);return e?e.value.trim():'';}
 let tareaSemana=new Date(); let tFormFecha=null;
 function render(){
@@ -318,6 +408,7 @@ function render(){
   else if(tab==='finanzas') m.innerHTML=viewFinanzas();
   else if(tab==='altas') m.innerHTML=viewAltas();
   else if(tab==='videollamadas') m.innerHTML=viewVideo();
+  else if(tab==='crm') m.innerHTML=viewCRM();
   else if(tab==='calendario') m.innerHTML=viewCalendario();
   else if(tab==='tareas') m.innerHTML=viewTareas();
   else if(tab==='equipo') m.innerHTML=viewEquipo();
@@ -352,6 +443,12 @@ function viewResumen(){
   const prox=[...state.eventos].filter(e=>new Date(e.fecha+'T'+(e.hora||'23:59'))>=new Date()).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora)).slice(0,5);
   const sinContacto=state.altas.filter(a=>a.estado==='activo'&&(diasDesde(a.ultimoContacto)===null||diasDesde(a.ultimoContacto)>2));
   const avisos=[];
+  const impagos=state.altas.filter(a=>{var e=pagoEstado(a);return e&&e.impago;});
+  if(impagos.length) avisos.push(['red', impagos.length+(impagos.length===1?' cliente en impago':' clientes en impago'), impagos.slice(0,6).map(a=>a.nombre).join('  ·  ')]);
+  const urgentes=(state.tareas||[]).filter(t=>!t.hecha&&t.urgencia==='alta');
+  if(urgentes.length) avisos.push(['red', urgentes.length+(urgentes.length===1?' tarea urgente':' tareas urgentes'), urgentes.slice(0,5).map(t=>t.titulo).join('  ·  ')]);
+  const renov=state.altas.filter(a=>a.estado==='activo'&&a.fechaVencimiento&&(function(){var dd=diasHasta(a.fechaVencimiento);return dd!==null&&dd>=0&&dd<=30;})());
+  if(renov.length) avisos.push(['amber', renov.length+(renov.length===1?' renovación próxima':' renovaciones próximas'), renov.map(a=>a.nombre+' ('+diasHasta(a.fechaVencimiento)+'d)').slice(0,6).join('  ·  ')]);
   if(sinContacto.length) avisos.push(['red', sinContacto.length+(sinContacto.length===1?' cliente sin contacto +2 días':' clientes sin contacto +2 días'), sinContacto.slice(0,6).map(a=>{const d=diasDesde(a.ultimoContacto);return a.nombre+(d===null?' (nunca)':' ('+d+'d)');}).join('  ·  ')]);
   if(tVenc.length) avisos.push(['red', tVenc.length+(tVenc.length===1?' tarea vencida':' tareas vencidas'),'Pendientes de días anteriores']);
   if(vcHoy.length) avisos.push(['cyan', vcHoy.length+(vcHoy.length===1?' videollamada hoy':' videollamadas hoy'), vcHoy.map(v=>((v.hora||'')+' '+v.atleta).trim()).join('  ·  ')]);
@@ -378,6 +475,8 @@ function viewResumen(){
     <div class="kpi"><div class="label">Coste por alta · CAC</div><div class="val mono">${fCac}</div><div class="sub">${nuevas} altas nuevas este mes</div></div>
     <div class="kpi"><div class="label">Lifetime Value · LTV</div><div class="val mono">${eur(ltv)}</div><div class="sub">tarifa media × permanencia (${permMeses.toFixed(1)} m)</div></div>
   </div>
+
+  <div class="panel"><div class="panel-head"><h3>Evolución · últimos 6 meses</h3></div>${chartEvolucion()}</div>
 
   <div class="panel"><div class="panel-head"><h3>Próximas videollamadas</h3></div><div class="panel-body">
     ${vcPend.length?`<table><thead><tr><th>Atleta</th><th>Fecha</th><th>Hora</th><th>Plataforma</th></tr></thead><tbody>
@@ -419,6 +518,7 @@ function viewFinanzas(){
       <div class="field"><label>Etiqueta</label><select id="f-cat">${CATEGORIAS.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field"><label>Importe (€)</label><input type="number" id="f-importe" step="0.01" placeholder="0,00"></div>
       <div class="field"><label>Cliente (si es un pago)</label><select id="f-cli"><option value="">— ninguno —</option>${state.altas.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Fuente de pago</label><select id="f-fuente"><option value="">—</option><option>Abanca</option><option>Stripe</option><option>Hotmart</option><option>Efectivo</option><option>Otro</option></select></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('f-form')">Cancelar</button><button class="btn sm" onclick="addFinanza()">Guardar</button></div>
     </div>
     <div class="filterbar">
@@ -428,7 +528,7 @@ function viewFinanzas(){
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Etiqueta</th><th>Tipo</th><th style="text-align:right">Importe</th><th></th></tr></thead><tbody>
-      ${rows.map(f=>`<tr><td class="num">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria?`<span class="badge b-gray">${esc(f.categoria)}</span>`:'—'}${f.stripeInvoice?` <span class="badge b-cyan">Stripe</span>`:''}</td><td><span class="badge ${f.tipo==='ingreso'?'b-cyan':'b-red'}">${f.tipo}</span></td><td class="num ${f.tipo==='ingreso'?'pos':'neg'}" style="text-align:right">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right"><button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(f=>`<tr><td class="num">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria?`<span class="badge b-gray">${esc(f.categoria)}</span>`:'—'}${f.fuente?` <span class="badge ${fuenteCls(f.fuente)}">${esc(f.fuente)}</span>`:''}</td><td><span class="badge ${f.tipo==='ingreso'?'b-cyan':'b-red'}">${f.tipo}</span></td><td class="num ${f.tipo==='ingreso'?'pos':'neg'}" style="text-align:right">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right"><button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin movimientos</b>${state.finanzas.length?'Ningún movimiento con este filtro.':'Pulsa «+ Movimiento» para registrar el primero.'}</div>`}
     </div>
   </div>`;
@@ -439,7 +539,7 @@ async function addFinanza(){
   const concepto=document.getElementById('f-concepto').value.trim();
   if(!concepto||isNaN(importe)){ alert('Añade concepto e importe.'); return; }
   const cli=(document.getElementById('f-cli')||{}).value||'';
-  const mov={id:uid(),fecha:document.getElementById('f-fecha').value||hoy(),tipo:document.getElementById('f-tipo').value,concepto,categoria:document.getElementById('f-cat').value,importe,cliente:cli};
+  const mov={id:uid(),fecha:document.getElementById('f-fecha').value||hoy(),tipo:document.getElementById('f-tipo').value,concepto,categoria:document.getElementById('f-cat').value,importe,cliente:cli,fuente:(document.getElementById('f-fuente')||{}).value||''};
   state.finanzas.push(mov);
   if(mov.tipo==='ingreso'&&cli){ await generarFacturaDesdePago(mov); }
   save(); render();
@@ -454,23 +554,28 @@ function viewAltas(){
   <p>Ficha de cada atleta: lesión, tarifa, entrenador asignado y datos para facturación.</p></div>
   <button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
   <div class="panel"><div class="panel-head"><h3>Seguimiento de contacto</h3><span class="muted-mini">Pulsa cuando hables con cada cliente</span></div><div class="panel-body" style="padding:6px 0">${segRows()}</div></div>
+  <div class="panel"><div class="panel-head"><h3>Cobros del mes</h3><span class="muted-mini">Estado de pago de cada cliente</span></div><div class="panel-body" style="padding:6px 0">${cobrosRows()}</div></div>
   <div class="panel">
     <div class="form-grid hidden" id="a-form">
       <div class="field"><label>Nombre</label><input id="a-nombre" placeholder="Nombre del atleta"></div>
       <div class="field"><label>Email</label><input id="a-email" placeholder="para cobros Stripe / facturación"></div>
+      <div class="field"><label>Día de cobro</label><input type="number" id="a-diacobro" min="1" max="31" placeholder="1-31"></div>
+      <div class="field"><label>Fecha de vencimiento</label><input type="date" id="a-venc"></div>
       <div class="field"><label>Deporte / posición</label><input id="a-dep" placeholder="Fútbol · central"></div>
       <div class="field"><label>Lesión / patología</label><input id="a-lesion" placeholder="Ej: LCA rodilla dcha."></div>
       <div class="field"><label>Entrenador</label><select id="a-ent"><option value="">— sin asignar —</option>${ents.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha de alta</label><input type="date" id="a-fecha" value="${hoy()}"></div>
       <div class="field"><label>Tarifa (€/mes)</label><input type="number" id="a-tarifa" step="0.01" placeholder="0,00"></div>
       <div class="field"><label>Estado</label><select id="a-estado"><option value="activo">Activo</option><option value="pausa">En pausa</option><option value="alta">Alta médica</option><option value="baja">Baja</option></select></div>
+      <div class="field"><label>Tipo de cliente</label><select id="a-tipocli"><option value="">—</option><option>Futbolista - LCA</option><option>Futbolista - Pubalgia</option><option>Futbolista - Otra lesión</option><option>Futbolista - Rendimiento</option><option>Otro deporte</option></select></div>
       <div class="field"><label>NIF (facturación)</label><input id="a-nif" placeholder="opcional"></div>
       <div class="field"><label>Dirección (facturación)</label><input id="a-dir" placeholder="opcional"></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('a-form')">Cancelar</button><button class="btn sm" onclick="addAlta()">Guardar</button></div>
     </div>
+    <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"></div>
     <div class="panel-body">
-      ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Entrenador</th><th>Alta</th><th style="text-align:right">Tarifa</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${rows.map(a=>`<tr><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td style="text-align:right"><button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
+      ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Alta</th><th style="text-align:right">Tarifa</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${rows.map(a=>`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td style="text-align:right"><button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin altas todavía</b>Registra a tu primer atleta con «+ Alta».</div>`}
     </div>
   </div>`;
@@ -478,7 +583,7 @@ function viewAltas(){
 function addAlta(){
   const nombre=document.getElementById('a-nombre').value.trim();
   if(!nombre){ alert('El nombre es obligatorio.'); return; }
-  state.altas.push({id:uid(),nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:document.getElementById('a-fecha').value||hoy(),tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email')});
+  state.altas.push({id:uid(),nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:document.getElementById('a-fecha').value||hoy(),tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,fechaVencimiento:val('a-venc')});
   save(); render();
 }
 function viewVideo(){
@@ -543,7 +648,8 @@ function viewCalendario(){
     const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const evs=state.eventos.filter(e=>e.fecha===ds).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
     const chips=evs.slice(0,3).map(e=>`<div class="ev-chip">${e.hora?esc(e.hora)+' ':''}${esc(e.titulo)}</div>`).join('')+(evs.length>3?`<div class="ev-chip" style="background:rgba(255,255,255,.07);color:var(--muted)">+${evs.length-3} más</div>`:'');
-    cells+=`<div class="cal-cell ${ds===hoyStr?'today':''}" onclick="nuevoEvento('${ds}')"><span class="dnum">${d}</span>${chips}</div>`;
+    const rchips=recsDelDia(ds).slice(0,2).map(function(t){return '<div class="ev-venc'+(t.urg?' urg':'')+'">'+esc(t.txt)+'</div>';}).join('');
+    cells+=`<div class="cal-cell ${ds===hoyStr?'today':''}" onclick="nuevoEvento('${ds}')"><span class="dnum">${d}</span>${chips}${rchips}</div>`;
   }
   const totalCeldas=inicio+diasMes;
   for(let i=0;i<(7-totalCeldas%7)%7;i++) cells+=`<div class="cal-cell out"><span class="dnum">${i+1}</span></div>`;
@@ -612,6 +718,7 @@ function viewTareas(){
       <div class="field"><label>Tarea</label><input id="t-titulo" placeholder="Ej: preparar programa de Juan"></div>
       <div class="field"><label>Categoría</label><select id="t-cat">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
       <div class="field"><label>Asignar a</label><select id="t-asig"><option value="">— nadie —</option>${(state.equipo||[]).map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Urgencia</label><select id="t-urg"><option value="alta">🔴 Urgente</option><option value="media" selected>🟠 Moderada</option><option value="baja">🟢 No urgente</option></select></div>
       <div class="field"><label>Día</label><input type="date" id="t-fecha" value="${hoyStr}"></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('t-form')">Cancelar</button><button class="btn sm" onclick="addTarea()">Guardar</button></div>
     </div>
@@ -622,20 +729,20 @@ function viewTareas(){
     ${cats.length?`<div class="catbar">${cats.map(c=>`<span class="catchip" style="--c:${catColor(c)}">${esc(c)} <button onclick="delCat('${esc(c)}')" title="Quitar">✕</button></span>`).join('')}</div>`:''}
     <div class="cal-top"><div class="month">Semana · ${rango}</div><div class="cal-nav"><button onclick="setSemana(-1)">‹</button><button onclick="setSemanaHoy()">Hoy</button><button onclick="setSemana(1)">›</button></div></div>
     <div class="panel-body">
-      ${dias.map((d,i)=>{const ds=ymd(d);const tt=tareas.filter(t=>t.fecha===ds && (filtro==='todas'||t.categoria===filtro)).sort((a,b)=>(a.hecha-b.hecha));
+      ${dias.map((d,i)=>{const ds=ymd(d);const tt=tareas.filter(t=>t.fecha===ds && (filtro==='todas'||t.categoria===filtro)).sort((a,b)=>((a.hecha-b.hecha)||(urgRank(a)-urgRank(b))));
         return `<div class="dayrow ${ds===hoyStr?'is-today':''}"><div class="dayhead">${dow[i]}<span>${d.getDate()}/${String(d.getMonth()+1).padStart(2,'0')}</span></div><div class="daytasks">${tt.length?tt.map(t=>taskRow(t)).join(''):`<div class="noday">—</div>`}</div></div>`;}).join('')}
     </div>
   </div>
   ${backlog.length?`<div class="panel"><div class="panel-head"><h3>Sin fecha</h3></div><div class="panel-body" style="padding:12px 20px;display:flex;flex-direction:column;gap:6px">${backlog.map(t=>taskRow(t)).join('')}</div></div>`:''}`;
 }
 function taskRow(t){
-  return `<div class="task ${t.hecha?'done':''}"><button class="chk" onclick="toggleTarea('${t.id}')">${t.hecha?'✓':''}</button><span class="task-t">${esc(t.titulo)}</span>${t.categoria?`<span class="catchip sm" style="--c:${catColor(t.categoria)}">${esc(t.categoria)}</span>`:''}${t.asignado?`<span class="who">${esc(miembroNombre(t.asignado))}</span>`:''}<button class="del" onclick="delItem('tareas','${t.id}')">✕</button></div>`;
+  return `<div class="task ${t.hecha?'done':''}"><button class="chk" onclick="toggleTarea('${t.id}')">${t.hecha?'✓':''}</button><span class="urg-dot urg-${t.urgencia||'media'}"></span><span class="task-t">${esc(t.titulo)}</span>${t.categoria?`<span class="catchip sm" style="--c:${catColor(t.categoria)}">${esc(t.categoria)}</span>`:''}${t.asignado?`<span class="who">${esc(miembroNombre(t.asignado))}</span>`:''}<button class="del" onclick="delItem('tareas','${t.id}')">✕</button></div>`;
 }
 function addTarea(){
   const titulo=document.getElementById('t-titulo').value.trim();
   if(!titulo){ alert('Escribe la tarea.'); return; }
   if(!state.tareas) state.tareas=[];
-  state.tareas.push({id:uid(),titulo,categoria:document.getElementById('t-cat').value,asignado:document.getElementById('t-asig').value,fecha:document.getElementById('t-fecha').value||null,hecha:false});
+  state.tareas.push({id:uid(),titulo,categoria:document.getElementById('t-cat').value,asignado:document.getElementById('t-asig').value,urgencia:(document.getElementById('t-urg')||{}).value||'media',fecha:document.getElementById('t-fecha').value||null,hecha:false});
   save(); render();
 }
 function toggleTarea(id){ const t=state.tareas.find(x=>x.id===id); if(t){ t.hecha=!t.hecha; save(); render(); } }
@@ -682,6 +789,7 @@ function viewFacturas(){
   const borr=(state.facturas||[]).filter(f=>f.estado!=='emitida').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   const emit=(state.facturas||[]).filter(f=>f.estado==='emitida').sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const fs=borr.concat(emit);
+  const nsel=Object.keys(selFacturas).filter(function(k){return selFacturas[k];}).length;
   const clientes=state.altas;
   const emisorOK=em.nombre&&em.nif;
   return `
@@ -718,9 +826,9 @@ function viewFacturas(){
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('fac-form')">Cancelar</button><button class="btn sm" onclick="addFactura()">Emitir</button></div>
     </div>
     <div class="info" style="margin:16px 20px 6px">Todo entra como <b>borrador</b> (gris) con su fecha de pago. Revisa, y pulsa <b>Emitir</b> para fijar el número correlativo (pasa a verde). Los cobros de Stripe y los ingresos con cliente crean el borrador solos.</div>
-    <div style="padding:12px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span class="muted-mini">${borr.length} borrador(es) · ${emit.length} emitida(s)</span>${borr.length?`<button class="btn sm" onclick="emitirTodos()">Emitir todos los borradores</button>`:''}</div>
+    <div style="padding:12px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span class="muted-mini">${borr.length} borrador(es) · ${emit.length} emitida(s)</span>${nsel?`<button class="btn sm" onclick="emitirSeleccionadas()">Emitir seleccionadas (${nsel})</button> `:''}${borr.length?`<button class="btn ghost sm" onclick="emitirTodos()">Emitir todos</button>`:''}</div>
     <div class="panel-body">
-      ${fs.length?`<table><thead><tr><th>Nº</th><th>Fecha pago</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>
+      ${fs.length?`<table><thead><tr><th></th><th>Nº</th><th>Fecha pago</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>
       ${fs.map(f=>facRow(f,prov)).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin facturas</b>Se irán creando como borrador con cada cobro o ingreso.</div>`}
     </div>
@@ -748,27 +856,38 @@ async function addFactura(){
   state.facturas.push(fac);
   toggleForm('fac-form'); save(); render();
 }
+function facturaDocHTML(f){
+  var em=state.emisor||{};
+  var dest=f.tipo==='nominativa'?`<div class="fx-box"><div class="fx-h">Cliente</div><b>${esc(f.clienteNombre)}</b>${f.clienteNif?`<div>NIF: ${esc(f.clienteNif)}</div>`:''}${f.clienteDir?`<div>${esc(f.clienteDir)}</div>`:''}</div>`:(f.clienteNombre?`<div class="fx-box"><div class="fx-h">Cliente</div><b>${esc(f.clienteNombre)}</b></div>`:'');
+  return `<div class="fx-top"><div><div class="fx-title">FACTURA${f.tipo==='simplificada'?' SIMPLIFICADA':''}</div><div class="fx-num">${f.estado==='emitida'?('Nº '+esc(f.numero)):'BORRADOR — sin número asignado'}</div><div>Fecha de expedición: ${fFecha(f.fecha)}</div>${f.periodo?`<div>Periodo: ${esc(f.periodo)}</div>`:''}</div>
+    <div class="fx-box"><div class="fx-h">Emisor</div><b>${esc(em.nombre||'')}</b>${em.nif?`<div>NIF: ${esc(em.nif)}</div>`:''}${em.direccion?`<div>${esc(em.direccion)}</div>`:''}${em.email?`<div>${esc(em.email)}</div>`:''}</div></div>
+    ${dest}
+    <table class="fx-table"><thead><tr><th>Concepto</th><th style="text-align:right">Importe</th></tr></thead><tbody><tr><td>${esc(f.concepto)}${f.periodo?` (${esc(f.periodo)})`:''}</td><td style="text-align:right">${eur(f.base)}</td></tr></tbody></table>
+    <div class="fx-tot">
+      <div><span>Base imponible</span><span>${eur(f.base)}</span></div>
+      <div><span>IVA (${f.ivaPct}%)</span><span>${eur(f.ivaCuota)}</span></div>
+      ${f.irpfPct?`<div><span>Retención IRPF (${f.irpfPct}%)</span><span>−${eur(f.irpfCuota)}</span></div>`:''}
+      <div class="fx-total"><span>TOTAL</span><span>${eur(f.total)}</span></div>
+    </div>
+    ${em.iban?`<div class="fx-pay">Forma de pago — transferencia: ${esc(em.iban)}</div>`:''}
+    ${f.ivaPct===0?`<div class="fx-note">Operación exenta de IVA.</div>`:''}`;
+}
 function verFactura(id){
   const f=(state.facturas||[]).find(x=>x.id===id); if(!f) return;
-  const em=state.emisor||{};
-  const dest=f.tipo==='nominativa'?`<div class="fx-box"><div class="fx-h">Cliente</div><b>${esc(f.clienteNombre)}</b>${f.clienteNif?`<div>NIF: ${esc(f.clienteNif)}</div>`:''}${f.clienteDir?`<div>${esc(f.clienteDir)}</div>`:''}</div>`:(f.clienteNombre?`<div class="fx-box"><div class="fx-h">Cliente</div><b>${esc(f.clienteNombre)}</b></div>`:'');
   const ov=document.getElementById('fac-overlay');
-  ov.innerHTML=`<div class="fx-overlay"><div class="fx-actions"><button class="btn" onclick="window.print()">Imprimir / PDF</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
-    <div class="fx-doc" id="fx-print">
-      <div class="fx-top"><div><div class="fx-title">FACTURA${f.tipo==='simplificada'?' SIMPLIFICADA':''}</div><div class="fx-num">${f.estado==='emitida'?('Nº '+esc(f.numero)):'BORRADOR — sin número asignado'}</div><div>Fecha de expedición: ${fFecha(f.fecha)}</div>${f.periodo?`<div>Periodo: ${esc(f.periodo)}</div>`:''}</div>
-        <div class="fx-box"><div class="fx-h">Emisor</div><b>${esc(em.nombre||'')}</b>${em.nif?`<div>NIF: ${esc(em.nif)}</div>`:''}${em.direccion?`<div>${esc(em.direccion)}</div>`:''}${em.email?`<div>${esc(em.email)}</div>`:''}</div></div>
-      ${dest}
-      <table class="fx-table"><thead><tr><th>Concepto</th><th style="text-align:right">Importe</th></tr></thead><tbody><tr><td>${esc(f.concepto)}${f.periodo?` (${esc(f.periodo)})`:''}</td><td style="text-align:right">${eur(f.base)}</td></tr></tbody></table>
-      <div class="fx-tot">
-        <div><span>Base imponible</span><span>${eur(f.base)}</span></div>
-        <div><span>IVA (${f.ivaPct}%)</span><span>${eur(f.ivaCuota)}</span></div>
-        ${f.irpfPct?`<div><span>Retención IRPF (${f.irpfPct}%)</span><span>−${eur(f.irpfCuota)}</span></div>`:''}
-        <div class="fx-total"><span>TOTAL</span><span>${eur(f.total)}</span></div>
-      </div>
-      ${em.iban?`<div class="fx-pay">Forma de pago — transferencia: ${esc(em.iban)}</div>`:''}
-      ${f.ivaPct===0?`<div class="fx-note">Operación exenta de IVA.</div>`:''}
-    </div></div>`;
+  ov.innerHTML=`<div class="fx-overlay"><div class="fx-actions"><button class="btn" onclick="descargarPDF('${f.id}')">Descargar PDF</button><button class="btn ghost" onclick="window.print()">Imprimir</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
+    <div class="fx-doc" id="fx-print">${facturaDocHTML(f)}</div></div>`;
   document.body.classList.add('printing');
+}
+function descargarPDF(id){
+  var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f) return;
+  if(typeof html2pdf==='undefined'){ alert('Generador de PDF no disponible. Usa Imprimir y elige Guardar como PDF.'); return; }
+  var wrap=document.createElement('div');
+  wrap.style.position='fixed'; wrap.style.left='-9999px'; wrap.style.top='0';
+  wrap.innerHTML='<div class="fx-doc" style="max-width:720px;background:#fff;color:#111">'+facturaDocHTML(f)+'</div>';
+  document.body.appendChild(wrap);
+  var nombre='Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf';
+  html2pdf().set({margin:10,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap.firstChild).save().then(function(){ try{document.body.removeChild(wrap);}catch(e){} }).catch(function(){ try{document.body.removeChild(wrap);}catch(e){} });
 }
 function cerrarFactura(){ const ov=document.getElementById('fac-overlay'); if(ov) ov.innerHTML=''; document.body.classList.remove('printing'); }
 function provFacturas(){
@@ -780,8 +899,8 @@ function provFacturas(){
 function facRow(f, prov){
   var emitida=f.estado==='emitida';
   var numero = emitida ? esc(f.numero) : `<span style="color:var(--muted)">${prov[f.id]||'—'} <span class="prov">(prov.)</span></span>`;
-  var acc = (emitida?'':`<button class="btn sm" onclick="emitirFactura('${f.id}')">Emitir</button> `)+`<button class="btn ghost sm" onclick="verFactura('${f.id}')">Ver</button> <button class="del" onclick="delItem('facturas','${f.id}')">✕</button>`;
-  return `<tr><td class="num"><b>${numero}</b></td><td class="num">${fFecha(f.fecha)}</td><td>${esc(f.clienteNombre||'—')}</td><td><span class="badge ${f.tipo==='nominativa'?'b-cyan':'b-gray'}">${f.tipo}</span></td><td><span class="badge ${emitida?'b-green':'b-gray'}">${emitida?'Emitida':'Borrador'}</span></td><td class="num" style="text-align:right">${eur(f.total)}</td><td style="text-align:right">${acc}</td></tr>`;
+  var acc = (emitida?'':`<button class="btn sm" onclick="emitirFactura('${f.id}')">Emitir</button> `)+`<button class="btn ghost sm" onclick="verFactura('${f.id}')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF('${f.id}')">PDF</button> <button class="del" onclick="delItem('facturas','${f.id}')">✕</button>`;
+  return `<tr><td>${emitida?'':`<input type="checkbox" onchange="toggleSelFac('${f.id}',this.checked)" ${selFacturas[f.id]?'checked':''}>`}</td><td class="num"><b>${numero}</b></td><td class="num">${fFecha(f.fecha)}</td><td>${esc(f.clienteNombre||'—')}</td><td><span class="badge ${f.tipo==='nominativa'?'b-cyan':'b-gray'}">${f.tipo}</span></td><td><span class="badge ${emitida?'b-green':'b-gray'}">${emitida?'Emitida':'Borrador'}</span></td><td class="num" style="text-align:right">${eur(f.total)}</td><td style="text-align:right">${acc}</td></tr>`;
 }
 async function emitirFactura(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f||f.estado==='emitida') return;
@@ -817,6 +936,61 @@ async function generarFacturaDesdePago(mov){
   var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:mov.concepto||'Servicio',clienteNombre:c.nombre||'',clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
   if(!state.facturas) state.facturas=[];
   state.facturas.push(fac); return fac;
+}
+
+function viewCRM(){
+  const ETAPAS=[['nuevo','Nuevo'],['contactado','Contactado'],['agendado','Agendado'],['llamada','Llamada'],['ganado','Ganado'],['perdido','Perdido']];
+  const eq=(state.equipo||[]);
+  const leads=(state.leads||[]);
+  const ganados=leads.filter(l=>l.etapa==='ganado').length;
+  const perdidos=leads.filter(l=>l.etapa==='perdido').length;
+  const conv=(ganados+perdidos)? Math.round(ganados/(ganados+perdidos)*100):0;
+  const activos=leads.filter(l=>l.etapa!=='ganado'&&l.etapa!=='perdido');
+  const valorPipe=activos.reduce((a,l)=>a+ +(l.valor||0),0);
+  return `
+  <div class="page-head"><div><div class="eyebrow">Captación</div><h1>CRM · Pipeline</h1>
+  <p>Tus leads por etapa, desde que entran hasta que cierran. Muévelos de fase y conviértelos en cliente.</p></div>
+  <button class="btn" onclick="toggleForm('l-form')">+ Lead</button></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Leads activos</div><div class="val">${activos.length}</div><div class="sub">en el pipeline</div></div>
+    <div class="kpi pos"><div class="label">% conversión</div><div class="val">${conv}%</div><div class="sub">${ganados} ganados · ${perdidos} perdidos</div></div>
+    <div class="kpi"><div class="label">Valor en pipeline</div><div class="val mono">${eur(valorPipe)}</div><div class="sub">estimado, leads activos</div></div>
+  </div>
+  <div class="panel">
+    <div class="form-grid hidden" id="l-form">
+      <div class="field"><label>Nombre</label><input id="l-nombre" placeholder="Nombre del lead"></div>
+      <div class="field"><label>Email</label><input id="l-email"></div>
+      <div class="field"><label>Teléfono</label><input id="l-tel"></div>
+      <div class="field"><label>Fuente</label><select id="l-fuente"><option value="">—</option><option>Instagram</option><option>Facebook Ads</option><option>Referido</option><option>Web</option><option>Otro</option></select></div>
+      <div class="field"><label>Tipo</label><select id="l-tipo"><option value="">—</option><option>Futbolista - LCA</option><option>Futbolista - Pubalgia</option><option>Futbolista - Otra lesión</option><option>Futbolista - Rendimiento</option><option>Otro deporte</option></select></div>
+      <div class="field"><label>Valor estimado (€)</label><input type="number" id="l-valor" step="0.01" placeholder="0,00"></div>
+      <div class="field"><label>Asignado a</label><select id="l-asig"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
+      <div class="field full"><label>Notas</label><input id="l-notas"></div>
+      <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('l-form')">Cancelar</button><button class="btn sm" onclick="addLead()">Guardar</button></div>
+    </div>
+    <div class="panel-body">
+      ${ETAPAS.map(function(et){ var ls=leads.filter(function(l){return (l.etapa||'nuevo')===et[0];}); if(!ls.length&&(et[0]==='ganado'||et[0]==='perdido')) return ''; return `<div class="crm-stage"><div class="crm-stage-h">${et[1]} <span>${ls.length}</span></div>${ls.length?ls.map(l=>leadCard(l)).join(''):'<div class="noday" style="padding:6px 20px">—</div>'}</div>`; }).join('')}
+    </div>
+  </div>`;
+}
+function leadCard(l){
+  var E=[['nuevo','Nuevo'],['contactado','Contactado'],['agendado','Agendado'],['llamada','Llamada'],['ganado','Ganado'],['perdido','Perdido']];
+  var opts=E.map(function(e){return '<option value="'+e[0]+'"'+((l.etapa||'nuevo')===e[0]?' selected':'')+'>'+e[1]+'</option>';}).join('');
+  return `<div class="crm-card"><div class="crm-main"><b>${esc(l.nombre)}</b>${l.fuente?` <span class="badge b-gray">${esc(l.fuente)}</span>`:''}${l.valor?` <span class="crm-val">${eur(l.valor)}</span>`:''}${l.asignado?`<span class="who">${esc(miembroNombre(l.asignado))}</span>`:''}</div><div class="crm-actions"><select onchange="moverLead('${l.id}',this.value)">${opts}</select>${l.etapa==='ganado'?`<button class="btn sm" onclick="convertirLead('${l.id}')">A cliente</button>`:''}<button class="del" onclick="delItem('leads','${l.id}')">✕</button></div></div>`;
+}
+function addLead(){
+  var nombre=val('l-nombre'); if(!nombre){ alert('Indica el nombre del lead.'); return; }
+  if(!state.leads) state.leads=[];
+  state.leads.push({id:uid(),nombre:nombre,email:val('l-email'),telefono:val('l-tel'),fuente:document.getElementById('l-fuente').value,tipo:document.getElementById('l-tipo').value,valor:parseFloat(document.getElementById('l-valor').value)||0,asignado:document.getElementById('l-asig').value,notas:val('l-notas'),etapa:'nuevo'});
+  toggleForm('l-form'); save(); render();
+}
+function moverLead(id,etapa){ var l=(state.leads||[]).find(function(x){return x.id===id;}); if(l){ l.etapa=etapa; save(); render(); } }
+function convertirLead(id){
+  var l=(state.leads||[]).find(function(x){return x.id===id;}); if(!l) return;
+  if(!confirm('¿Convertir "'+l.nombre+'" en cliente (Alta)?')) return;
+  if(!state.altas) state.altas=[];
+  state.altas.push({id:uid(),nombre:l.nombre,deporte:'',lesion:'',entrenador:'',fechaAlta:hoy(),tarifa:l.valor||0,estado:'activo',nif:'',direccion:'',email:l.email||'',tipoCliente:l.tipo||'',diaCobro:null,fechaVencimiento:null,ultimoContacto:hoy()});
+  save(); render(); alert('Convertido a cliente. Revisa su ficha en Altas.');
 }
 
 function viewDatos(){
@@ -862,7 +1036,7 @@ function importarBackup(input){
       const data=JSON.parse(reader.result);
       if(!data||typeof data!=='object') throw 0;
       if(!confirm('Esto reemplazará los datos actuales de este dispositivo por los de la copia. ¿Continuar?')){ input.value=''; return; }
-      state={ finanzas:data.finanzas||[], altas:data.altas||[], videollamadas:data.videollamadas||[], eventos:data.eventos||[], tareas:data.tareas||[], tareaCats:data.tareaCats||[] };
+      state={ finanzas:data.finanzas||[], altas:data.altas||[], videollamadas:data.videollamadas||[], eventos:data.eventos||[], tareas:data.tareas||[], tareaCats:data.tareaCats||[], equipo:data.equipo||[], emisor:data.emisor||{}, facturas:data.facturas||[], leads:data.leads||[] };
       save(); render(); alert('Copia importada correctamente.');
     }catch(e){ alert('El archivo no es una copia válida del panel.'); }
     input.value='';

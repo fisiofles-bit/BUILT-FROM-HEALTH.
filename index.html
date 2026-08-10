@@ -378,6 +378,22 @@ function barChartSigned(values, labels){
   var xlabels=labels.map(function(l,i){ return '<text x="'+(padL+groupW*i+groupW/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(l)+'</text>'; }).join('');
   return '<div style="padding:16px 20px"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+grid+bars+xlabels+'</svg></div>';
 }
+function lineChartSigned(values, labels){
+  var W=640,H=220,padL=52,padR=16,padT=14,padB=26;
+  var maxAbs=Math.max.apply(null, values.map(function(v){return Math.abs(v);}).concat([1])); if(maxAbs<=0) maxAbs=1;
+  var n=labels.length, plotW=W-padL-padR, plotH=H-padT-padB;
+  function X(i){ return padL+plotW*(n<=1?0:(i/(n-1))); }
+  function Y(v){ return padT+plotH*(1-(v+maxAbs)/(2*maxAbs)); }
+  var zeroY=Y(0);
+  var grid='<line x1="'+padL+'" y1="'+zeroY+'" x2="'+(W-padR)+'" y2="'+zeroY+'" stroke="var(--line)" stroke-width="1.5"/>';
+  grid+='<text x="'+(padL-8)+'" y="'+(Y(maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+Math.round(maxAbs)+'</text>';
+  grid+='<text x="'+(padL-8)+'" y="'+(Y(-maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">-'+Math.round(maxAbs)+'</text>';
+  var segs='';
+  for(var i=0;i<n-1;i++){ var v1=values[i]||0, v2=values[i+1]||0, col=(((v1+v2)/2)>=0?'#6EE7B7':'#FF6B7A'); segs+='<line x1="'+X(i)+'" y1="'+Y(v1)+'" x2="'+X(i+1)+'" y2="'+Y(v2)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>'; }
+  var dots=values.map(function(v,i){ return '<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3.5" fill="'+((v>=0)?'#6EE7B7':'#FF6B7A')+'"/>'; }).join('');
+  var xlabels=labels.map(function(l,i){ return '<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(l)+'</text>'; }).join('');
+  return '<div style="padding:16px 20px"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+grid+segs+dots+xlabels+'</svg></div>';
+}
 function chartBalance(){
   var now=new Date(), months=[];
   for(var i=5;i>=0;i--){ var d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({y:d.getFullYear(), m:d.getMonth()}); }
@@ -387,7 +403,7 @@ function chartBalance(){
     return ing-gas;
   });
   var labels=months.map(function(mo){ return meses[mo.m].slice(0,3); });
-  return barChartSigned(bal, labels);
+  return lineChartSigned(bal, labels);
 }
 function marcarContacto(id){ var a=state.altas.find(function(x){return x.id===id;}); if(a){ a.ultimoContacto=hoy(); save(); render(); } }
 function pagoEstado(a){
@@ -461,8 +477,23 @@ function render(){
 }
 
 async function cargarSaldoStripe(){
-  var el=document.getElementById('saldo-stripe'); if(!el) return;
-  try{ var r=await sb.functions.invoke('stripe-balance'); if(r&&r.data&&r.data.ok){ el.textContent=eur(r.data.total); } else { el.textContent='—'; } }catch(e){ el.textContent='—'; }
+  var el=document.getElementById('saldo-stripe'); var tot=document.getElementById('saldo-total'); if(!el) return;
+  var banco=parseFloat((state.emisor&&state.emisor.saldoBanco)||0)||0;
+  try{ var r=await sb.functions.invoke('stripe-balance'); if(r&&r.data&&r.data.ok){ el.textContent=eur(r.data.total); if(tot) tot.textContent=eur(r.data.total+banco); } else { el.textContent='—'; if(tot) tot.textContent=eur(banco); } }catch(e){ el.textContent='—'; if(tot) tot.textContent=eur(banco); }
+}
+function comparativaHTML(){
+  var now=new Date();
+  function balMes(back){ var d=new Date(now.getFullYear(), now.getMonth()-back, 1); var y=d.getFullYear(), m=d.getMonth();
+    var ing=(state.finanzas||[]).filter(function(fx){var dd=new Date(fx.fecha);return fx.tipo==='ingreso'&&dd.getMonth()===m&&dd.getFullYear()===y;}).reduce(function(a,fx){return a+ +fx.importe;},0);
+    var gas=(state.finanzas||[]).filter(function(fx){var dd=new Date(fx.fecha);return fx.tipo==='gasto'&&dd.getMonth()===m&&dd.getFullYear()===y;}).reduce(function(a,fx){return a+ +fx.importe;},0);
+    return {bal:ing-gas, label:meses[m].slice(0,3)+' '+String(y).slice(2)}; }
+  var a=balMes(0), b=balMes(3), diff=a.bal-b.bal;
+  var mejora=diff>=0, col=mejora?'#6EE7B7':'#FF6B7A', flecha=mejora?'▲':'▼';
+  var txt;
+  if(a.bal===0 && b.bal===0){ txt='<span style="color:var(--muted)">Sin datos suficientes para comparar (falta histórico de hace 3 meses).</span>'; }
+  else if(b.bal===0){ txt='<span style="color:'+col+'">'+flecha+' '+(mejora?'mejora':'empeora')+'</span> <span style="color:var(--muted)">respecto a hace 3 meses ('+b.label+' sin balance → '+eur(a.bal)+' este mes)</span>'; }
+  else { var pct=Math.round(Math.abs(diff)/Math.abs(b.bal)*100); txt='<span style="color:'+col+';font-weight:600">'+flecha+' '+pct+'% '+(mejora?'de mejora':'de empeoramiento')+'</span> <span style="color:var(--muted)">('+eur(b.bal)+' en '+b.label+' → '+eur(a.bal)+' este mes)</span>'; }
+  return '<div style="padding:2px 20px 14px;font-size:13px"><b>Balance del mes vs hace 3 meses:</b> '+txt+'</div>';
 }
 async function guardarSaldoBanco(){
   var v=parseFloat((document.getElementById('saldo-banco-inp')||{}).value)||0;
@@ -567,7 +598,9 @@ function viewFinanzas(){
     <div class="kpis" style="margin:0">
       <div class="kpi b-stripe-kpi"><div class="label">Saldo en Stripe</div><div class="val mono" id="saldo-stripe">…</div><div class="sub">disponible + pendiente</div></div>
       <div class="kpi"><div class="label">Saldo en banco (Abanca)</div><div class="val mono"><input id="saldo-banco-inp" type="number" step="0.01" value="${(state.emisor&&state.emisor.saldoBanco)||0}" style="width:120px;background:#0E1013;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:4px 8px"> €</div><div class="sub"><button class="btn ghost sm" onclick="guardarSaldoBanco()">Guardar</button></div></div>
+      <div class="kpi"><div class="label">Total (Stripe + banco)</div><div class="val mono" id="saldo-total">…</div><div class="sub">tu dinero disponible</div></div>
     </div>
+    ${comparativaHTML()}
   </div></div>
   <div class="kpis">
     <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono">${eur(ing)}</div><div class="sub">${scope}</div></div>
@@ -872,10 +905,10 @@ function viewFacturas(){
   <p>Facturas de cobros de Stripe, de ingresos de cliente y manuales. Numeración correlativa por serie.</p></div>
   <button class="btn" onclick="toggleForm('fac-form')">+ Factura</button></div>
   <div class="panel">
-    <div class="panel-head"><h3>Datos de emisor</h3><button class="btn ghost sm" onclick="toggleForm('em-form')">Editar</button></div>
+    <div class="panel-head"><h3>Datos de emisor</h3><span class="muted-mini">Tus datos; aparecen en todas tus facturas</span><button class="btn ghost sm" onclick="toggleForm('em-form')">Editar</button></div>
     <div class="form-grid ${emisorOK?'hidden':''}" id="em-form">
       <div class="field"><label>Nombre / razón social</label><input id="em-nombre" value="${esc(em.nombre||'')}"></div>
-      <div class="field"><label>NIF</label><input id="em-nif" value="${esc(em.nif||'')}"></div>
+      <div class="field"><label>NIF / DNI</label><input id="em-nif" value="${esc(em.nif||'')}"></div>
       <div class="field"><label>Dirección</label><input id="em-dir" value="${esc(em.direccion||'')}"></div>
       <div class="field"><label>Email / contacto</label><input id="em-email" value="${esc(em.email||'')}"></div>
       <div class="field"><label>IBAN (opcional)</label><input id="em-iban" value="${esc(em.iban||'')}"></div>
@@ -1023,6 +1056,7 @@ function guardarFacturaEdit(id){
 }
 async function emitirFactura(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f||f.estado==='emitida') return;
+  if(f.tipo==='nominativa' && (!f.clienteNif || !f.clienteDir)){ if(!confirm('Una factura NOMINATIVA debe incluir NIF/DNI y dirección del cliente, y faltan. Cancela para editarla y añadirlos, o Aceptar para emitir igualmente.')) return; }
   if(!confirm('¿Emitir esta factura? El número quedará fijado.')) return;
   var anio=parseInt((f.fecha||hoy()).slice(0,4),10); var k=f.tipo+'|'+anio;
   if(f.numero){
@@ -1040,6 +1074,8 @@ async function emitirTodos(tipo){
   var draftsAll=(state.facturas||[]).filter(function(x){return x.estado!=='emitida' && (!tipo || x.tipo===tipo);});
   if(!draftsAll.length){ alert('No hay borradores que emitir.'); return; }
   if(!confirm('¿Emitir '+draftsAll.length+' borrador(es) por orden de fecha de pago? Los números quedarán fijados.')) return;
+  var faltan=draftsAll.filter(function(x){return x.tipo==='nominativa'&&(!x.clienteNif||!x.clienteDir);});
+  if(faltan.length && !confirm(faltan.length+' factura(s) nominativa(s) no llevan NIF/DNI y dirección del cliente (obligatorio). ¿Emitir igualmente?')) return;
   draftsAll.sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
   for(var i=0;i<draftsAll.length;i++){
     var f=draftsAll[i]; var anio=parseInt((f.fecha||hoy()).slice(0,4),10); var k=f.tipo+'|'+anio;

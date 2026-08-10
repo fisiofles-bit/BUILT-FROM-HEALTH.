@@ -271,7 +271,7 @@ let loaded=false;
 let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[] };
 
 const SPECS={
-  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas']]},
+  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['renovaciones','renovaciones','num']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
@@ -667,7 +667,7 @@ function viewAltas(){
   <p>Ficha de cada atleta: lesión, tarifa, entrenador asignado y datos para facturación.</p></div>
   <button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
   <div class="panel"><div class="panel-head"><h3>Seguimiento de contacto</h3><span class="muted-mini">Pulsa cuando hables con cada cliente</span></div><div class="panel-body" style="padding:6px 0">${segRows()}</div></div>
-  <div class="panel"><div class="panel-head"><h3>Cobros del mes</h3><span class="muted-mini">Estado de pago de cada cliente</span></div><div class="panel-body" style="padding:6px 0">${cobrosRows()}</div></div>
+  
   <div class="panel">
     <div class="form-grid ${altaEdit?'':'hidden'}" id="a-form">
       <div class="field"><label>Nombre</label><input id="a-nombre" placeholder="Nombre del atleta" value="${esc(ae.nombre||'')}"></div>
@@ -690,13 +690,23 @@ function viewAltas(){
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"></div>
     <div class="panel-body">
-      ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Alta</th><th style="text-align:right">Tarifa</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${rows.map(a=>`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
+      ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Alta</th><th>Plan</th><th style="text-align:right">Tarifa</th><th>Estado</th><th>Pago mes</th><th>Renovación</th><th></th></tr></thead><tbody>
+      ${rows.map(a=>`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td>${planLabel(a.duracionPlan)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td>${(()=>{const s=pagoEstado(a);return `<span class="badge ${s.cls}">${s.txt}</span>`;})()}</td><td class="num">${a.fechaVencimiento?fFecha(a.fechaVencimiento):'—'}${a.renovaciones?` <span class="badge b-green">×${a.renovaciones}</span>`:''} <button class="btn ghost sm" onclick="renovar('${a.id}')">Renovar</button></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin altas todavía</b>Registra a tu primer atleta con «+ Alta».</div>`}
     </div>
   </div>`;
 }
 var altaEdit=null;
+function planLabel(d){ d=parseInt(d,10)||0; if(!d) return '—'; var m={1:'Mensual',3:'Trimestral',6:'Semestral',9:'9 meses',12:'Anual'}; return m[d]||(d+' meses'); }
+function renovar(id){
+  var a=(state.altas||[]).find(function(x){return x.id===id;}); if(!a) return;
+  var dur=parseInt(a.duracionPlan,10)||0;
+  if(!dur){ var v=prompt('¿Cuántos meses dura la renovación?','6'); dur=parseInt(v,10)||0; if(!dur) return; a.duracionPlan=dur; }
+  var base=a.fechaVencimiento||hoy();
+  a.fechaVencimiento=addMonthsStr(base,dur);
+  a.renovaciones=(parseInt(a.renovaciones,10)||0)+1;
+  save(); render();
+}
 function addMonthsStr(iso,n){ if(!iso) return ''; var p=iso.split('-'); if(p.length<3) return ''; var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,10); }
 function calcVenc(){ var fa=document.getElementById('a-fecha'), du=document.getElementById('a-duracion'), ve=document.getElementById('a-venc'); if(!fa||!du||!ve) return; var dur=parseInt(du.value,10)||0; if(dur>0&&fa.value){ ve.value=addMonthsStr(fa.value,dur); } }
 function addPagoCliente(id){
@@ -722,7 +732,7 @@ function fichaCliente(id){
     var items=ds.length?ds.map(function(d){return '<li><span>'+esc(d.nombre)+'</span><button class="btn ghost sm" onclick="descargarDoc(\''+d.path+'\')">Abrir</button><button class="del" onclick="borrarDoc(\''+d.id+'\',\''+d.path+'\',\''+id+'\')">✕</button></li>';}).join(''):'<li style="list-style:none;padding:2px 0;color:var(--muted);font-size:12px">— sin documentos —</li>';
     return '<div class="doc-cat"><div class="doc-cat-h">'+cat[1]+'</div><ul class="doc-list">'+items+'</ul><label class="btn ghost sm" style="cursor:pointer">+ Subir documento<input type="file" style="display:none" onchange="uploadDoc(\''+id+'\',\''+cat[0]+'\',this)"></label></div>';
   }).join('');
-  var facs=(state.facturas||[]).filter(function(fx){return (fx.clienteNombre||'')===(c.nombre||'');}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  var facs=(state.facturas||[]).filter(function(fx){return (fx.clienteNombre||'')===(c.nombre||'') || (c.nombreFacturacion && (fx.clienteNombre||'')===c.nombreFacturacion);}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
   var facHTML=facs.length?('<table><thead><tr><th>Nº</th><th>Fecha</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>'+facs.map(function(fx){var em=fx.estado==='emitida';return '<tr><td class="num">'+(em?esc(fx.numero):'<span class="prov">borrador</span>')+'</td><td class="num">'+fFecha(fx.fecha)+'</td><td><span class="badge '+(em?'b-green':'b-gray')+'">'+(em?'Emitida':'Borrador')+'</span></td><td class="num" style="text-align:right">'+eur(fx.total)+'</td><td style="text-align:right"><button class="btn ghost sm" onclick="verFactura(\''+fx.id+'\')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF(\''+fx.id+'\')">PDF</button></td></tr>';}).join('')+'</tbody></table>') : '<div style="color:var(--muted);font-size:13px">Este cliente no tiene facturas todavía.</div>';
   var pagos=(state.finanzas||[]).filter(function(fx){return fx.tipo==='ingreso' && fx.cliente===id;}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
   var totalPagado=pagos.reduce(function(a,p){return a+ +(p.importe||0);},0);
@@ -734,7 +744,7 @@ function fichaCliente(id){
   var ov=getOverlay();
   ov.innerHTML='<div class="fx-overlay"><div class="fx-edit">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><h3 style="margin:0">Ficha · '+esc(c.nombre)+'</h3><div><button class="btn ghost sm" onclick="cerrarFactura();editarAlta(\''+id+'\')">Editar datos</button> <button class="btn ghost sm" onclick="cerrarFactura()">Cerrar</button></div></div>'
-    +'<div style="color:var(--muted);font-size:12px;margin-bottom:14px">'+esc(c.email||'sin email')+(c.telefono?(' · '+esc(c.telefono)):'')+(c.tipoCliente?(' · '+esc(c.tipoCliente)):'')+(c.tarifa?(' · '+eur(c.tarifa)+'/mes'):'')+(c.fechaAlta?(' · alta '+fFecha(c.fechaAlta)):'')+(c.fechaVencimiento?(' · baja '+fFecha(c.fechaVencimiento)):'')+'</div>'
+    +'<div style="color:var(--muted);font-size:12px;margin-bottom:14px">'+esc(c.email||'sin email')+(c.telefono?(' · '+esc(c.telefono)):'')+(c.nombreFacturacion?(' · factura a: '+esc(c.nombreFacturacion)):'')+(c.tipoCliente?(' · '+esc(c.tipoCliente)):'')+(c.tarifa?(' · '+eur(c.tarifa)+'/mes'):'')+(c.fechaAlta?(' · alta '+fFecha(c.fechaAlta)):'')+(c.fechaVencimiento?(' · baja '+fFecha(c.fechaVencimiento)):'')+'</div>'
     +'<h4 style="margin:16px 0 8px">Historial de pagos</h4>'+pagosHTML
     +'<h4 style="margin:18px 0 8px">Documentos</h4>'+docsHTML
     +'<h4 style="margin:18px 0 8px">Facturas del cliente</h4>'+facHTML
@@ -1243,7 +1253,7 @@ async function generarFacturaDesdePago(mov){
   var total=+mov.importe;
   var base=ivaPct>0? total/(1+ivaPct/100) : total;
   var ivaCuota=total-base;
-  var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:mov.concepto||'Servicio',clienteNombre:c.nombre||'',clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
+  var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:mov.concepto||'Servicio',clienteNombre:(c.nombreFacturacion||c.nombre||''),clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
   if(!state.facturas) state.facturas=[];
   state.facturas.push(fac); return fac;
 }

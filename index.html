@@ -90,6 +90,14 @@ tr:hover td{background:#1C2026}
 .b-abanca{background:rgba(37,99,235,.18);color:#7FB0FF}
 .b-stripe{background:rgba(124,92,255,.20);color:#C4B5FD}
 .b-hotmart{background:rgba(226,59,78,.16);color:#FF8A97}
+.b-venta{background:rgba(226,59,78,.18);color:#FF8A97}
+.b-inicial{background:rgba(232,147,12,.20);color:#F2B657}
+.b-control{background:rgba(52,211,153,.16);color:#6EE7B7}
+.doc-cat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.doc-cat-h{font-weight:600;font-size:13px;margin-bottom:6px}
+.doc-list{list-style:none;margin:0 0 8px;padding:0}
+.doc-list li{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.doc-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .urg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
 .urg-alta{background:#FF6B7A}
 .urg-media{background:#F2B657}
@@ -226,10 +234,10 @@ tr:hover td{background:#1C2026}
   <button class="nav-btn active" data-tab="resumen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="lbl">Resumen</span></button>
   <button class="nav-btn" data-tab="finanzas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lbl">Finanzas</span></button>
   <button class="nav-btn" data-tab="altas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span class="lbl">Altas</span></button>
-  <button class="nav-btn" data-tab="videollamadas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="lbl">Videollamadas</span></button>
-  <button class="nav-btn" data-tab="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span class="lbl">CRM</span></button>
   <button class="nav-btn" data-tab="calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="lbl">Calendario</span></button>
+  <button class="nav-btn" data-tab="videollamadas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="lbl">Videollamadas</span></button>
   <button class="nav-btn" data-tab="tareas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="lbl">Tareas</span></button>
+  <button class="nav-btn" data-tab="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span class="lbl">CRM</span></button>
   <button class="nav-btn" data-tab="equipo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Equipo</span></button>
   <button class="nav-btn" data-tab="facturas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg><span class="lbl">Facturas</span></button>
   <button class="nav-btn" data-tab="datos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span class="lbl">Datos</span></button>
@@ -254,17 +262,18 @@ const SB_URL='https://vxxhkuizeceutbowxcmq.supabase.co';
 const SB_KEY='sb_publishable_czwCWuPJQYKiZzvHRaQlVQ_Z9EsbAP3';
 const sb=window.supabase.createClient(SB_URL, SB_KEY);
 let loaded=false;
-let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[] };
+let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[] };
 
 const SPECS={
   altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
-  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num']]},
-  eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas']]},
-  tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia']]},
+  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada']]},
+  eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
+  tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia'],['fechaFin','fecha_fin'],['horaInicio','hora_inicio'],['horaFin','hora_fin']]},
   equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas']]},
   facturas:{table:'facturas',cols:[['numero','numero'],['fecha','fecha'],['tipo','tipo'],['periodo','periodo'],['concepto','concepto'],['clienteNombre','cliente_nombre'],['clienteNif','cliente_nif'],['clienteDir','cliente_dir'],['base','base','num'],['ivaPct','iva_pct','num'],['ivaCuota','iva_cuota','num'],['irpfPct','irpf_pct','num'],['irpfCuota','irpf_cuota','num'],['total','total','num'],['origen','origen_id'],['estado','estado']]},
-  leads:{table:'leads',cols:[['nombre','nombre'],['email','email'],['telefono','telefono'],['fuente','fuente'],['etapa','etapa'],['valor','valor','num'],['tipo','tipo'],['asignado','asignado_id'],['notas','notas']]}
+  leads:{table:'leads',cols:[['nombre','nombre'],['email','email'],['telefono','telefono'],['fuente','fuente'],['etapa','etapa'],['valor','valor','num'],['tipo','tipo'],['asignado','asignado_id'],['notas','notas']]},
+  documentos:{table:'documentos',cols:[['clienteId','cliente_id'],['categoria','categoria'],['nombre','nombre'],['path','path']]}
 };
 function rowToDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1]; var v=r[a]; if(v===undefined||v==='') v=null; o[d]=v; } return o; }
 function rowFromDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1],t=cols[i][2]; var v=r[d]; if(t==='num') v=(v==null?0:Number(v)); else if(t==='bool') v=!!v; else v=(v==null?'':v); o[a]=v; } return o; }
@@ -568,7 +577,7 @@ function viewResumen(){
 
   <div class="panel"><div class="panel-head"><h3>Próximas videollamadas</h3></div><div class="panel-body">
     ${vcPend.length?`<table><thead><tr><th>Atleta</th><th>Fecha</th><th>Hora</th><th>Plataforma</th></tr></thead><tbody>
-    ${vcPend.sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora)).map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${fFecha(v.fecha)}</td><td class="num">${esc(v.hora||'—')}</td><td>${esc(v.plataforma||'—')}</td></tr>`).join('')}
+    ${vcPend.sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora)).map(v=>`<tr><td><b>${esc(v.atleta)}</b>${v.tipoLlamada?` <span class="badge ${tllCls(v.tipoLlamada)}">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:''}</td><td>${fFecha(v.fecha)}</td><td class="num">${esc(v.hora||'—')}</td><td>${esc(v.plataforma||'—')}</td></tr>`).join('')}
     </tbody></table>`:`<div class="empty"><b>Nada esta semana</b>No hay videollamadas pendientes en los próximos 7 días.</div>`}
   </div></div>
   <div class="panel"><div class="panel-head"><h3>Agenda próxima</h3></div><div class="panel-body">
@@ -674,7 +683,7 @@ function viewAltas(){
     <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"></div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Alta</th><th style="text-align:right">Tarifa</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${rows.map(a=>`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td style="text-align:right"><button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(a=>`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b>${esc(a.nombre)}</b></td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td class="num">${fFecha(a.fechaAlta)}</td><td class="num" style="text-align:right">${a.tarifa?eur(a.tarifa):'—'}</td><td><span class="badge ${bE[a.estado]||'b-gray'}">${esc(a.estado)}</span></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin altas todavía</b>Registra a tu primer atleta con «+ Alta».</div>`}
     </div>
   </div>`;
@@ -682,6 +691,47 @@ function viewAltas(){
 var altaEdit=null;
 function addMonthsStr(iso,n){ if(!iso) return ''; var p=iso.split('-'); if(p.length<3) return ''; var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,10); }
 function calcVenc(){ var fa=document.getElementById('a-fecha'), du=document.getElementById('a-duracion'), ve=document.getElementById('a-venc'); if(!fa||!du||!ve) return; var dur=parseInt(du.value,10)||0; if(dur>0&&fa.value){ ve.value=addMonthsStr(fa.value,dur); } }
+function fichaCliente(id){
+  var c=(state.altas||[]).find(function(x){return x.id===id;}); if(!c) return;
+  var CATS=[['contrato','Contrato de prestación de servicios'],['anamnesis','Anamnesis'],['seguimiento','Informes de seguimiento'],['medicos','Informes médicos']];
+  var docsHTML=CATS.map(function(cat){
+    var ds=(state.documentos||[]).filter(function(d){return d.clienteId===id && d.categoria===cat[0];});
+    var items=ds.length?ds.map(function(d){return '<li><span>'+esc(d.nombre)+'</span><button class="btn ghost sm" onclick="descargarDoc(\''+d.path+'\')">Abrir</button><button class="del" onclick="borrarDoc(\''+d.id+'\',\''+d.path+'\',\''+id+'\')">✕</button></li>';}).join(''):'<li style="list-style:none;padding:2px 0;color:var(--muted);font-size:12px">— sin documentos —</li>';
+    return '<div class="doc-cat"><div class="doc-cat-h">'+cat[1]+'</div><ul class="doc-list">'+items+'</ul><label class="btn ghost sm" style="cursor:pointer">+ Subir documento<input type="file" style="display:none" onchange="uploadDoc(\''+id+'\',\''+cat[0]+'\',this)"></label></div>';
+  }).join('');
+  var facs=(state.facturas||[]).filter(function(fx){return (fx.clienteNombre||'')===(c.nombre||'');}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  var facHTML=facs.length?('<table><thead><tr><th>Nº</th><th>Fecha</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>'+facs.map(function(fx){var em=fx.estado==='emitida';return '<tr><td class="num">'+(em?esc(fx.numero):'<span class="prov">borrador</span>')+'</td><td class="num">'+fFecha(fx.fecha)+'</td><td><span class="badge '+(em?'b-green':'b-gray')+'">'+(em?'Emitida':'Borrador')+'</span></td><td class="num" style="text-align:right">'+eur(fx.total)+'</td><td style="text-align:right"><button class="btn ghost sm" onclick="verFactura(\''+fx.id+'\')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF(\''+fx.id+'\')">PDF</button></td></tr>';}).join('')+'</tbody></table>'):'<div style="color:var(--muted);font-size:13px">Este cliente no tiene facturas todavía.</div>';
+  var ov=document.getElementById('fac-overlay');
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><h3 style="margin:0">Ficha · '+esc(c.nombre)+'</h3><div><button class="btn ghost sm" onclick="cerrarFactura();editarAlta(\''+id+'\')">Editar datos</button> <button class="btn ghost sm" onclick="cerrarFactura()">Cerrar</button></div></div>'
+    +'<div style="color:var(--muted);font-size:12px;margin-bottom:14px">'+esc(c.email||'sin email')+(c.tipoCliente?(' · '+esc(c.tipoCliente)):'')+(c.tarifa?(' · '+eur(c.tarifa)+'/mes'):'')+'</div>'
+    +'<h4 style="margin:6px 0 8px">Documentos</h4>'+docsHTML
+    +'<h4 style="margin:18px 0 8px">Facturas del cliente</h4>'+facHTML
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+async function uploadDoc(clienteId, categoria, inp){
+  var file=inp.files&&inp.files[0]; if(!file) return;
+  var safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  var path=clienteId+'/'+categoria+'/'+Date.now()+'_'+safe;
+  try{
+    var up=await sb.storage.from('documentos').upload(path, file, {upsert:false});
+    if(up.error){ alert('Error subiendo el documento: '+up.error.message); return; }
+    if(!state.documentos) state.documentos=[];
+    state.documentos.push({id:uid(), clienteId:clienteId, categoria:categoria, nombre:file.name, path:path});
+    save(); fichaCliente(clienteId);
+  }catch(e){ alert('Error subiendo: '+e); }
+}
+async function descargarDoc(path){
+  try{ var r=await sb.storage.from('documentos').createSignedUrl(path, 3600); if(r.data&&r.data.signedUrl){ window.open(r.data.signedUrl,'_blank'); } else { alert('No se pudo abrir el documento.'); } }catch(e){ alert('Error: '+e); }
+}
+async function borrarDoc(id, path, clienteId){
+  if(!confirm('¿Eliminar este documento? No se puede deshacer.')) return;
+  try{ await sb.storage.from('documentos').remove([path]); }catch(e){}
+  try{ await sb.from('documentos').delete().eq('id', id); }catch(e){}
+  state.documentos=(state.documentos||[]).filter(function(d){return d.id!==id;});
+  fichaCliente(clienteId);
+}
 function editarAlta(id){ altaEdit=(state.altas||[]).find(function(x){return x.id===id;})||null; render(); var el=document.getElementById('a-form'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'}); }
 function cancelarAlta(){ altaEdit=null; render(); }
 function guardarAlta(){
@@ -722,6 +772,7 @@ function viewVideo(){
     <div class="form-grid hidden" id="v-form">
       <div class="field"><label>Nombre / lead</label><input id="v-atleta" list="v-atletas" placeholder="Nombre"><datalist id="v-atletas">${atletas.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>
       <div class="field"><label>Tipo de lead</label><select id="v-lead">${LEADS.map(l=>`<option>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Tipo de videollamada</label><select id="v-tll"><option value="">—</option><option value="venta">De venta</option><option value="inicial">Inicial</option><option value="control">De control</option></select></div>
       <div class="field"><label>Realizada por</label><select id="v-por"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha</label><input type="date" id="v-fecha" value="${hoy()}"></div>
       <div class="field"><label>Hora</label><input type="time" id="v-hora" value="17:00"></div>
@@ -734,16 +785,57 @@ function viewVideo(){
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
-      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin videollamadas</b>Programa la primera con «+ Videollamada».</div>`}
     </div>
   </div>`;
 }
+function tipoLlamadaLabel(x){ return x==='venta'?'Venta':(x==='inicial'?'Inicial':(x==='control'?'Control':'')); }
+function tllCls(x){ return x==='venta'?'b-venta':(x==='inicial'?'b-inicial':(x==='control'?'b-control':'b-gray')); }
+function syncEventoVid(v){ if(!state.eventos) state.eventos=[]; var key='vid:'+v.id; var ev=state.eventos.find(function(e){return e.origen===key;}); var titulo='📹 '+(v.atleta||'Videollamada')+(v.tipoLlamada?(' · '+tipoLlamadaLabel(v.tipoLlamada)):''); if(ev){ ev.titulo=titulo; ev.fecha=v.fecha; ev.hora=v.hora||''; } else { state.eventos.push({id:uid(),titulo:titulo,fecha:v.fecha,hora:v.hora||'',duracion:45,notas:'Videollamada',origen:key}); } }
+function syncEventoTarea(t){ if(!t.fecha) return; if(!state.eventos) state.eventos=[]; var key='tarea:'+t.id; var ev=state.eventos.find(function(e){return e.origen===key;});
+  var rango=''; if(t.horaInicio&&t.horaFin) rango=' ('+t.horaInicio+'–'+t.horaFin+')'; else if(t.horaInicio) rango=' ('+t.horaInicio+')';
+  var titulo='✔ '+(t.titulo||'Tarea')+rango;
+  var dur=null; if(t.horaInicio&&t.horaFin){ var a=t.horaInicio.split(':'), b=t.horaFin.split(':'); var mm=(parseInt(b[0],10)*60+parseInt(b[1],10))-(parseInt(a[0],10)*60+parseInt(a[1],10)); if(mm>0) dur=mm; }
+  if(ev){ ev.titulo=titulo; ev.fecha=t.fecha; ev.fechaFin=t.fechaFin||null; ev.hora=t.horaInicio||''; ev.duracion=dur; } else { state.eventos.push({id:uid(),titulo:titulo,fecha:t.fecha,fechaFin:t.fechaFin||null,hora:t.horaInicio||'',duracion:dur,notas:'Tarea',origen:key}); } }
 function addVideo(){
-  const atleta=document.getElementById('v-atleta').value.trim();
+  var atleta=document.getElementById('v-atleta').value.trim();
   if(!atleta){ alert('Indica el nombre / lead.'); return; }
-  state.videollamadas.push({id:uid(),atleta,tipoLead:document.getElementById('v-lead').value,realizadaPor:document.getElementById('v-por').value,fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()});
+  var v={id:uid(),atleta:atleta,tipoLead:document.getElementById('v-lead').value,tipoLlamada:document.getElementById('v-tll').value,realizadaPor:document.getElementById('v-por').value,fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()};
+  if(!state.videollamadas) state.videollamadas=[]; state.videollamadas.push(v);
+  syncEventoVid(v);
   save(); render();
+}
+function editarVideo(id){
+  var v=(state.videollamadas||[]).find(function(x){return x.id===id;}); if(!v) return;
+  var estados=[['pendiente','Pendiente'],['realizada','Realizada'],['cancelada','Cancelada']].map(function(o){return '<option value="'+o[0]+'"'+((v.estado||'pendiente')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
+  var res=[['pendiente','Pendiente'],['cerrada','Cerrada'],['no_cerrada','No cerrada']].map(function(o){return '<option value="'+o[0]+'"'+((v.resultado||'pendiente')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
+  var tll=[['','—'],['venta','De venta'],['inicial','Inicial'],['control','De control']].map(function(o){return '<option value="'+o[0]+'"'+((v.tipoLlamada||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
+  var eq=(state.equipo||[]);
+  var por=['<option value="">—</option>'].concat(eq.map(function(m){return '<option value="'+m.id+'"'+((v.realizadaPor||'')===m.id?' selected':'')+'>'+esc(m.nombre)+'</option>';})).join('');
+  var ov=document.getElementById('fac-overlay');
+  ov.innerHTML=`<div class="fx-overlay"><div class="fx-edit">
+    <h3 style="margin:0 0 14px">Editar videollamada</h3>
+    <div class="form-grid">
+      <div class="field"><label>Nombre / lead</label><input id="ev-atleta" value="${esc(v.atleta||'')}"></div>
+      <div class="field"><label>Tipo de videollamada</label><select id="ev-tll">${tll}</select></div>
+      <div class="field"><label>Realizada por</label><select id="ev-por">${por}</select></div>
+      <div class="field"><label>Fecha</label><input type="date" id="ev-fecha" value="${v.fecha||''}"></div>
+      <div class="field"><label>Hora</label><input type="time" id="ev-hora" value="${esc(v.hora||'')}"></div>
+      <div class="field"><label>Estado</label><select id="ev-estado">${estados}</select></div>
+      <div class="field"><label>Resultado</label><select id="ev-res">${res}</select></div>
+      <div class="field"><label>Facturación (€)</label><input type="number" step="0.01" id="ev-importe" value="${v.importe||0}"></div>
+      <div class="field full"><label>Notas</label><input id="ev-notas" value="${esc(v.notas||'')}"></div>
+    </div>
+    <div class="fx-actions" style="margin-top:14px"><button class="btn" onclick="guardarVideoEdit('${v.id}')">Guardar</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
+  </div></div>`;
+  document.body.classList.add('printing');
+}
+function guardarVideoEdit(id){
+  var v=(state.videollamadas||[]).find(function(x){return x.id===id;}); if(!v) return;
+  v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value;
+  v.fecha=document.getElementById('ev-fecha').value||v.fecha; v.hora=val('ev-hora'); v.estado=document.getElementById('ev-estado').value; v.resultado=document.getElementById('ev-res').value; v.importe=parseFloat(document.getElementById('ev-importe').value)||0; v.notas=val('ev-notas');
+  syncEventoVid(v); cerrarFactura(); save(); render();
 }
 
 function viewCalendario(){
@@ -754,7 +846,7 @@ function viewCalendario(){
   for(let i=inicio-1;i>=0;i--) cells+=`<div class="cal-cell out"><span class="dnum">${prevDias-i}</span></div>`;
   for(let d=1;d<=diasMes;d++){
     const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const evs=state.eventos.filter(e=>e.fecha===ds).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+    const evs=state.eventos.filter(e=>{ var f1=e.fechaFin||e.fecha; return e.fecha && ds>=e.fecha && ds<=f1; }).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
     const chips=evs.slice(0,3).map(e=>`<div class="ev-chip">${e.hora?esc(e.hora)+' ':''}${esc(e.titulo)}</div>`).join('')+(evs.length>3?`<div class="ev-chip" style="background:rgba(255,255,255,.07);color:var(--muted)">+${evs.length-3} más</div>`:'');
     const rchips=recsDelDia(ds).slice(0,2).map(function(t){return '<div class="ev-venc'+(t.urg?' urg':'')+'">'+esc(t.txt)+'</div>';}).join('');
     cells+=`<div class="cal-cell ${ds===hoyStr?'today':''}" onclick="nuevoEvento('${ds}')"><span class="dnum">${d}</span>${chips}${rchips}</div>`;
@@ -827,7 +919,10 @@ function viewTareas(){
       <div class="field"><label>Categoría</label><select id="t-cat">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
       <div class="field"><label>Asignar a</label><select id="t-asig"><option value="">— nadie —</option>${(state.equipo||[]).map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Urgencia</label><select id="t-urg"><option value="alta">🔴 Urgente</option><option value="media" selected>🟠 Moderada</option><option value="baja">🟢 No urgente</option></select></div>
-      <div class="field"><label>Día</label><input type="date" id="t-fecha" value="${hoyStr}"></div>
+      <div class="field"><label>Desde (día)</label><input type="date" id="t-fecha" value="${hoyStr}"></div>
+      <div class="field"><label>Hasta (día)</label><input type="date" id="t-fecha-fin"></div>
+      <div class="field"><label>Hora inicio</label><input type="time" id="t-hini"></div>
+      <div class="field"><label>Hora fin</label><input type="time" id="t-hfin"></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('t-form')">Cancelar</button><button class="btn sm" onclick="addTarea()">Guardar</button></div>
     </div>
     <div class="filterbar">
@@ -844,13 +939,16 @@ function viewTareas(){
   ${backlog.length?`<div class="panel"><div class="panel-head"><h3>Sin fecha</h3></div><div class="panel-body" style="padding:12px 20px;display:flex;flex-direction:column;gap:6px">${backlog.map(t=>taskRow(t)).join('')}</div></div>`:''}`;
 }
 function taskRow(t){
-  return `<div class="task ${t.hecha?'done':''}"><button class="chk" onclick="toggleTarea('${t.id}')">${t.hecha?'✓':''}</button><span class="urg-dot urg-${t.urgencia||'media'}"></span><span class="task-t">${esc(t.titulo)}</span>${t.categoria?`<span class="catchip sm" style="--c:${catColor(t.categoria)}">${esc(t.categoria)}</span>`:''}${t.asignado?`<span class="who">${esc(miembroNombre(t.asignado))}</span>`:''}<button class="del" onclick="delItem('tareas','${t.id}')">✕</button></div>`;
+  var rng=''; if(t.fecha){ if(t.fechaFin && t.fechaFin!==t.fecha){ rng=fFecha(t.fecha)+' → '+fFecha(t.fechaFin); } else if(t.horaInicio&&t.horaFin){ rng=t.horaInicio+'–'+t.horaFin; } else if(t.horaInicio){ rng=t.horaInicio; } }
+  return `<div class="task ${t.hecha?'done':''}"><button class="chk" onclick="toggleTarea('${t.id}')">${t.hecha?'✓':''}</button><span class="urg-dot urg-${t.urgencia||'media'}"></span><span class="task-t">${esc(t.titulo)}</span>${t.categoria?`<span class="catchip sm" style="--c:${catColor(t.categoria)}">${esc(t.categoria)}</span>`:''}${rng?`<span class="who">${esc(rng)}</span>`:''}${t.asignado?`<span class="who">${esc(miembroNombre(t.asignado))}</span>`:''}<button class="del" onclick="delItem('tareas','${t.id}')">✕</button></div>`;
 }
 function addTarea(){
-  const titulo=document.getElementById('t-titulo').value.trim();
+  var titulo=document.getElementById('t-titulo').value.trim();
   if(!titulo){ alert('Escribe la tarea.'); return; }
   if(!state.tareas) state.tareas=[];
-  state.tareas.push({id:uid(),titulo,categoria:document.getElementById('t-cat').value,asignado:document.getElementById('t-asig').value,urgencia:(document.getElementById('t-urg')||{}).value||'media',fecha:document.getElementById('t-fecha').value||null,hecha:false});
+  var t={id:uid(),titulo:titulo,categoria:document.getElementById('t-cat').value,asignado:document.getElementById('t-asig').value,urgencia:(document.getElementById('t-urg')||{}).value||'media',fecha:document.getElementById('t-fecha').value||null,fechaFin:document.getElementById('t-fecha-fin').value||null,horaInicio:(document.getElementById('t-hini')||{}).value||'',horaFin:(document.getElementById('t-hfin')||{}).value||'',hecha:false};
+  state.tareas.push(t);
+  syncEventoTarea(t);
   save(); render();
 }
 function toggleTarea(id){ const t=state.tareas.find(x=>x.id===id); if(t){ t.hecha=!t.hecha; save(); render(); } }
@@ -1196,7 +1294,7 @@ function importarBackup(input){
       const data=JSON.parse(reader.result);
       if(!data||typeof data!=='object') throw 0;
       if(!confirm('Esto reemplazará los datos actuales de este dispositivo por los de la copia. ¿Continuar?')){ input.value=''; return; }
-      state={ finanzas:data.finanzas||[], altas:data.altas||[], videollamadas:data.videollamadas||[], eventos:data.eventos||[], tareas:data.tareas||[], tareaCats:data.tareaCats||[], equipo:data.equipo||[], emisor:data.emisor||{}, facturas:data.facturas||[], leads:data.leads||[] };
+      state={ finanzas:data.finanzas||[], altas:data.altas||[], videollamadas:data.videollamadas||[], eventos:data.eventos||[], tareas:data.tareas||[], tareaCats:data.tareaCats||[], equipo:data.equipo||[], emisor:data.emisor||{}, facturas:data.facturas||[], leads:data.leads||[], documentos:data.documentos||[] };
       save(); render(); alert('Copia importada correctamente.');
     }catch(e){ alert('El archivo no es una copia válida del panel.'); }
     input.value='';

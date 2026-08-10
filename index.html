@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Built From Health · Panel</title>
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="icon" type="image/png" href="/icon.png">
+<meta name="theme-color" content="#0E1013">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BFH Panel">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -265,7 +271,7 @@ let loaded=false;
 let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[] };
 
 const SPECS={
-  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num']]},
+  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
@@ -666,6 +672,7 @@ function viewAltas(){
     <div class="form-grid ${altaEdit?'':'hidden'}" id="a-form">
       <div class="field"><label>Nombre</label><input id="a-nombre" placeholder="Nombre del atleta" value="${esc(ae.nombre||'')}"></div>
       <div class="field"><label>Email</label><input id="a-email" placeholder="para cobros Stripe / facturación" value="${esc(ae.email||'')}"></div>
+      <div class="field"><label>Teléfono</label><input id="a-tel" value="${esc(ae.telefono||'')}"></div>
       <div class="field"><label>Día de cobro</label><input type="number" id="a-diacobro" min="1" max="31" placeholder="1-31" value="${ae.diaCobro||''}"></div>
       <div class="field"><label>Fecha de alta (1er cobro)</label><input type="date" id="a-fecha" value="${ae.fechaAlta||hoy()}" onchange="calcVenc()"></div>
       <div class="field"><label>Duración de plan</label><select id="a-duracion" onchange="calcVenc()"><option value="0">— sin plan —</option>${[1,3,6,9,12].map(n=>`<option value="${n}"${(ae.duracionPlan==n)?' selected':''}>${n} meses</option>`).join('')}</select></div>
@@ -678,6 +685,7 @@ function viewAltas(){
       <div class="field"><label>Tipo de cliente</label><select id="a-tipocli"><option value="">—</option>${['Futbolista - LCA','Futbolista - Pubalgia','Futbolista - Otra lesión','Futbolista - Rendimiento','Otro deporte'].map(o=>`<option${(ae.tipoCliente===o)?' selected':''}>${o}</option>`).join('')}</select></div>
       <div class="field"><label>NIF (facturación)</label><input id="a-nif" placeholder="opcional" value="${esc(ae.nif||'')}"></div>
       <div class="field"><label>Dirección (facturación)</label><input id="a-dir" placeholder="opcional" value="${esc(ae.direccion||'')}"></div>
+      <div class="field full"><label>Observaciones</label><input id="a-notas" value="${esc(ae.notas||'')}"></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="cancelarAlta()">Cancelar</button><button class="btn sm" onclick="guardarAlta()">${altaEdit?'Guardar cambios':'Guardar'}</button></div>
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"></div>
@@ -691,6 +699,21 @@ function viewAltas(){
 var altaEdit=null;
 function addMonthsStr(iso,n){ if(!iso) return ''; var p=iso.split('-'); if(p.length<3) return ''; var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,10); }
 function calcVenc(){ var fa=document.getElementById('a-fecha'), du=document.getElementById('a-duracion'), ve=document.getElementById('a-venc'); if(!fa||!du||!ve) return; var dur=parseInt(du.value,10)||0; if(dur>0&&fa.value){ ve.value=addMonthsStr(fa.value,dur); } }
+function addPagoCliente(id){
+  var c=(state.altas||[]).find(function(x){return x.id===id;});
+  var imp=parseFloat((document.getElementById('pg-importe')||{}).value); if(isNaN(imp)){ alert('Indica el importe del pago.'); return; }
+  var fecha=(document.getElementById('pg-fecha')||{}).value||hoy();
+  var fuente=(document.getElementById('pg-fuente')||{}).value||'';
+  if(!state.finanzas) state.finanzas=[];
+  state.finanzas.push({id:uid(),fecha:fecha,tipo:'ingreso',concepto:'Pago - '+(c?c.nombre:''),categoria:'Suscripción',importe:imp,cliente:id,fuente:fuente});
+  save(); fichaCliente(id);
+}
+function borrarPagoCliente(pid, cid){
+  if(!confirm('¿Eliminar este pago del historial?')) return;
+  state.finanzas=(state.finanzas||[]).filter(function(x){return x.id!==pid;});
+  try{ sb.from('finanzas').delete().eq('id',pid); }catch(e){}
+  save(); fichaCliente(cid);
+}
 function fichaCliente(id){
   var c=(state.altas||[]).find(function(x){return x.id===id;}); if(!c) return;
   var CATS=[['contrato','Contrato de prestación de servicios'],['anamnesis','Anamnesis'],['seguimiento','Informes de seguimiento'],['medicos','Informes médicos']];
@@ -700,12 +723,20 @@ function fichaCliente(id){
     return '<div class="doc-cat"><div class="doc-cat-h">'+cat[1]+'</div><ul class="doc-list">'+items+'</ul><label class="btn ghost sm" style="cursor:pointer">+ Subir documento<input type="file" style="display:none" onchange="uploadDoc(\''+id+'\',\''+cat[0]+'\',this)"></label></div>';
   }).join('');
   var facs=(state.facturas||[]).filter(function(fx){return (fx.clienteNombre||'')===(c.nombre||'');}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
-  var facHTML=facs.length?('<table><thead><tr><th>Nº</th><th>Fecha</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>'+facs.map(function(fx){var em=fx.estado==='emitida';return '<tr><td class="num">'+(em?esc(fx.numero):'<span class="prov">borrador</span>')+'</td><td class="num">'+fFecha(fx.fecha)+'</td><td><span class="badge '+(em?'b-green':'b-gray')+'">'+(em?'Emitida':'Borrador')+'</span></td><td class="num" style="text-align:right">'+eur(fx.total)+'</td><td style="text-align:right"><button class="btn ghost sm" onclick="verFactura(\''+fx.id+'\')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF(\''+fx.id+'\')">PDF</button></td></tr>';}).join('')+'</tbody></table>'):'<div style="color:var(--muted);font-size:13px">Este cliente no tiene facturas todavía.</div>';
-  var ov=document.getElementById('fac-overlay');
+  var facHTML=facs.length?('<table><thead><tr><th>Nº</th><th>Fecha</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>'+facs.map(function(fx){var em=fx.estado==='emitida';return '<tr><td class="num">'+(em?esc(fx.numero):'<span class="prov">borrador</span>')+'</td><td class="num">'+fFecha(fx.fecha)+'</td><td><span class="badge '+(em?'b-green':'b-gray')+'">'+(em?'Emitida':'Borrador')+'</span></td><td class="num" style="text-align:right">'+eur(fx.total)+'</td><td style="text-align:right"><button class="btn ghost sm" onclick="verFactura(\''+fx.id+'\')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF(\''+fx.id+'\')">PDF</button></td></tr>';}).join('')+'</tbody></table>') : '<div style="color:var(--muted);font-size:13px">Este cliente no tiene facturas todavía.</div>';
+  var pagos=(state.finanzas||[]).filter(function(fx){return fx.tipo==='ingreso' && fx.cliente===id;}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  var totalPagado=pagos.reduce(function(a,p){return a+ +(p.importe||0);},0);
+  var est=pagoEstado(c);
+  var FSRC=['Abanca','Stripe','Hotmart','Efectivo','Transferencia','Otro'];
+  var pagosHTML='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><span class="badge '+est.cls+'">'+est.txt+'</span><span style="color:var(--muted);font-size:12px">Total pagado: '+eur(totalPagado)+' · '+pagos.length+' pago(s) desde el alta</span></div>';
+  pagosHTML+='<div class="doc-cat" style="margin-bottom:10px"><div class="form-grid" style="margin:0"><div class="field"><label>Fecha</label><input type="date" id="pg-fecha" value="'+hoy()+'"></div><div class="field"><label>Importe (€)</label><input type="number" step="0.01" id="pg-importe"></div><div class="field"><label>Fuente</label><select id="pg-fuente">'+FSRC.map(function(x){return "<option>"+x+"</option>";}).join('')+'</select></div><div class="form-actions"><button class="btn sm" onclick="addPagoCliente(\''+id+'\')">+ Añadir pago manual</button></div></div></div>';
+  pagosHTML+=pagos.length?('<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Fuente</th><th style="text-align:right">Importe</th><th></th></tr></thead><tbody>'+pagos.map(function(p){return '<tr><td class="num">'+fFecha(p.fecha)+'</td><td>'+esc(p.concepto||"—")+'</td><td>'+(p.fuente?'<span class="badge '+fuenteCls(p.fuente)+'">'+esc(p.fuente)+'</span>':"—")+'</td><td class="num" style="text-align:right">'+eur(p.importe)+'</td><td style="text-align:right"><button class="del" onclick="borrarPagoCliente(\''+p.id+'\',\''+id+'\')">✕</button></td></tr>';}).join('')+'</tbody></table>'):'<div style="color:var(--muted);font-size:13px">Sin pagos registrados todavía.</div>';
+  var ov=getOverlay();
   ov.innerHTML='<div class="fx-overlay"><div class="fx-edit">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><h3 style="margin:0">Ficha · '+esc(c.nombre)+'</h3><div><button class="btn ghost sm" onclick="cerrarFactura();editarAlta(\''+id+'\')">Editar datos</button> <button class="btn ghost sm" onclick="cerrarFactura()">Cerrar</button></div></div>'
-    +'<div style="color:var(--muted);font-size:12px;margin-bottom:14px">'+esc(c.email||'sin email')+(c.tipoCliente?(' · '+esc(c.tipoCliente)):'')+(c.tarifa?(' · '+eur(c.tarifa)+'/mes'):'')+'</div>'
-    +'<h4 style="margin:6px 0 8px">Documentos</h4>'+docsHTML
+    +'<div style="color:var(--muted);font-size:12px;margin-bottom:14px">'+esc(c.email||'sin email')+(c.telefono?(' · '+esc(c.telefono)):'')+(c.tipoCliente?(' · '+esc(c.tipoCliente)):'')+(c.tarifa?(' · '+eur(c.tarifa)+'/mes'):'')+(c.fechaAlta?(' · alta '+fFecha(c.fechaAlta)):'')+(c.fechaVencimiento?(' · baja '+fFecha(c.fechaVencimiento)):'')+'</div>'
+    +'<h4 style="margin:16px 0 8px">Historial de pagos</h4>'+pagosHTML
+    +'<h4 style="margin:18px 0 8px">Documentos</h4>'+docsHTML
     +'<h4 style="margin:18px 0 8px">Facturas del cliente</h4>'+facHTML
     +'</div></div>';
   document.body.classList.add('printing');
@@ -740,7 +771,7 @@ function guardarAlta(){
   var dur=parseInt((document.getElementById('a-duracion')||{}).value,10)||0;
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
-  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc};
+  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas')};
   if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); }
   altaEdit=null; save(); render();
 }
@@ -813,7 +844,7 @@ function editarVideo(id){
   var tll=[['','—'],['venta','De venta'],['inicial','Inicial'],['control','De control']].map(function(o){return '<option value="'+o[0]+'"'+((v.tipoLlamada||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
   var eq=(state.equipo||[]);
   var por=['<option value="">—</option>'].concat(eq.map(function(m){return '<option value="'+m.id+'"'+((v.realizadaPor||'')===m.id?' selected':'')+'>'+esc(m.nombre)+'</option>';})).join('');
-  var ov=document.getElementById('fac-overlay');
+  var ov=getOverlay();
   ov.innerHTML=`<div class="fx-overlay"><div class="fx-edit">
     <h3 style="margin:0 0 14px">Editar videollamada</h3>
     <div class="form-grid">
@@ -864,7 +895,7 @@ function viewCalendario(){
   </div>
   <div class="panel"><div class="panel-head"><h3>Próximos eventos</h3></div><div class="panel-body">
     ${listaFut.length?`<table><thead><tr><th>Evento</th><th>Fecha</th><th>Hora</th><th>Enviar al móvil</th><th></th></tr></thead><tbody>
-    ${listaFut.map(e=>`<tr><td><b>${esc(e.titulo)}</b>${e.notas?`<br><span style="color:var(--muted);font-size:12px">${esc(e.notas)}</span>`:''}</td><td class="num">${fFecha(e.fecha)}</td><td class="num">${esc(e.hora||'—')}</td><td><a class="btn ghost sm" href="${gcalLink(e)}" target="_blank" rel="noopener">Google</a> <button class="btn ghost sm" onclick="descargarICS('${e.id}')">.ics</button></td><td style="text-align:right"><button class="del" onclick="delItem('eventos','${e.id}')">✕</button></td></tr>`).join('')}
+    ${listaFut.map(e=>`<tr><td><b>${esc(e.titulo)}</b>${e.notas?`<br><span style="color:var(--muted);font-size:12px">${esc(e.notas)}</span>`:''}</td><td class="num">${fFecha(e.fecha)}</td><td class="num">${esc(e.hora||'—')}</td><td><a class="btn ghost sm" href="${gcalLink(e)}" target="_blank" rel="noopener">Google</a> <button class="btn ghost sm" onclick="descargarICS('${e.id}')">.ics</button></td><td style="text-align:right"><button class="btn ghost sm" onclick="editarEvento('${e.id}')">Editar</button> <button class="del" onclick="delItem('eventos','${e.id}')">✕</button></td></tr>`).join('')}
     </tbody></table>`:`<div class="empty"><b>Sin eventos próximos</b>Toca cualquier día del calendario para añadir uno.</div>`}
   </div></div>`;
 }
@@ -1036,8 +1067,7 @@ function viewFacturas(){
   ${nsel?`<div style="margin:0 0 12px;text-align:right"><button class="btn sm" onclick="emitirSeleccionadas()">Emitir seleccionadas (${nsel})</button></div>`:''}
   ${facBloque('nominativa','Facturas nominativas',prov)}
   ${facBloque('simplificada','Facturas simplificadas',prov)}
-  <p style="color:var(--muted);font-size:12px;max-width:660px">Plantilla orientativa según el Reglamento de Facturación (RD 1619/2012). Revisa con tu gestor el tipo de IVA aplicable; algunos servicios sanitarios están exentos. No constituye asesoramiento fiscal.</p>
-  <div id="fac-overlay"></div>`;
+  <p style="color:var(--muted);font-size:12px;max-width:660px">Plantilla orientativa según el Reglamento de Facturación (RD 1619/2012). Revisa con tu gestor el tipo de IVA aplicable; algunos servicios sanitarios están exentos. No constituye asesoramiento fiscal.</p>`;
 }
 function saveEmisor(){ const iv=document.getElementById('em-iva'), tp=document.getElementById('em-tipo'); state.emisor={nombre:val('em-nombre'),nif:val('em-nif'),direccion:val('em-dir'),email:val('em-email'),iban:val('em-iban'),ivaDefault:iv?+iv.value:0,tipoDefault:tp?tp.value:'auto'}; save(); render(); }
 function rellenaCliente(){ const c=state.altas.find(x=>x.id===document.getElementById('fac-cli').value); if(c){ document.getElementById('fac-clinom').value=c.nombre||''; document.getElementById('fac-clinif').value=c.nif||''; document.getElementById('fac-clidir').value=c.direccion||''; } }
@@ -1077,7 +1107,7 @@ function facturaDocHTML(f){
 }
 function verFactura(id){
   const f=(state.facturas||[]).find(x=>x.id===id); if(!f) return;
-  const ov=document.getElementById('fac-overlay');
+  const ov=getOverlay();
   ov.innerHTML=`<div class="fx-overlay"><div class="fx-actions"><button class="btn" onclick="descargarPDF('${f.id}')">Descargar PDF</button><button class="btn ghost" onclick="window.print()">Imprimir</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
     <div class="fx-doc" id="fx-print">${facturaDocHTML(f)}</div></div>`;
   document.body.classList.add('printing');
@@ -1092,7 +1122,29 @@ function descargarPDF(id){
   var nombre='Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf';
   html2pdf().set({margin:10,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap.firstChild).save().then(function(){ try{document.body.removeChild(wrap);}catch(e){} }).catch(function(){ try{document.body.removeChild(wrap);}catch(e){} });
 }
-function cerrarFactura(){ const ov=document.getElementById('fac-overlay'); if(ov) ov.innerHTML=''; document.body.classList.remove('printing'); }
+function getOverlay(){ var el=document.getElementById('fac-overlay'); if(!el){ el=document.createElement('div'); el.id='fac-overlay'; document.body.appendChild(el); } return el; }
+function editarEvento(id){
+  var e=(state.eventos||[]).find(function(x){return x.id===id;}); if(!e) return;
+  var ov=getOverlay();
+  ov.innerHTML=`<div class="fx-overlay"><div class="fx-edit">
+    <h3 style="margin:0 0 14px">Editar evento</h3>
+    <div class="form-grid">
+      <div class="field"><label>Título</label><input id="ee-titulo" value="${esc(e.titulo||'')}"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="ee-fecha" value="${e.fecha||''}"></div>
+      <div class="field"><label>Fecha fin (opcional)</label><input type="date" id="ee-fechafin" value="${e.fechaFin||''}"></div>
+      <div class="field"><label>Hora</label><input type="time" id="ee-hora" value="${esc(e.hora||'')}"></div>
+      <div class="field full"><label>Notas</label><input id="ee-notas" value="${esc(e.notas||'')}"></div>
+    </div>
+    <div class="fx-actions" style="margin-top:14px"><button class="btn" onclick="guardarEventoEdit('${e.id}')">Guardar</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
+  </div></div>`;
+  document.body.classList.add('printing');
+}
+function guardarEventoEdit(id){
+  var e=(state.eventos||[]).find(function(x){return x.id===id;}); if(!e) return;
+  e.titulo=val('ee-titulo'); e.fecha=document.getElementById('ee-fecha').value||e.fecha; e.fechaFin=document.getElementById('ee-fechafin').value||null; e.hora=val('ee-hora'); e.notas=val('ee-notas');
+  cerrarFactura(); save(); render();
+}
+function cerrarFactura(){ const ov=getOverlay(); if(ov) ov.innerHTML=''; document.body.classList.remove('printing'); }
 function provFacturas(){
   var map={}, groups={};
   (state.facturas||[]).forEach(function(f){ if(f.estado!=='emitida' && !f.numero){ var anio=(f.fecha||hoy()).slice(0,4); var key=f.tipo+'|'+anio; (groups[key]=groups[key]||[]).push(f); } });
@@ -1116,7 +1168,7 @@ function facBloque(tipo, titulo, prov){
 function editarFactura(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f) return;
   var opts=[['nominativa','Nominativa (completa)'],['simplificada','Simplificada']].map(function(o){return '<option value="'+o[0]+'"'+(f.tipo===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
-  var ov=document.getElementById('fac-overlay');
+  var ov=getOverlay();
   ov.innerHTML=`<div class="fx-overlay"><div class="fx-edit">
     <h3 style="margin:0 0 14px">Editar factura ${f.estado==='emitida'?('Nº '+esc(f.numero)):'(borrador)'}</h3>
     <div class="form-grid">

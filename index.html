@@ -192,6 +192,11 @@ tr:hover td{background:#1D232B}
 .fx-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .fx-actions{display:flex;gap:10px}
 .fx-doc{background:#fff;color:#111;width:100%;max-width:720px;padding:40px;border-radius:8px;font-size:14px}
+.fx-doc td,.fx-doc th,.fx-doc div,.fx-doc b,.fx-doc span{color:#111}
+.fx-doc .fx-h{color:#888}
+.fx-doc .fx-pay{color:#444}
+.fx-doc .fx-note{color:#666}
+.fx-doc .fx-table th{color:#333}
 .fx-top{display:flex;justify-content:space-between;gap:20px;margin-bottom:18px}
 .fx-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;letter-spacing:-.01em}
 .fx-num{font-weight:600;margin-top:4px}
@@ -199,7 +204,7 @@ tr:hover td{background:#1D232B}
 .fx-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#888;font-weight:700;margin-bottom:4px}
 .fx-table{width:100%;border-collapse:collapse;margin:8px 0}
 .fx-table th{background:#f4f4f4;color:#333;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.fx-table td{padding:10px;border-bottom:1px solid #eee}
+.fx-table td{padding:10px;border-bottom:1px solid #eee;color:#111;white-space:normal}
 .fx-tot{margin-left:auto;max-width:300px;margin-top:8px}
 .fx-tot>div{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
 .fx-tot .fx-total{border-top:2px solid #111;margin-top:6px;padding-top:8px;font-weight:700;font-size:17px;font-family:'Space Grotesk',sans-serif}
@@ -240,7 +245,7 @@ tr:hover td{background:#1D232B}
   .side-foot{display:none}
   .main{padding:22px 16px 60px}
   .page-head h1{font-size:23px}
-  table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  table:not(.fx-table){display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
   .cal-cell{min-height:60px}
   .kpi .val{font-size:26px}
 }
@@ -1261,10 +1266,10 @@ function descargarPDF(id){
   if(typeof html2pdf==='undefined'){ alert('Generador de PDF no disponible. Usa Imprimir y elige Guardar como PDF.'); return; }
   var wrap=document.createElement('div');
   wrap.style.position='fixed'; wrap.style.left='-9999px'; wrap.style.top='0';
-  wrap.innerHTML='<div class="fx-doc" style="max-width:720px;background:#fff;color:#111">'+facturaDocHTML(f)+'</div>';
+  wrap.style.width='760px'; wrap.innerHTML='<div class="fx-doc" style="width:720px;max-width:720px;background:#fff;color:#111">'+facturaDocHTML(f)+'</div>';
   document.body.appendChild(wrap);
   var nombre='Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf';
-  html2pdf().set({margin:10,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap.firstChild).save().then(function(){ try{document.body.removeChild(wrap);}catch(e){} }).catch(function(){ try{document.body.removeChild(wrap);}catch(e){} });
+  html2pdf().set({margin:10,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff',windowWidth:760,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap.firstChild).save().then(function(){ try{document.body.removeChild(wrap);}catch(e){} }).catch(function(){ try{document.body.removeChild(wrap);}catch(e){} });
 }
 function getOverlay(){ var el=document.getElementById('fac-overlay'); if(!el){ el=document.createElement('div'); el.id='fac-overlay'; document.body.appendChild(el); } return el; }
 function editarEvento(id){

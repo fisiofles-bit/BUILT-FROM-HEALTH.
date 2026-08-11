@@ -1263,13 +1263,17 @@ function verFactura(id){
 }
 function descargarPDF(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f) return;
-  if(typeof html2pdf==='undefined'){ alert('Generador de PDF no disponible. Usa Imprimir y elige Guardar como PDF.'); return; }
-  var wrap=document.createElement('div');
-  wrap.style.position='fixed'; wrap.style.left='-9999px'; wrap.style.top='0';
-  wrap.style.width='760px'; wrap.innerHTML='<div class="fx-doc" style="width:720px;max-width:720px;background:#fff;color:#111">'+facturaDocHTML(f)+'</div>';
-  document.body.appendChild(wrap);
-  var nombre='Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf';
-  html2pdf().set({margin:10,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff',windowWidth:760,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap.firstChild).save().then(function(){ try{document.body.removeChild(wrap);}catch(e){} }).catch(function(){ try{document.body.removeChild(wrap);}catch(e){} });
+  if(typeof html2pdf==='undefined'){ alert('Generador de PDF no disponible. Abre la factura y usa Imprimir → Guardar como PDF.'); return; }
+  var abierto=false;
+  if(!document.getElementById('fx-print')){ verFactura(id); abierto=true; }
+  setTimeout(function(){
+    var el=document.getElementById('fx-print'); if(!el){ alert('Abre la factura (Ver) y pulsa Descargar PDF.'); return; }
+    var pw=el.style.width, pm=el.style.maxWidth, pmg=el.style.margin;
+    el.style.width='720px'; el.style.maxWidth='720px'; el.style.margin='0 auto';
+    var restore=function(){ el.style.width=pw; el.style.maxWidth=pm; el.style.margin=pmg; };
+    var nombre='Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf';
+    html2pdf().set({margin:8,filename:nombre,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:760,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(restore).catch(restore);
+  }, abierto?450:120);
 }
 function getOverlay(){ var el=document.getElementById('fac-overlay'); if(!el){ el=document.createElement('div'); el.id='fac-overlay'; document.body.appendChild(el); } return el; }
 function editarEvento(id){

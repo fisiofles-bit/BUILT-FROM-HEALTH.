@@ -1244,7 +1244,7 @@ function facturaDocHTML(f){
   return `<div class="fx-top"><div><div class="fx-title">FACTURA${f.tipo==='simplificada'?' SIMPLIFICADA':''}</div><div class="fx-num">${f.estado==='emitida'?('Nº '+esc(f.numero)):'BORRADOR — sin número asignado'}</div><div>Fecha de expedición: ${fFecha(f.fecha)}</div>${f.periodo?`<div>Periodo: ${esc(f.periodo)}</div>`:''}</div>
     <div class="fx-box"><div class="fx-h">Emisor</div><b>${esc(em.nombre||'')}</b>${em.nif?`<div>NIF: ${esc(em.nif)}</div>`:''}${em.direccion?`<div>${esc(em.direccion)}</div>`:''}${em.email?`<div>${esc(em.email)}</div>`:''}</div></div>
     ${dest}
-    <table class="fx-table"><thead><tr><th>Concepto</th><th style="text-align:right">Importe</th></tr></thead><tbody><tr><td>${esc(f.concepto)}${f.periodo?` (${esc(f.periodo)})`:''}</td><td style="text-align:right">${eur(f.base)}</td></tr></tbody></table>
+    <table class="fx-table"><thead><tr><th>Concepto</th><th style="text-align:right">Importe</th></tr></thead><tbody><tr><td style="color:#111">${esc(f.concepto)}${f.periodo?` (${esc(f.periodo)})`:''}</td><td style="text-align:right;color:#111">${eur(f.base)}</td></tr></tbody></table>
     <div class="fx-tot">
       <div><span>Base imponible</span><span>${eur(f.base)}</span></div>
       <div><span>IVA (${f.ivaPct}%)</span><span>${eur(f.ivaCuota)}</span></div>

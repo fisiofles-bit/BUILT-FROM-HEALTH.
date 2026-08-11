@@ -857,6 +857,14 @@ async function borrarDoc(id, path, clienteId){
 }
 function editarAlta(id){ altaEdit=(state.altas||[]).find(function(x){return x.id===id;})||null; render(); var el=document.getElementById('a-form'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'}); }
 function cancelarAlta(){ altaEdit=null; render(); }
+function registrarIngresoAlta(obj){
+  if(!((obj.tarifa||0)>0)) return;
+  var meses = obj.pagoUnico ? (parseInt(obj.duracionPlan,10)||1) : 1;
+  var imp = (obj.tarifa||0) * meses;
+  if(!confirm('¿Registrar '+eur(imp)+' como ingreso de '+(obj.nombre||'')+'?'+(obj.pagoUnico?' (pago único del plan completo)':' (primera cuota)'))) return;
+  if(!state.finanzas) state.finanzas=[];
+  state.finanzas.push({id:uid(), fecha:(obj.fechaAlta||hoy()), tipo:'ingreso', concepto:(obj.pagoUnico?'Pago único - ':'Cuota - ')+(obj.nombre||''), categoria:'Suscripción', importe:imp, cliente:obj.id, fuente:(obj.fuentePago||'')});
+}
 function guardarAlta(){
   var nombre=document.getElementById('a-nombre').value.trim();
   if(!nombre){ alert('El nombre es obligatorio.'); return; }
@@ -864,7 +872,7 @@ function guardarAlta(){
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
   var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico')};
-  if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); }
+  if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); registrarIngresoAlta(obj); }
   altaEdit=null; save(); render();
 }
 function viewVideo(){
@@ -876,7 +884,7 @@ function viewVideo(){
   const eq=(state.equipo||[]);
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
   const delMes=state.videollamadas.filter(v=>{const d=new Date(v.fecha);return d.getMonth()===mm&&d.getFullYear()===yy;});
-  const delMesVenta=delMes.filter(v=>v.tipoLlamada==='venta');
+  const delMesVenta=delMes.filter(v=>!v.tipoLlamada || v.tipoLlamada==='venta');
   const agendas=delMesVenta.length;
   const realizadas=delMesVenta.filter(v=>v.estado==='realizada').length;
   const cerradas=delMesVenta.filter(v=>v.resultado==='cerrada').length;

@@ -1372,21 +1372,62 @@ function imprimirDoc(){ var t=document.title; document.title=''; window.print();
 function subirFotoPerfil(inp){
   var fl=inp.files&&inp.files[0]; if(!fl) return;
   var rd=new FileReader();
-  rd.onload=function(){
-    var img=new Image();
-    img.onload=function(){
-      var s=220, cv=document.createElement('canvas'); cv.width=s; cv.height=s; var ctx=cv.getContext('2d');
-      var m=Math.min(img.width,img.height), sx=(img.width-m)/2, sy=(img.height-m)/2;
-      ctx.drawImage(img, sx, sy, m, m, 0, 0, s, s);
-      var data=cv.toDataURL('image/jpeg', 0.82);
-      if(!state.emisor) state.emisor={}; state.emisor.fotoPerfil=data;
-      try{localStorage.setItem('pf_foto', data);}catch(e){}
-      var im=document.getElementById('pf-img'); if(im) im.src=data;
-      sb.from('config').update({foto_perfil:data}).eq('id',1).then(function(r){ if(r&&r.error) showToast('No se pudo guardar la foto en la nube.', true, 5000); else showToast('Foto de perfil actualizada.', false, 3000); });
-    };
-    img.src=rd.result;
-  };
+  rd.onload=function(){ abrirRecorteFoto(rd.result); };
   rd.readAsDataURL(fl);
+}
+var _crop=null;
+function abrirRecorteFoto(dataUrl){
+  var img=new Image();
+  img.onload=function(){
+    var CB=240; var minS=CB/Math.min(img.width,img.height);
+    _crop={img:img, CB:CB, scale:minS, minS:minS, ox:(CB-img.width*minS)/2, oy:(CB-img.height*minS)/2, drag:false, lx:0, ly:0};
+    var ov=getOverlay();
+    ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:330px;text-align:center">'
+      +'<h3 style="margin:0 0 12px">Ajusta tu foto</h3>'
+      +'<div id="crop-box" style="position:relative;width:'+CB+'px;height:'+CB+'px;margin:0 auto;border-radius:50%;overflow:hidden;background:#0e141c;cursor:grab;touch-action:none;border:2px solid rgba(255,255,255,.2)">'
+      +'<img id="crop-img" src="'+dataUrl+'" style="position:absolute;left:0;top:0;user-select:none;pointer-events:none;max-width:none">'
+      +'</div>'
+      +'<div style="margin:14px 0 6px;color:var(--muted);font-size:12px">Arrastra para mover · desliza para acercar</div>'
+      +'<input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1" style="width:100%">'
+      +'<div class="fx-actions" style="margin-top:14px;justify-content:center;gap:10px"><button class="btn ghost" onclick="cerrarFactura()">Cancelar</button><button class="btn" onclick="guardarFotoRecorte()">Guardar foto</button></div>'
+      +'</div></div>';
+    document.body.classList.add('printing');
+    _cropApply(); _cropBind();
+  };
+  img.src=dataUrl;
+}
+function _cropApply(){
+  var s=_crop; if(!s) return; var im=document.getElementById('crop-img'); if(!im) return;
+  s.ox=Math.min(0, Math.max(s.CB - s.img.width*s.scale, s.ox));
+  s.oy=Math.min(0, Math.max(s.CB - s.img.height*s.scale, s.oy));
+  im.style.width=(s.img.width*s.scale)+'px'; im.style.height=(s.img.height*s.scale)+'px';
+  im.style.left=s.ox+'px'; im.style.top=s.oy+'px';
+}
+function _cropBind(){
+  var s=_crop; var box=document.getElementById('crop-box'); var zoom=document.getElementById('crop-zoom');
+  var ovl=box.closest('.fx-overlay');
+  var start=function(x,y){ s.drag=true; s.lx=x; s.ly=y; box.style.cursor='grabbing'; };
+  var move=function(x,y){ if(!s.drag) return; s.ox+=(x-s.lx); s.oy+=(y-s.ly); s.lx=x; s.ly=y; _cropApply(); };
+  var end=function(){ s.drag=false; box.style.cursor='grab'; };
+  box.onmousedown=function(e){ e.preventDefault(); start(e.clientX,e.clientY); };
+  ovl.onmousemove=function(e){ move(e.clientX,e.clientY); };
+  ovl.onmouseup=end; ovl.onmouseleave=end;
+  box.ontouchstart=function(e){ var t=e.touches[0]; start(t.clientX,t.clientY); };
+  box.ontouchmove=function(e){ e.preventDefault(); var t=e.touches[0]; move(t.clientX,t.clientY); };
+  box.ontouchend=end;
+  zoom.oninput=function(){ var ns=s.minS*parseFloat(zoom.value); var cx=s.CB/2, cy=s.CB/2; var ix=(cx-s.ox)/s.scale, iy=(cy-s.oy)/s.scale; s.scale=ns; s.ox=cx-ix*s.scale; s.oy=cy-iy*s.scale; _cropApply(); };
+}
+function guardarFotoRecorte(){
+  var s=_crop; if(!s) return;
+  var out=240, cv=document.createElement('canvas'); cv.width=out; cv.height=out; var ctx=cv.getContext('2d');
+  var srcX=-s.ox/s.scale, srcY=-s.oy/s.scale, srcSize=s.CB/s.scale;
+  ctx.drawImage(s.img, srcX, srcY, srcSize, srcSize, 0, 0, out, out);
+  var data=cv.toDataURL('image/jpeg', 0.85);
+  if(!state.emisor) state.emisor={}; state.emisor.fotoPerfil=data;
+  try{localStorage.setItem('pf_foto', data);}catch(e){}
+  var im=document.getElementById('pf-img'); if(im) im.src=data;
+  cerrarFactura();
+  sb.from('config').update({foto_perfil:data}).eq('id',1).then(function(r){ if(r&&r.error) showToast('No se pudo guardar la foto.', true, 5000); else showToast('Foto de perfil actualizada.', false, 3000); });
 }
 function getOverlay(){ var el=document.getElementById('fac-overlay'); if(!el){ el=document.createElement('div'); el.id='fac-overlay'; document.body.appendChild(el); } return el; }
 function editarEvento(id){

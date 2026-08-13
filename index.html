@@ -938,8 +938,8 @@ var vidMes='', vidSort='fecha';
 function setVidMes(v){ vidMes=v; render(); }
 function setVidSort(v){ vidSort=v; render(); }
 function viewVideo(){
-  var mesFiltro=vidMes||hoy().slice(0,7);
-  var rows=[...state.videollamadas].filter(v=>(v.fecha||'').slice(0,7)===mesFiltro);
+  var mesKpi=vidMes||hoy().slice(0,7);
+  var rows=[...state.videollamadas]; if(vidMes) rows=rows.filter(v=>(v.fecha||'').slice(0,7)===vidMes);
   if(vidSort==='tipo') rows.sort((a,b)=>((a.tipoLlamada||'zzz').localeCompare(b.tipoLlamada||'zzz'))||((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||''))); else rows.sort((a,b)=>((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||'')));
   const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red'};
   const rE={cerrada:'b-cyan',no_cerrada:'b-red',pendiente:'b-gray'};
@@ -947,7 +947,7 @@ function viewVideo(){
   const atletas=[...new Set(state.altas.map(a=>a.nombre))];
   const eq=(state.equipo||[]);
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
-  const delMes=state.videollamadas.filter(v=>(v.fecha||'').slice(0,7)===mesFiltro);
+  const delMes=state.videollamadas.filter(v=>(v.fecha||'').slice(0,7)===mesKpi);
   const delMesVenta=delMes.filter(v=>!v.tipoLlamada || v.tipoLlamada==='venta');
   const agendas=delMesVenta.length;
   const realizadas=delMesVenta.filter(v=>v.estado==='realizada').length;
@@ -958,7 +958,7 @@ function viewVideo(){
   return `
   <div class="page-head"><div><div class="eyebrow">Ventas · Seguimiento</div><h1>Videollamadas</h1>
   <p>Cada llamada con su tipo de lead, quién la realizó y su resultado. Arriba, tus métricas de cierre del mes.</p></div>
-  <input type="month" value="${vidMes||hoy().slice(0,7)}" onchange="setVidMes(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
+  <input type="month" value="${vidMes}" onchange="setVidMes(this.value)" title="Filtrar por mes" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${vidMes?`<button class="btn ghost sm" onclick="setVidMes('')" style="margin-right:8px">Ver todo</button>`:''}<select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
   <div class="kpis">
     <div class="kpi"><div class="label">Agendas de venta del mes</div><div class="val">${agendas}</div><div class="sub">${realizadas} realizadas</div></div>
     <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${realizadas} realizadas</div></div>

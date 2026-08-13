@@ -352,6 +352,7 @@ async function loadAll(){
   state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto',saldoBanco:(c.saldo_banco!=null?Number(c.saldo_banco):0),fotoPerfil:c.foto_perfil||''};
   var sr=await sb.from('factura_series').select('*');
   state.series={}; (sr.data||[]).forEach(function(r){ state.series[r.serie+'|'+r.anio]=r.ultimo; });
+  pruneEventos();
   loaded=true;
 }
 
@@ -781,6 +782,7 @@ function viewAltas(){
       <div class="field"><label>Tarifa (€/mes)</label><input type="number" id="a-tarifa" step="0.01" placeholder="0,00" value="${ae.tarifa||''}"></div>
       <div class="field"><label>Estado</label><select id="a-estado">${[['activo','Activo'],['pausa','En pausa'],['alta','Alta médica'],['baja','Baja']].map(o=>`<option value="${o[0]}"${((ae.estado||'activo')===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></div>
       <div class="field"><label>Tipo de cliente</label><select id="a-tipocli"><option value="">—</option>${['Futbolista - LCA','Futbolista - Pubalgia','Futbolista - Otra lesión','Futbolista - Rendimiento','Otro deporte'].map(o=>`<option${(ae.tipoCliente===o)?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="field"><label>Nombre de facturación</label><input id="a-nomfact" placeholder="Persona a la que se factura" value="${esc(ae.nombreFacturacion||'')}"></div>
       <div class="field"><label>NIF (facturación)</label><input id="a-nif" placeholder="opcional" value="${esc(ae.nif||'')}"></div>
       <div class="field"><label>Dirección (facturación)</label><input id="a-dir" placeholder="opcional" value="${esc(ae.direccion||'')}"></div>
       <div class="field full"><label>Observaciones</label><input id="a-notas" value="${esc(ae.notas||'')}"></div>
@@ -810,7 +812,7 @@ function whatsappCliente(id){
   if(!tel){ alert('Este cliente no tiene teléfono guardado en su ficha.'); return; }
   if(tel.length===9) tel='34'+tel;
   c.ultimoContacto=new Date().toISOString(); save(); render();
-  window.open('https://wa.me/'+tel, '_blank');
+  window.open('https://web.whatsapp.com/send?phone='+tel, '_blank');
 }
 function contactoBadge(a){ var hh=horasDesde(a.ultimoContacto); if(hh===null) return {txt:'sin contacto', col:'#8A94A0'}; if(hh<0) hh=0; var hoyMismo=(String(a.ultimoContacto||'').slice(0,10)===hoy()); if(hh<24){ if(hoyMismo) return {txt:'Hablado hoy · hace '+Math.floor(hh)+'h', col:'#00B2FF'}; return {txt:'hace '+Math.floor(hh)+'h', col:'#6EE7B7'}; } var dias=Math.floor(hh/24); if(dias<2) return {txt:'hace 1 día', col:'#F2B657'}; return {txt:'hace '+dias+' días', col:'#FF6B7A'}; }
 function fuenteColor(x){ x=(x||'').toLowerCase(); if(x.indexOf('abanca')>=0||x.indexOf('transf')>=0)return '#7FB0FF'; if(x.indexOf('stripe')>=0)return '#C4B5FD'; if(x.indexOf('hotmart')>=0)return '#FF8A97'; return 'var(--text)'; }
@@ -928,19 +930,24 @@ function guardarAlta(){
   var dur=parseInt((document.getElementById('a-duracion')||{}).value,10)||0;
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
-  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico')};
+  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),nombreFacturacion:val('a-nomfact'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico')};
   if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); registrarIngresoAlta(obj); }
   altaEdit=null; save(); render();
 }
+var vidMes='', vidSort='fecha';
+function setVidMes(v){ vidMes=v; render(); }
+function setVidSort(v){ vidSort=v; render(); }
 function viewVideo(){
-  const rows=[...state.videollamadas].sort((a,b)=>(b.fecha+b.hora).localeCompare(a.fecha+a.hora));
+  var mesFiltro=vidMes||hoy().slice(0,7);
+  var rows=[...state.videollamadas].filter(v=>(v.fecha||'').slice(0,7)===mesFiltro);
+  if(vidSort==='tipo') rows.sort((a,b)=>((a.tipoLlamada||'zzz').localeCompare(b.tipoLlamada||'zzz'))||((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||''))); else rows.sort((a,b)=>((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||'')));
   const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red'};
   const rE={cerrada:'b-cyan',no_cerrada:'b-red',pendiente:'b-gray'};
   const rTxt={cerrada:'Cerrada',no_cerrada:'No cerrada',pendiente:'—'};
   const atletas=[...new Set(state.altas.map(a=>a.nombre))];
   const eq=(state.equipo||[]);
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
-  const delMes=state.videollamadas.filter(v=>{const d=new Date(v.fecha);return d.getMonth()===mm&&d.getFullYear()===yy;});
+  const delMes=state.videollamadas.filter(v=>(v.fecha||'').slice(0,7)===mesFiltro);
   const delMesVenta=delMes.filter(v=>!v.tipoLlamada || v.tipoLlamada==='venta');
   const agendas=delMesVenta.length;
   const realizadas=delMesVenta.filter(v=>v.estado==='realizada').length;
@@ -951,7 +958,7 @@ function viewVideo(){
   return `
   <div class="page-head"><div><div class="eyebrow">Ventas · Seguimiento</div><h1>Videollamadas</h1>
   <p>Cada llamada con su tipo de lead, quién la realizó y su resultado. Arriba, tus métricas de cierre del mes.</p></div>
-  <button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
+  <input type="month" value="${vidMes||hoy().slice(0,7)}" onchange="setVidMes(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
   <div class="kpis">
     <div class="kpi"><div class="label">Agendas de venta del mes</div><div class="val">${agendas}</div><div class="sub">${realizadas} realizadas</div></div>
     <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${realizadas} realizadas</div></div>
@@ -973,8 +980,8 @@ function viewVideo(){
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('v-form')">Cancelar</button><button class="btn sm" onclick="addVideo()">Guardar</button></div>
     </div>
     <div class="panel-body">
-      ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
-      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
+      ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
+      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin videollamadas</b>Programa la primera con «+ Videollamada».</div>`}
     </div>
   </div>`;
@@ -982,6 +989,16 @@ function viewVideo(){
 function tipoLlamadaLabel(x){ return x==='venta'?'Venta':(x==='inicial'?'Inicial':(x==='control'?'Control':'')); }
 function tllCls(x){ return x==='venta'?'b-venta':(x==='inicial'?'b-inicial':(x==='control'?'b-control':'b-gray')); }
 function syncEventoVid(v){ if(!state.eventos) state.eventos=[]; var key='vid:'+v.id; var ev=state.eventos.find(function(e){return e.origen===key;}); var titulo='📹 '+(v.atleta||'Videollamada')+(v.tipoLlamada?(' · '+tipoLlamadaLabel(v.tipoLlamada)):''); if(ev){ ev.titulo=titulo; ev.fecha=v.fecha; ev.hora=v.hora||''; } else { state.eventos.push({id:uid(),titulo:titulo,fecha:v.fecha,hora:v.hora||'',duracion:45,notas:'Videollamada',origen:key}); } }
+function pruneEventos(){
+  if(!Array.isArray(state.eventos)) return;
+  var borrar=state.eventos.filter(function(e){
+    var o=e.origen||'';
+    if(o.indexOf('tarea:')===0) return !(state.tareas||[]).some(function(t){return t.id===o.slice(6);});
+    if(o.indexOf('vid:')===0) return !(state.videollamadas||[]).some(function(v){return v.id===o.slice(4);});
+    return false;
+  });
+  if(borrar.length){ var ids={}; borrar.forEach(function(e){ ids[e.id]=1; dbDelete('eventos', e.id); }); state.eventos=state.eventos.filter(function(e){ return !ids[e.id]; }); }
+}
 function syncEventoTarea(t){ if(!t.fecha) return; if(!state.eventos) state.eventos=[]; var key='tarea:'+t.id; var ev=state.eventos.find(function(e){return e.origen===key;});
   var rango=''; if(t.horaInicio&&t.horaFin) rango=' ('+t.horaInicio+'–'+t.horaFin+')'; else if(t.horaInicio) rango=' ('+t.horaInicio+')';
   var titulo='✔ '+(t.titulo||'Tarea')+rango;
@@ -1754,7 +1771,7 @@ function showToast(html, isErr, ms){ var t=document.getElementById('bfh-toast');
 function hideToast(){ var t=document.getElementById('bfh-toast'); if(t) t.style.display='none'; }
 function toastUndo(msg){ showToast('<span>'+msg+'</span><button onclick="deshacerBorrado()">Deshacer</button>', false, 8000); }
 function deshacerBorrado(){ if(!lastDeleted||!lastDeleted.item) return; if(!state[lastDeleted.coll]) state[lastDeleted.coll]=[]; state[lastDeleted.coll].push(lastDeleted.item); lastDeleted=null; hideToast(); save(); render(); }
-function delItem(coll,id){ if(!confirm('¿Eliminar este registro? Podrás deshacerlo justo después.')) return; var item=(state[coll]||[]).find(function(x){return x.id===id;}); lastDeleted={coll:coll, item:item}; state[coll]=state[coll].filter(x=>x.id!==id); dbDelete(coll,id); save(); render(); toastUndo('Registro eliminado.'); }
+function delItem(coll,id){ if(!confirm('¿Eliminar este registro? Podrás deshacerlo justo después.')) return; var item=(state[coll]||[]).find(function(x){return x.id===id;}); lastDeleted={coll:coll, item:item}; state[coll]=state[coll].filter(x=>x.id!==id); dbDelete(coll,id); if(coll==='tareas'||coll==='videollamadas'){ var _pref=(coll==='tareas'?'tarea:':'vid:')+id; (state.eventos||[]).forEach(function(e){ if(e.origen===_pref) dbDelete('eventos', e.id); }); state.eventos=(state.eventos||[]).filter(function(e){return e.origen!==_pref;}); } save(); render(); toastUndo('Registro eliminado.'); }
 function toggleForm(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden'); }
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));

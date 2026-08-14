@@ -28,7 +28,7 @@
   --accent-press:#33C1FF;
   --accent-tint:rgba(0,178,255,.15);
   --on-accent:#04222E;
-  --red-text:#FF6B7A;
+  --red-text:#FF3547;
   --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.42);
   --radius:14px;
 }
@@ -93,18 +93,20 @@ tr:hover td{background:#1D232B}
 .empty b{display:block;color:var(--text);font-family:'Space Grotesk';margin-bottom:5px;font-size:16px}
 .badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
 .b-cyan{background:rgba(0,178,255,.16);color:#7FD6FF}
-.b-amber{background:rgba(232,147,12,.18);color:#F2B657}
-.b-red{background:rgba(226,59,78,.18);color:#FF8A97}
+.b-amber{background:rgba(232,147,12,.18);color:#F59E0B}
+.b-red{background:rgba(226,59,78,.18);color:#FF3547}
+.b-impago{background:rgba(255,40,58,.22);color:#FF2E3A;font-weight:700}
+.b-gasto{background:rgba(249,115,22,.2);color:#F97316;font-weight:600}
 .b-ink{background:#24282E;color:#C6CDD5}
 .b-gray{background:#22262B;color:#8A94A0}
-.b-green{background:rgba(52,211,153,.16);color:#6EE7B7}
-.ev-venc.urg{background:rgba(232,147,12,.22);color:#F2B657}
+.b-green{background:rgba(52,211,153,.16);color:#22D07B}
+.ev-venc.urg{background:rgba(232,147,12,.22);color:#F59E0B}
 .b-abanca{background:rgba(37,99,235,.18);color:#7FB0FF}
-.b-stripe{background:rgba(124,92,255,.20);color:#C4B5FD}
-.b-hotmart{background:rgba(226,59,78,.16);color:#FF8A97}
-.b-venta{background:rgba(226,59,78,.18);color:#FF8A97}
-.b-inicial{background:rgba(232,147,12,.20);color:#F2B657}
-.b-control{background:rgba(52,211,153,.16);color:#6EE7B7}
+.b-stripe{background:rgba(124,92,255,.20);color:#9B7BF0}
+.b-hotmart{background:rgba(226,59,78,.16);color:#FF3547}
+.b-venta{background:rgba(226,59,78,.18);color:#FF3547}
+.b-inicial{background:rgba(232,147,12,.20);color:#F59E0B}
+.b-control{background:rgba(52,211,153,.16);color:#22D07B}
 .doc-cat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
 .doc-cat-h{font-weight:600;font-size:13px;margin-bottom:6px}
 .doc-list{list-style:none;margin:0 0 8px;padding:0}
@@ -122,12 +124,12 @@ tr:hover td{background:#1D232B}
 .bfh-toast.err{border-color:#E23B4E;background:#2A1720}
 .bfh-toast button{background:#33C1FF;color:#04121A;border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:700;cursor:pointer}
 .avisos-det.prio{border:2px solid #E23B4E}
-.avisos-det.prio>summary h3{color:#FF6B7A;font-size:20px}
+.avisos-det.prio>summary h3{color:#FF3547;font-size:20px}
 .avisos-det.secu{border:2px solid #E8930C}
-.avisos-det.secu>summary h3{color:#F2B657;font-size:18px}
+.avisos-det.secu>summary h3{color:#F59E0B;font-size:18px}
 .urg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
-.urg-alta{background:#FF6B7A}
-.urg-media{background:#F2B657}
+.urg-alta{background:#FF3547}
+.urg-media{background:#F59E0B}
 .urg-baja{background:#34D399}
 .crm-stage{border-bottom:1px solid var(--line)}
 .crm-stage:last-child{border-bottom:0}
@@ -158,7 +160,7 @@ tr:hover td{background:#1D232B}
 .aviso b{display:block;font-size:14px;font-weight:600}
 .aviso>div>span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .aviso span[class^="dot-"]{display:inline-block;width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
-.dot-cyan{background:var(--accent)} .dot-amber{background:#F2B657} .dot-red{background:#FF6B7A}
+.dot-cyan{background:var(--accent)} .dot-amber{background:#F59E0B} .dot-red{background:#FF3547}
 .catbar{padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
 .dayrow{display:flex;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line)}
 .dayrow:last-child{border-bottom:0}
@@ -184,7 +186,7 @@ tr:hover td{background:#1D232B}
 .login-card input{font:inherit;font-size:14px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#10141A;color:var(--text)}
 .login-card input:focus{outline:2px solid var(--accent-tint);border-color:var(--accent)}
 .login-card .btn{justify-content:center;margin-top:4px}
-.login-err{color:#FF8A97;font-size:13px;min-height:18px;text-align:center}
+.login-err{color:#FF3547;font-size:13px;min-height:18px;text-align:center}
 .seg-row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line)}
 .seg-row:last-child{border-bottom:0}
 .seg-name{flex:1;font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -231,7 +233,7 @@ tr:hover td{background:#1D232B}
 .cal-cell.today{outline:2px solid var(--accent);outline-offset:-3px;background:rgba(0,178,255,.10);z-index:1}
 .cal-cell.today .dnum{background:transparent;color:var(--accent);width:auto;height:auto;border-radius:0;font-weight:700}
 .ev-chip{font-size:11px;background:rgba(0,178,255,.16);color:#7FD6FF;border-radius:5px;padding:2px 5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-.ev-venc{font-size:11px;background:rgba(167,139,250,.20);color:#C4B5FD;border-radius:5px;padding:2px 5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.ev-venc{font-size:11px;background:rgba(167,139,250,.20);color:#9B7BF0;border-radius:5px;padding:2px 5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .info{background:#12151A;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:14px;color:var(--muted);line-height:1.6}
 .info b{color:var(--text)}
 .info ol{margin:8px 0 0 18px}
@@ -324,7 +326,7 @@ let loaded=false;
 let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[], publicidad:[], renovLog:[] };
 
 const SPECS={
-  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador']]},
+  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
@@ -401,7 +403,7 @@ function chartEvolucion(){
   var ing=months.map(function(mo){ return (state.finanzas||[]).filter(function(fx){var d=new Date(fx.fecha); return fx.tipo==='ingreso'&&d.getMonth()===mo.m&&d.getFullYear()===mo.y;}).reduce(function(a,fx){return a+ +fx.importe;},0); });
   var gas=months.map(function(mo){ return (state.finanzas||[]).filter(function(fx){var d=new Date(fx.fecha); return fx.tipo==='gasto'&&d.getMonth()===mo.m&&d.getFullYear()===mo.y;}).reduce(function(a,fx){return a+ +fx.importe;},0); });
   var labels=months.map(function(mo){ return meses[mo.m].slice(0,3); });
-  return barChart([{name:'Ingresos',color:'#6EE7B7',values:ing},{name:'Gastos',color:'#FF6B7A',values:gas}], labels);
+  return barChart([{name:'Ingresos',color:'#22D07B',values:ing},{name:'Gastos',color:'#FF3547',values:gas}], labels);
 }
 function lineChart(series, labels){
   var W=640,H=220,padL=52,padR=16,padT=14,padB=26;
@@ -444,7 +446,7 @@ function barChartSigned(values, labels){
   grid+='<text x="'+(padL-8)+'" y="'+(Y(maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+Math.round(maxAbs)+'</text>';
   grid+='<text x="'+(padL-8)+'" y="'+(Y(-maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">-'+Math.round(maxAbs)+'</text>';
   var bars='';
-  for(var i=0;i<n;i++){ var v=values[i]||0, x=padL+groupW*i+(groupW-bw)/2, yv=Y(v), top=Math.min(yv,zeroY), hh=Math.abs(yv-zeroY), col=(v>=0?'#6EE7B7':'#FF6B7A');
+  for(var i=0;i<n;i++){ var v=values[i]||0, x=padL+groupW*i+(groupW-bw)/2, yv=Y(v), top=Math.min(yv,zeroY), hh=Math.abs(yv-zeroY), col=(v>=0?'#22D07B':'#FF3547');
     bars+='<rect x="'+x+'" y="'+top+'" width="'+bw+'" height="'+Math.max(1,hh)+'" fill="'+col+'" rx="2"/>'; }
   var xlabels=labels.map(function(l,i){ return '<text x="'+(padL+groupW*i+groupW/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(l)+'</text>'; }).join('');
   return '<div style="padding:16px 20px"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+grid+bars+xlabels+'</svg></div>';
@@ -460,8 +462,8 @@ function lineChartSigned(values, labels){
   grid+='<text x="'+(padL-8)+'" y="'+(Y(maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+Math.round(maxAbs)+'</text>';
   grid+='<text x="'+(padL-8)+'" y="'+(Y(-maxAbs)+3)+'" text-anchor="end" font-size="10" fill="var(--muted)">-'+Math.round(maxAbs)+'</text>';
   var segs='';
-  for(var i=0;i<n-1;i++){ var v1=values[i]||0, v2=values[i+1]||0, col=(((v1+v2)/2)>=0?'#6EE7B7':'#FF6B7A'); segs+='<line x1="'+X(i)+'" y1="'+Y(v1)+'" x2="'+X(i+1)+'" y2="'+Y(v2)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>'; }
-  var dots=values.map(function(v,i){ return '<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3.5" fill="'+((v>=0)?'#6EE7B7':'#FF6B7A')+'"/>'; }).join('');
+  for(var i=0;i<n-1;i++){ var v1=values[i]||0, v2=values[i+1]||0, col=(((v1+v2)/2)>=0?'#22D07B':'#FF3547'); segs+='<line x1="'+X(i)+'" y1="'+Y(v1)+'" x2="'+X(i+1)+'" y2="'+Y(v2)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>'; }
+  var dots=values.map(function(v,i){ return '<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3.5" fill="'+((v>=0)?'#22D07B':'#FF3547')+'"/>'; }).join('');
   var xlabels=labels.map(function(l,i){ return '<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+esc(l)+'</text>'; }).join('');
   return '<div style="padding:16px 20px"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+grid+segs+dots+xlabels+'</svg></div>';
 }
@@ -477,14 +479,29 @@ function chartBalance(){
   return lineChartSigned(bal, labels);
 }
 function marcarContacto(id){ var a=state.altas.find(function(x){return x.id===id;}); if(a){ a.ultimoContacto=new Date().toISOString(); save(); render(); } }
+function togglePagoManual(id,checked){
+  var c=(state.altas||[]).find(function(x){return x.id===id;}); if(!c) return;
+  var mes=hoy().slice(0,7); var now=new Date(), mm=now.getMonth(), yy=now.getFullYear();
+  if(checked){
+    c.pagoManual=mes;
+    var existe=(state.finanzas||[]).some(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==id) return false; var d=new Date(fx.fecha); return d.getMonth()===mm&&d.getFullYear()===yy; });
+    if(!existe){ if(!state.finanzas) state.finanzas=[]; state.finanzas.push({id:uid(), fecha:hoy(), tipo:'ingreso', concepto:'Cuota '+mes+' · '+(c.nombre||''), categoria:'Ingreso', importe:(c.tarifa||0), cliente:id, fuente:(c.fuentePago||'')}); showToast('Cobro registrado: '+eur(c.tarifa||0), false, 3000); }
+  } else {
+    c.pagoManual='';
+    var quitar=(state.finanzas||[]).filter(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==id) return false; var d=new Date(fx.fecha); if(!(d.getMonth()===mm&&d.getFullYear()===yy)) return false; return (fx.concepto||'').indexOf('Cuota ')===0; });
+    if(quitar.length){ var ids={}; quitar.forEach(function(fx){ ids[fx.id]=1; dbDelete('finanzas', fx.id); }); state.finanzas=(state.finanzas||[]).filter(function(fx){ return !ids[fx.id]; }); }
+  }
+  save(); render();
+}
 function pagoEstado(a){
   if(a.estado!=='activo') return null;
+  if(a.pagoManual===hoy().slice(0,7)) return {txt:'Pagado', cls:'b-green', impago:false};
   if(a.pagoUnico){ var tU=hoy(); if(a.fechaAlta && tU>=a.fechaAlta && (!a.fechaVencimiento || tU<=a.fechaVencimiento)) return {txt:'Pagado', cls:'b-green', impago:false}; }
   var now=new Date(), mm=now.getMonth(), yy=now.getFullYear();
   var pagado=(state.finanzas||[]).some(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==a.id) return false; var d=new Date(fx.fecha); return d.getMonth()===mm&&d.getFullYear()===yy; });
   if(pagado) return {txt:'Pagado', cls:'b-green', impago:false};
   var dia=parseInt(a.diaCobro,10);
-  if(dia && now.getDate()>dia) return {txt:'Impago', cls:'b-red', impago:true};
+  if(dia && now.getDate()>dia) return {txt:'Impago', cls:'b-impago', impago:true};
   if(dia) return {txt:'Se cobra el '+dia, cls:'b-amber', impago:false};
   return {txt:'Pendiente', cls:'b-gray', impago:false};
 }
@@ -525,7 +542,7 @@ let finTipo='todos'; function setFinTipo(v){finTipo=v;render();}
 let semRef=new Date(); let tareaFiltroCat='todas';
 function lunes(d){const x=new Date(d);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);x.setHours(0,0,0,0);return x;}
 function ymd(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
-const CAT_COLORS=['#00B2FF','#F2B657','#7C5CFF','#34D399','#FF6B7A','#22D3EE','#F472B6'];
+const CAT_COLORS=['#00B2FF','#F59E0B','#7C5CFF','#34D399','#FF3547','#22D3EE','#F472B6'];
 function catColor(name){const cats=state.tareaCats||[];let i=cats.indexOf(name);if(i<0){i=0;for(const c of String(name))i+=c.charCodeAt(0);}return CAT_COLORS[i%CAT_COLORS.length];}
 const ROLES=['Entrenador','Nutricionista','Fisio','Closer','Setter','Admin','Otro'];
 function miembroNombre(id){const m=(state.equipo||[]).find(x=>x.id===id);return m?m.nombre:'';}
@@ -562,7 +579,7 @@ function comparativaHTML(){
     var gas=(state.finanzas||[]).filter(function(fx){var dd=new Date(fx.fecha);return fx.tipo==='gasto'&&dd.getMonth()===m&&dd.getFullYear()===y;}).reduce(function(a,fx){return a+ +fx.importe;},0);
     return {bal:ing-gas, label:meses[m].slice(0,3)+' '+String(y).slice(2)}; }
   var a=balMes(0), b=balMes(3), diff=a.bal-b.bal;
-  var mejora=diff>=0, col=mejora?'#6EE7B7':'#FF6B7A', flecha=mejora?'▲':'▼';
+  var mejora=diff>=0, col=mejora?'#22D07B':'#FF3547', flecha=mejora?'▲':'▼';
   var txt;
   if(a.bal===0 && b.bal===0){ txt='<span style="color:var(--muted)">Sin datos suficientes para comparar (falta histórico de hace 3 meses).</span>'; }
   else if(b.bal===0){ txt='<span style="color:'+col+'">'+flecha+' '+(mejora?'mejora':'empeora')+'</span> <span style="color:var(--muted)">respecto a hace 3 meses ('+b.label+' sin balance → '+eur(a.bal)+' este mes)</span>'; }
@@ -649,7 +666,7 @@ function viewResumen(){
 
   ${kpisSuscripcion()}
   <div class="kpis">
-    <div class="kpi ${bal>=0?'pos':'neg'}"><div class="label">Balance del mes</div><div class="val mono" style="color:${bal>=0?'#6EE7B7':'#FF8A97'}">${eur(bal)}</div><div class="sub">${eur(ing)} ingresos · ${eur(gas)} gastos</div></div>
+    <div class="kpi ${bal>=0?'pos':'neg'}"><div class="label">Balance del mes</div><div class="val mono" style="color:${bal>=0?'#22D07B':'#FF3547'}">${eur(bal)}</div><div class="sub">${eur(ing)} ingresos · ${eur(gas)} gastos</div></div>
     <div class="kpi"><div class="label">Ingresos recurrentes</div><div class="val mono">${eur(mrr)}</div><div class="sub">${activos} atletas activos (MRR)</div></div>
     <div class="kpi ${roas!==null&&roas>=1?'pos':(roas!==null?'neg':'')}"><div class="label">ROAS mensual</div><div class="val">${fRoas}</div><div class="sub">ingresos ÷ inversión ads (${eur(adSpend)})</div></div>
     <div class="kpi"><div class="label">Coste por alta · CAC</div><div class="val mono">${fCac}</div><div class="sub">${nuevas} altas nuevas este mes</div></div>
@@ -683,6 +700,9 @@ function viewFinanzas(){
   if(finCat!=='todos') base=base.filter(f=>(f.categoria||'Otros')===finCat);
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
+  const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
+  const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
+  const impagos=impagoCli+impagoManual;
   let rows=[...base];
   if(finTipo!=='todos') rows=rows.filter(f=>f.tipo===finTipo);
   rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -702,13 +722,14 @@ function viewFinanzas(){
   </div></div>
   <div class="kpis">
     <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono">${eur(ing)}</div><div class="sub">${scope}</div></div>
-    <div class="kpi neg"><div class="label">Gastos</div><div class="val mono">${eur(gas)}</div><div class="sub">${scope}</div></div>
-    <div class="kpi ${ing-gas>=0?'pos':'neg'}"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#6EE7B7':'#FF8A97'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
+    <div class="kpi"><div class="label">Gastos</div><div class="val mono" style="color:#F97316">${eur(gas)}</div><div class="sub">${scope}</div></div>
+    <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
+    <div class="kpi ${ing-gas>=0?'pos':'neg'}"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
   <div class="panel">
     <div class="form-grid hidden" id="f-form">
       <div class="field"><label>Fecha</label><input type="date" id="f-fecha" value="${hoy()}"></div>
-      <div class="field"><label>Tipo</label><select id="f-tipo" onchange="finTipoChange()"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option></select></div>
+      <div class="field"><label>Tipo</label><select id="f-tipo" onchange="finTipoChange()"><option value="ingreso">Ingreso</option><option value="gasto">Gasto</option><option value="impago">Impago</option></select></div>
       <div class="field"><label>Concepto</label><input id="f-concepto" placeholder="Ej: mensualidad atleta"></div>
       <div class="field"><label id="f-cat-label">Por dónde se hizo</label><select id="f-cat">${['Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field"><label>Importe (€)</label><input type="number" id="f-importe" step="0.01" placeholder="0,00"></div>
@@ -722,13 +743,13 @@ function viewFinanzas(){
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Etiqueta</th><th>Tipo</th><th style="text-align:right">Importe</th><th></th></tr></thead><tbody>
-      ${rows.map(f=>`<tr><td class="num">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria?`<span class="badge b-gray">${esc(f.categoria)}</span>`:'—'}${f.fuente?` <span class="badge ${fuenteCls(f.fuente)}">${esc(f.fuente)}</span>`:''}</td><td><span class="badge ${f.tipo==='ingreso'?'b-cyan':'b-red'}">${f.tipo}</span></td><td class="num ${f.tipo==='ingreso'?'pos':'neg'}" style="text-align:right">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right"><button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(f=>`<tr><td class="num">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria?`<span class="badge b-gray">${esc(f.categoria)}</span>`:'—'}${f.fuente?` <span class="badge ${fuenteCls(f.fuente)}">${esc(f.fuente)}</span>`:''}</td><td><span class="badge ${f.tipo==='ingreso'?'b-green':(f.tipo==='impago'?'b-impago':'b-gasto')}">${f.tipo}</span></td><td class="num" style="text-align:right;color:${f.tipo==='ingreso'?'#22D07B':(f.tipo==='impago'?'#FF2E3A':'#F97316')}">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right"><button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin movimientos</b>${state.finanzas.length?'Ningún movimiento con este filtro.':'Pulsa «+ Movimiento» para registrar el primero.'}</div>`}
     </div>
   </div>`;
 }
 
-function finTipoChange(){ var tipo=document.getElementById('f-tipo').value; var cat=document.getElementById('f-cat'); var lbl=document.getElementById('f-cat-label'); var opts=(tipo==='ingreso')?['Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro']:CATEGORIAS; if(cat) cat.innerHTML=opts.map(function(o){return '<option>'+o+'</option>';}).join(''); if(lbl) lbl.textContent=(tipo==='ingreso')?'Por dónde se hizo':'Tipo de gasto'; }
+function finTipoChange(){ var tipo=document.getElementById('f-tipo').value; var cat=document.getElementById('f-cat'); var lbl=document.getElementById('f-cat-label'); var opts=(tipo==='ingreso')?['Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro']:(tipo==='impago'?['Cuota no pagada','Otro']:CATEGORIAS); if(cat) cat.innerHTML=opts.map(function(o){return '<option>'+o+'</option>';}).join(''); if(lbl) lbl.textContent=(tipo==='ingreso')?'Por dónde se hizo':(tipo==='impago'?'Motivo del impago':'Tipo de gasto'); }
 function exportTrimestre(){
   var y=new Date().getFullYear();
   var q=prompt('¿Qué trimestre exportar del año '+y+'? (1, 2, 3 o 4)', String(Math.floor(new Date().getMonth()/3)+1));
@@ -749,7 +770,7 @@ async function addFinanza(){
   if(!concepto||isNaN(importe)){ alert('Añade concepto e importe.'); return; }
   const cli=(document.getElementById('f-cli')||{}).value||'';
   const tipo=document.getElementById('f-tipo').value; const etq=document.getElementById('f-cat').value;
-  const mov={id:uid(),fecha:document.getElementById('f-fecha').value||hoy(),tipo,concepto,categoria:(tipo==='gasto'?etq:'Ingreso'),importe,cliente:cli,fuente:(tipo==='ingreso'?etq:'')};
+  const mov={id:uid(),fecha:document.getElementById('f-fecha').value||hoy(),tipo,concepto,categoria:(tipo==='ingreso'?'Ingreso':etq),importe,cliente:cli,fuente:(tipo==='ingreso'?etq:'')};
   state.finanzas.push(mov);
   if(mov.tipo==='ingreso'&&cli){ await generarFacturaDesdePago(mov); }
   save(); render();
@@ -792,7 +813,7 @@ function viewAltas(){
     <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"> <select class="inl" style="margin-left:8px" onchange="setAltaSort(this.value)"><option value="renovacion"${altaSort==='renovacion'?' selected':''}>Renovación más cercana</option><option value="plan"${altaSort==='plan'?' selected':''}>Tipo de plan</option><option value="alfabetico"${altaSort==='alfabetico'?' selected':''}>Alfabético</option></select></div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Estado</th><th>Alta</th><th>Baja</th><th>Plan</th><th style="text-align:right">Tarifa</th><th>Vía</th><th>Pago mes</th><th>Renovación</th><th></th></tr></thead><tbody>
-      ${rows.map(a=>a.estado==='baja'?bajaRowHTML(a):`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px" onclick="fichaCliente('${a.id}')">${esc(a.nombre)}</b>${a.telefono?waBtn(a.id):''}</td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td><select class="inl" style="color:${estadoCol(a.estado)};background:${estadoBg(a.estado)};border:0;border-radius:20px;padding:4px 12px;font-weight:600;font-size:12px" onchange="setCampo('${a.id}','estado',this.value)">${[['activo','Activo'],['pausa','Pausado'],['baja','Baja']].map(o=>`<option value="${o[0]}"${(a.estado===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td class="num">${fFecha(a.fechaAlta)}</td><td><input type="date" class="inl" value="${a.fechaVencimiento||''}" onchange="setCampo('${a.id}','fechaVencimiento',this.value)" style="width:132px;color:${bajaColor(a.fechaVencimiento)}"></td><td><select class="inl" onchange="setCampo('${a.id}','duracionPlan',this.value)" style="color:${planColor(a.duracionPlan)}">${[['0','—'],['1','Mensual'],['3','Trimestral'],['6','Semestral'],['9','9 meses'],['12','Anual']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td style="text-align:right"><input type="number" step="0.01" class="inl" value="${a.tarifa||''}" onchange="setCampo('${a.id}','tarifa',this.value)" style="width:82px;text-align:right;color:${planColor(a.duracionPlan)}"></td><td><select class="inl" onchange="setCampo('${a.id}','fuentePago',this.value)" style="color:${fuenteColor(a.fuentePago)}">${['','Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(o=>`<option value="${o}"${((a.fuentePago||'')===o)?' selected':''}>${o||'—'}</option>`).join('')}</select></td><td>${(()=>{const s=pagoEstado(a);return s?`<span class="badge ${s.cls}">${s.txt}</span>`:'—';})()}</td><td>${a.renovaciones?`<span class="badge b-green">×${a.renovaciones}</span> `:''}<select class="inl" id="renov-${a.id}" style="width:60px;padding:3px 4px">${[['1','1m'],['3','3m'],['6','6m'],['9','9m'],['12','12m']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select> <button class="btn ghost sm" onclick="renovar('${a.id}')">Renovar</button></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(a=>a.estado==='baja'?bajaRowHTML(a):`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px" onclick="fichaCliente('${a.id}')">${esc(a.nombre)}</b>${a.telefono?waBtn(a.id):''}</td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td><select class="inl" style="color:${estadoCol(a.estado)};background:${estadoBg(a.estado)};border:0;border-radius:20px;padding:4px 12px;font-weight:600;font-size:12px" onchange="setCampo('${a.id}','estado',this.value)">${[['activo','Activo'],['pausa','Pausado'],['baja','Baja']].map(o=>`<option value="${o[0]}"${(a.estado===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td class="num">${fFecha(a.fechaAlta)}</td><td><input type="date" class="inl" value="${a.fechaVencimiento||''}" onchange="setCampo('${a.id}','fechaVencimiento',this.value)" style="width:132px;color:${bajaColor(a.fechaVencimiento)}"></td><td><select class="inl" onchange="setCampo('${a.id}','duracionPlan',this.value)" style="color:${planColor(a.duracionPlan)}">${[['0','—'],['1','Mensual'],['3','Trimestral'],['6','Semestral'],['9','9 meses'],['12','Anual']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td style="text-align:right"><input type="number" step="0.01" class="inl" value="${a.tarifa||''}" onchange="setCampo('${a.id}','tarifa',this.value)" style="width:82px;text-align:right;color:${planColor(a.duracionPlan)}"></td><td><select class="inl" onchange="setCampo('${a.id}','fuentePago',this.value)" style="color:${fuenteColor(a.fuentePago)}">${['','Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(o=>`<option value="${o}"${((a.fuentePago||'')===o)?' selected':''}>${o||'—'}</option>`).join('')}</select></td><td>${(()=>{const s=pagoEstado(a); if(!s) return '—'; const paid=(s.txt==='Pagado'); return `<span class="badge ${s.cls}">${s.txt}</span> <input type="checkbox" title="Marcar cobrado este mes" ${paid?'checked':''} onchange="togglePagoManual('${a.id}',this.checked)" style="vertical-align:middle;cursor:pointer;accent-color:#22D07B">`;})()}</td><td>${a.renovaciones?`<span class="badge b-green">×${a.renovaciones}</span> `:''}<select class="inl" id="renov-${a.id}" style="width:60px;padding:3px 4px">${[['1','1m'],['3','3m'],['6','6m'],['9','9m'],['12','12m']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select> <button class="btn ghost sm" onclick="renovar('${a.id}')">Renovar</button></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin altas todavía</b>Registra a tu primer atleta con «+ Alta».</div>`}
     </div>
   </div>
@@ -801,10 +822,10 @@ function viewAltas(){
 var altaEdit=null; var altaSort='renovacion'; var segOpen=false;
 function setAltaSort(v){ altaSort=v; render(); }
 function planLabel(d){ d=parseInt(d,10)||0; if(!d) return '—'; var m={1:'Mensual',3:'Trimestral',6:'Semestral',9:'9 meses',12:'Anual'}; return m[d]||(d+' meses'); }
-function planColor(d){ d=parseInt(d,10)||0; var m={1:'#F2B657',3:'#33C1FF',6:'#C4B5FD',9:'#6EE7B7',12:'#FF8A97'}; return m[d]||'#8A94A0'; }
-function estadoCol(e){ return e==='activo'?'#6EE7B7':(e==='pausa'?'#F2B657':(e==='baja'?'#FF6B7A':'#8A94A0')); }
+function planColor(d){ d=parseInt(d,10)||0; var m={1:'#F59E0B',3:'#33C1FF',6:'#9B7BF0',9:'#22D07B',12:'#FF3547'}; return m[d]||'#8A94A0'; }
+function estadoCol(e){ return e==='activo'?'#22D07B':(e==='pausa'?'#F59E0B':(e==='baja'?'#FF3547':'#8A94A0')); }
 function estadoBg(e){ return e==='activo'?'rgba(110,231,183,.16)':(e==='pausa'?'rgba(242,182,87,.16)':(e==='baja'?'rgba(255,107,122,.16)':'rgba(255,255,255,.06)')); }
-function bajaColor(v){ if(!v) return 'var(--muted)'; var d=(new Date(v)-new Date(hoy()))/86400000; if(d<0) return '#FF6B7A'; if(d>30) return '#6EE7B7'; return '#F2B657'; }
+function bajaColor(v){ if(!v) return 'var(--muted)'; var d=(new Date(v)-new Date(hoy()))/86400000; if(d<0) return '#FF3547'; if(d>30) return '#22D07B'; return '#F59E0B'; }
 function horasDesde(d){ if(!d) return null; var t=new Date(d).getTime(); if(isNaN(t)) return null; return (Date.now()-t)/3600000; }
 function waBtn(id){ return '<button class="wa-btn" title="WhatsApp · marca contacto" onclick="event.stopPropagation();whatsappCliente(\''+id+'\')"><svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28.3c-2.5 0-4.8-.7-6.8-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5C3.9 20.9 3.2 18.5 3.2 16 3.2 8.9 8.9 3.2 16 3.2S28.8 8.9 28.8 16 23.1 28.8 16 28.8zm7.4-9.6c-.4-.2-2.4-1.2-2.7-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.7-.6-3.2-2-1.2-1.1-2-2.4-2.2-2.8-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.3-.4.4-.7.1-.3.1-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.7c-.2 0-.6.1-1 .5-.3.4-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.9c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.8.9.3 1.7.2 2.3.1.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.6.2-1.7-.1-.2-.3-.3-.7-.4z"/></svg></button>'; }
 function whatsappCliente(id){
@@ -815,8 +836,8 @@ function whatsappCliente(id){
   c.ultimoContacto=new Date().toISOString(); save(); render();
   window.open('https://web.whatsapp.com/send?phone='+tel, '_blank');
 }
-function contactoBadge(a){ var hh=horasDesde(a.ultimoContacto); if(hh===null) return {txt:'sin contacto', col:'#8A94A0'}; if(hh<0) hh=0; var hoyMismo=(String(a.ultimoContacto||'').slice(0,10)===hoy()); if(hh<24){ if(hoyMismo) return {txt:'Hablado hoy · hace '+Math.floor(hh)+'h', col:'#00B2FF'}; return {txt:'hace '+Math.floor(hh)+'h', col:'#6EE7B7'}; } var dias=Math.floor(hh/24); if(dias<2) return {txt:'hace 1 día', col:'#F2B657'}; return {txt:'hace '+dias+' días', col:'#FF6B7A'}; }
-function fuenteColor(x){ x=(x||'').toLowerCase(); if(x.indexOf('abanca')>=0||x.indexOf('transf')>=0)return '#7FB0FF'; if(x.indexOf('stripe')>=0)return '#C4B5FD'; if(x.indexOf('hotmart')>=0)return '#FF8A97'; return 'var(--text)'; }
+function contactoBadge(a){ var hh=horasDesde(a.ultimoContacto); if(hh===null) return {txt:'sin contacto', col:'#8A94A0'}; if(hh<0) hh=0; var hoyMismo=(String(a.ultimoContacto||'').slice(0,10)===hoy()); if(hh<24){ if(hoyMismo) return {txt:'Hablado hoy · hace '+Math.floor(hh)+'h', col:'#00B2FF'}; return {txt:'hace '+Math.floor(hh)+'h', col:'#22D07B'}; } var dias=Math.floor(hh/24); if(dias<2) return {txt:'hace 1 día', col:'#F59E0B'}; return {txt:'hace '+dias+' días', col:'#FF3547'}; }
+function fuenteColor(x){ x=(x||'').toLowerCase(); if(x.indexOf('abanca')>=0||x.indexOf('transf')>=0)return '#7FB0FF'; if(x.indexOf('stripe')>=0)return '#9B7BF0'; if(x.indexOf('hotmart')>=0)return '#FF3547'; return 'var(--text)'; }
 function setCampo(id,campo,valor){ var a=(state.altas||[]).find(function(x){return x.id===id;}); if(!a) return; if(campo==='duracionPlan'||campo==='tarifa') valor=parseFloat(valor)||0; a[campo]=valor; if((campo==='duracionPlan'||campo==='fechaAlta') && !(parseInt(a.renovaciones,10)>0) && a.fechaAlta && (parseInt(a.duracionPlan,10)||0)>0){ a.fechaVencimiento=addMonthsStr(a.fechaAlta, parseInt(a.duracionPlan,10)||0); } save(); render(); }
 var renovOpen=false;
 function renovar(id){
@@ -849,7 +870,7 @@ function borrarRenov(logId){
 }
 function histRenovHTML(){
   var log=(state.renovLog||[]).slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
-  var body=log.length?('<table><thead><tr><th>Cliente</th><th>Fecha renovación</th><th>Plan</th><th>Período</th><th>Tiempo en programa</th><th></th></tr></thead><tbody>'+log.map(function(r){var c=(state.altas||[]).find(function(x){return x.id===r.clienteId;});return '<tr><td><b>'+esc(c?c.nombre:'—')+'</b></td><td class="num">'+fFecha(r.fecha)+'</td><td>'+planLabel(r.meses)+'</td><td class="num">'+(r.bajaAnterior?fFecha(r.bajaAnterior):'—')+' → <span style="color:#F2B657">'+(r.bajaNueva?fFecha(r.bajaNueva):'—')+'</span></td><td>'+(c?tiempoPrograma(c.fechaAlta, c.fechaVencimiento||hoy()):'—')+'</td><td style="text-align:right"><button class="del" onclick="borrarRenov(\''+r.id+'\')">✕</button></td></tr>';}).join('')+'</tbody></table>'):'<div class="empty"><b>Sin renovaciones registradas</b>Cuando pulses «Renovar» en un cliente, quedará aquí el historial.</div>';
+  var body=log.length?('<table><thead><tr><th>Cliente</th><th>Fecha renovación</th><th>Plan</th><th>Período</th><th>Tiempo en programa</th><th></th></tr></thead><tbody>'+log.map(function(r){var c=(state.altas||[]).find(function(x){return x.id===r.clienteId;});return '<tr><td><b>'+esc(c?c.nombre:'—')+'</b></td><td class="num">'+fFecha(r.fecha)+'</td><td>'+planLabel(r.meses)+'</td><td class="num">'+(r.bajaAnterior?fFecha(r.bajaAnterior):'—')+' → <span style="color:#F59E0B">'+(r.bajaNueva?fFecha(r.bajaNueva):'—')+'</span></td><td>'+(c?tiempoPrograma(c.fechaAlta, c.fechaVencimiento||hoy()):'—')+'</td><td style="text-align:right"><button class="del" onclick="borrarRenov(\''+r.id+'\')">✕</button></td></tr>';}).join('')+'</tbody></table>'):'<div class="empty"><b>Sin renovaciones registradas</b>Cuando pulses «Renovar» en un cliente, quedará aquí el historial.</div>';
   return '<details class="panel" '+(renovOpen?'open':'')+' ontoggle="renovOpen=this.open"><summary class="panel-head" style="cursor:pointer"><h3>Historial de renovaciones</h3><span class="muted-mini">'+log.length+' renovación(es) · pulsa ✕ para deshacer una</span></summary><div class="panel-body">'+body+'</div></details>';
 }
 function addMonthsStr(iso,n){ if(!iso) return ''; var p=iso.split('-'); if(p.length<3) return ''; var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,10); }
@@ -1058,7 +1079,7 @@ var calView='mes';
 function setCalView(v){ calView=v; render(); }
 function irTab(t){ tab=t; document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===t); }); render(); window.scrollTo(0,0); }
 function urgEmoji(u){ return u==='alta'?'🔴':(u==='media'?'🟠':'🟢'); }
-function tllColor(x){ x=(x||'').toLowerCase(); if(x==='venta')return '#FF6B7A'; if(x==='inicial')return '#F2B657'; if(x==='control')return '#6EE7B7'; return '#33C1FF'; }
+function tllColor(x){ x=(x||'').toLowerCase(); if(x==='venta')return '#FF3547'; if(x==='inicial')return '#F59E0B'; if(x==='control')return '#22D07B'; return '#33C1FF'; }
 function lunesDe(d){ var x=new Date(d); var g=x.getDay(); g=(g===0?6:g-1); x.setDate(x.getDate()-g); x.setHours(0,0,0,0); return x; }
 function chipHTML(e){
   var org=e.origen||'';
@@ -1075,7 +1096,7 @@ function chipHTML(e){
   }
   return '<div class="ev-chip" style="cursor:pointer" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(e.hora?esc(e.hora)+' ':'')+esc(e.titulo)+'</div>';
 }
-function recHTML(r){ return '<div class="ev-venc" style="background:rgba(232,147,12,.16);color:#F2B657'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>'+esc(r.txt)+'</div>'; }
+function recHTML(r){ return '<div class="ev-venc" style="background:rgba(232,147,12,.16);color:#F59E0B'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>'+esc(r.txt)+'</div>'; }
 function evTitulo(e){
   var org=e.origen||'';
   if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); return (t?urgEmoji(t.urgencia):'🟢')+' '+esc(t?t.titulo:(e.titulo||'').replace('✔ ','')); }
@@ -1639,7 +1660,7 @@ function viewPublicidad(){
   var cpl=leadsT?invT/leadsT:0, cpa=cliT?invT/cliT:0;
   var rows=camps.map(function(c){
     var ccpl=(c.leads?(c.inversion/c.leads):0), ccpa=(c.clientes?(c.inversion/c.clientes):0);
-    return '<tr><td><b>'+esc(c.angulo||'—')+'</b>'+(c.notas?'<br><span style="color:var(--muted);font-size:12px">'+esc(c.notas)+'</span>':'')+'</td><td>'+esc(c.plataforma||'—')+'</td><td class="num">'+esc(c.mes||'—')+'</td><td class="num" style="text-align:right">'+eur(c.inversion)+'</td><td class="num" style="text-align:right">'+(c.leads||0)+'</td><td class="num" style="text-align:right">'+(c.clientes||0)+'</td><td class="num" style="text-align:right">'+(c.leads?eur(ccpl):'—')+'</td><td class="num" style="text-align:right;color:'+(c.clientes?'#6EE7B7':'var(--muted)')+'">'+(c.clientes?eur(ccpa):'—')+'</td><td style="text-align:right"><button class="del" onclick="delItem(\'publicidad\',\''+c.id+'\')">✕</button></td></tr>';
+    return '<tr><td><b>'+esc(c.angulo||'—')+'</b>'+(c.notas?'<br><span style="color:var(--muted);font-size:12px">'+esc(c.notas)+'</span>':'')+'</td><td>'+esc(c.plataforma||'—')+'</td><td class="num">'+esc(c.mes||'—')+'</td><td class="num" style="text-align:right">'+eur(c.inversion)+'</td><td class="num" style="text-align:right">'+(c.leads||0)+'</td><td class="num" style="text-align:right">'+(c.clientes||0)+'</td><td class="num" style="text-align:right">'+(c.leads?eur(ccpl):'—')+'</td><td class="num" style="text-align:right;color:'+(c.clientes?'#22D07B':'var(--muted)')+'">'+(c.clientes?eur(ccpa):'—')+'</td><td style="text-align:right"><button class="del" onclick="delItem(\'publicidad\',\''+c.id+'\')">✕</button></td></tr>';
   }).join('');
   return `
   <div class="page-head"><div><div class="eyebrow">Marketing</div><h1>Publicidad</h1>

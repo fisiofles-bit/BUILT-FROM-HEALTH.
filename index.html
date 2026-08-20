@@ -707,15 +707,8 @@ function previsionIngresos(){
     if(a.fechaVencimiento && a.fechaVencimiento.slice(0,7)===mes) renovaciones.push({nombre:a.nombre, importe:+(a.tarifa||0), plan:a.duracionPlan, id:a.id});
     else recurrentes.push({nombre:a.nombre, importe:+(a.tarifa||0), id:a.id});
   });
-  (state.videollamadas||[]).forEach(function(v){
-    var tll=(v.tipoLlamada||'').toLowerCase();
-    if(tll!=='inicial'&&tll!=='venta') return;
-    if((v.resultado||'')==='cerrada'||(v.resultado||'')==='no_cerrada') return;
-    if((v.estado||'')==='cancelada') return;
-    cierres.push({nombre:v.atleta||'Lead', importe:+(v.importe||0), id:v.id});
-  });
   var sum=function(arr){return arr.reduce(function(s,x){return s+x.importe;},0);};
-  return {recurrentes:recurrentes, renovaciones:renovaciones, cierres:cierres, total:sum(recurrentes)+sum(renovaciones)+sum(cierres)};
+  return {recurrentes:recurrentes, renovaciones:renovaciones, cierres:cierres, total:sum(recurrentes)+sum(renovaciones)};
 }
 function previsionRowsHTML(p){
   var out='';
@@ -734,11 +727,11 @@ function viewFinanzas(){
   if(finMes!=='todos') base=base.filter(f=>f.fecha.slice(0,7)===finMes);
   if(finCat!=='todos') base=base.filter(f=>(f.categoria||'Otros')===finCat);
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
-  const ventaCaja=base.filter(f=>f.tipo==='ingreso'&&f.fuente==='Venta').reduce((a,f)=>a+ +f.importe,0);
-  const dealsFull=(state.videollamadas||[]).filter(function(v){ if((v.resultado||'')!=='cerrada'||!(+(v.importe||0)>0)) return false; return finMes==='todos'?true:((v.fecha||'').slice(0,7)===finMes); }).reduce((a,v)=>a+ +(v.importe||0),0);
-  const _mesF=(finMes==='todos'?hoy().slice(0,7):finMes);
-  const recurNoCobrado=(state.altas||[]).filter(function(a){ if(a.estado!=='activo'||a.pagoUnico) return false; if(a.pagoManual===_mesF) return false; return !(state.finanzas||[]).some(function(fx){ return fx.tipo==='ingreso'&&fx.cliente===a.id&&(fx.fecha||'').slice(0,7)===_mesF; }); }).reduce((s,a)=>s+ +(a.tarifa||0),0);
-  const fact=(ing-ventaCaja)+dealsFull+recurNoCobrado;
+  const dealMes=(state.videollamadas||[]).filter(function(v){ return (v.resultado||'')==='cerrada' && +(v.importe||0)>0 && (finMes==='todos'||(v.fecha||'').slice(0,7)===finMes); });
+  const dealsFull=dealMes.reduce(function(s,v){return s+ +(v.importe||0);},0);
+  const dealNames=dealMes.map(function(v){return (v.atleta||'').trim().toLowerCase();});
+  const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; return !(nm&&dealNames.indexOf(nm)>=0); }).reduce(function(a,f){return a+ +f.importe;},0);
+  const fact=ingNoDeal+dealsFull;
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
@@ -1167,7 +1160,6 @@ function guardarVideoEdit(id){
   v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value;
   v.fecha=document.getElementById('ev-fecha').value||v.fecha; v.hora=val('ev-hora'); v.estado=document.getElementById('ev-estado').value; v.resultado=document.getElementById('ev-res').value; v.importe=parseFloat(document.getElementById('ev-importe').value)||0; v.notas=val('ev-notas');
   var _pg=document.getElementById('ev-pago'); if(_pg) v.pagoTipo=_pg.value; var _ms=document.getElementById('ev-meses'); if(_ms) v.mesesContratados=parseInt(_ms.value,10)||0;
-  if(v.resultado==='cerrada' && !v.ingresoGenerado && (+(v.importe||0))>0){ generarIngresosVenta(v); v.ingresoGenerado=true; }
   syncEventoVid(v); cerrarFactura(); save(); render();
 }
 

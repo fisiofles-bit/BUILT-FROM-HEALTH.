@@ -736,7 +736,9 @@ function viewFinanzas(){
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
   const ventaCaja=base.filter(f=>f.tipo==='ingreso'&&f.fuente==='Venta').reduce((a,f)=>a+ +f.importe,0);
   const dealsFull=(state.videollamadas||[]).filter(function(v){ if((v.resultado||'')!=='cerrada'||!(+(v.importe||0)>0)) return false; return finMes==='todos'?true:((v.fecha||'').slice(0,7)===finMes); }).reduce((a,v)=>a+ +(v.importe||0),0);
-  const fact=ing-ventaCaja+dealsFull;
+  const _mesF=(finMes==='todos'?hoy().slice(0,7):finMes);
+  const recurNoCobrado=(state.altas||[]).filter(function(a){ if(a.estado!=='activo'||a.pagoUnico) return false; if(a.pagoManual===_mesF) return false; return !(state.finanzas||[]).some(function(fx){ return fx.tipo==='ingreso'&&fx.cliente===a.id&&(fx.fecha||'').slice(0,7)===_mesF; }); }).reduce((s,a)=>s+ +(a.tarifa||0),0);
+  const fact=(ing-ventaCaja)+dealsFull+recurNoCobrado;
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
@@ -750,7 +752,6 @@ function viewFinanzas(){
   return `
   <div class="page-head"><div><div class="eyebrow">Accounting</div><h1>Finances</h1>
   <p>Registra ingresos y gastos, etiquétalos y filtra por mes. El balance se recalcula según el filtro.</p></div>
-  <span style="display:inline-flex;gap:4px;margin-right:12px"><button class="btn ${finVista==='ingresos'?'':'ghost'} sm" onclick="setFinVista('ingresos')">Ingresos</button><button class="btn ${finVista==='facturacion'?'':'ghost'} sm" onclick="setFinVista('facturacion')">Facturación</button></span>
   <span style="display:inline-flex;align-items:center;gap:6px;margin-right:10px;color:var(--muted);font-size:12px">Del <input type="date" value="${finDesde}" onchange="finDesde=this.value;render()" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 7px"> al <input type="date" value="${finHasta}" onchange="finHasta=this.value;render()" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 7px">${(finDesde||finHasta)?`<button class="btn ghost sm" onclick="limpiarFin()">✕</button>`:''}</span><button class="btn ghost" onclick="exportTrimestre()">↓ Exportar trimestre</button> <button class="btn" onclick="toggleForm('f-form')">+ Movimiento</button></div>
 
   <div class="panel"><div class="panel-head"><h3>Saldos</h3><span class="muted-mini">Stripe automático · banco manual</span></div><div class="panel-body">
@@ -762,12 +763,12 @@ function viewFinanzas(){
     ${comparativaHTML()}
   </div></div>
   <div class="kpis">
-    <div class="kpi"><div class="label">Facturación</div><div class="val mono" style="color:#FFFFFF">${eur(facturacion)}</div><div class="sub">total facturado</div></div>
-    <div class="kpi pos"><div class="label">${finVista==='facturacion'?'Facturación':'Ingresos'}</div><div class="val mono">${eur(finVista==='facturacion'?fact:ing)}</div><div class="sub">${finVista==='facturacion'?'todo lo facturado':'recibido \u00b7 '+scope}</div></div>
-    <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#D5EBFF">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
+    <div class="kpi"><div class="label">Facturación</div><div class="val mono" style="color:#FFFFFF">${eur(fact)}</div><div class="sub">total del mes</div></div>
+    <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono" style="color:#00b2ff">${eur(ing)}</div><div class="sub">recibido \u00b7 ${scope}</div></div>
+    <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#8792A6">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
     <div class="kpi"><div class="label">Gastos</div><div class="val mono" style="color:#F97316">${eur(gas)}</div><div class="sub">${scope}</div></div>
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
-    <div class="kpi ${ing-gas>=0?'pos':'neg'}"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
+    <div class="kpi ${ing-gas>=0?'pos':'neg'}" style="border:2px solid #22D07B;background:rgba(34,208,123,.10);box-shadow:0 6px 26px rgba(34,208,123,.42)"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
   <div class="panel">
     <div class="form-grid hidden" id="f-form">

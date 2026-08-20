@@ -727,7 +727,7 @@ function viewFinanzas(){
   if(finMes!=='todos') base=base.filter(f=>f.fecha.slice(0,7)===finMes);
   if(finCat!=='todos') base=base.filter(f=>(f.categoria||'Otros')===finCat);
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
-  const dealMes=(state.videollamadas||[]).filter(function(v){ return (v.resultado||'')==='cerrada' && +(v.importe||0)>0 && (finMes==='todos'||(v.fecha||'').slice(0,7)===finMes); });
+  const dealMes=(state.videollamadas||[]).filter(function(v){ return (v.tipoLlamada||'').toLowerCase()==='inicial' && (v.resultado||'')==='cerrada' && +(v.importe||0)>0 && (finMes==='todos'||(v.fecha||'').slice(0,7)===finMes); });
   const dealsFull=dealMes.reduce(function(s,v){return s+ +(v.importe||0);},0);
   const dealNames=dealMes.map(function(v){return (v.atleta||'').trim().toLowerCase();});
   const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; return !(nm&&dealNames.indexOf(nm)>=0); }).reduce(function(a,f){return a+ +f.importe;},0);

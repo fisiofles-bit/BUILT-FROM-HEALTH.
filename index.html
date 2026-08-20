@@ -696,6 +696,33 @@ function viewResumen(){
 
 var finDesde='', finHasta='';
 function limpiarFin(){ finDesde=''; finHasta=''; render(); }
+function previsionIngresos(){
+  var mes=hoy().slice(0,7); var now=new Date(), mm=now.getMonth(), yy=now.getFullYear();
+  function pagado(cid){ var c=(state.altas||[]).find(function(x){return x.id===cid;}); if(c&&c.pagoManual===mes) return true; return (state.finanzas||[]).some(function(f){ if(f.tipo!=='ingreso'||f.cliente!==cid) return false; var d=new Date(f.fecha); return d.getMonth()===mm&&d.getFullYear()===yy; }); }
+  var recurrentes=[], renovaciones=[], cierres=[];
+  (state.altas||[]).forEach(function(a){
+    if(a.estado!=='activo'||a.pagoUnico) return;
+    if(pagado(a.id)) return;
+    if(a.fechaVencimiento && a.fechaVencimiento.slice(0,7)===mes) renovaciones.push({nombre:a.nombre, importe:+(a.tarifa||0), plan:a.duracionPlan, id:a.id});
+    else recurrentes.push({nombre:a.nombre, importe:+(a.tarifa||0), id:a.id});
+  });
+  (state.videollamadas||[]).forEach(function(v){
+    if((v.tipoLlamada||'').toLowerCase()!=='inicial') return;
+    if((v.estado||'')!=='pendiente') return;
+    cierres.push({nombre:v.atleta||'Lead', importe:+(v.importe||0), id:v.id});
+  });
+  var sum=function(arr){return arr.reduce(function(s,x){return s+x.importe;},0);};
+  return {recurrentes:recurrentes, renovaciones:renovaciones, cierres:cierres, total:sum(recurrentes)+sum(renovaciones)+sum(cierres)};
+}
+function previsionRowsHTML(p){
+  var out='';
+  var mk=function(i,tipo,col){ return '<tr style="background:'+col+'10"><td class="num" style="border-left:3px solid '+col+';color:var(--muted)">prev.</td><td><b>'+esc(i.nombre)+'</b></td><td><span class="badge" style="background:'+col+'22;color:'+col+'">'+tipo+'</span></td><td><span style="background:#0d1119;color:#00b2ff;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700">previsto</span></td><td class="num" style="text-align:right;color:'+col+'">'+eur(i.importe)+'</td><td></td></tr>'; };
+  p.recurrentes.forEach(function(i){ out+=mk(i,'Recurrente','#22D07B'); });
+  p.renovaciones.forEach(function(i){ out+=mk(i,'Renovación','#F59E0B'); });
+  p.cierres.forEach(function(i){ out+=mk(i,'Cierre inicial','#9B7BF0'); });
+  if(!out) out='<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:16px">No hay ingresos previstos pendientes este mes.</td></tr>';
+  return out;
+}
 function viewFinanzas(){
   const mesesData=[...new Set(state.finanzas.map(f=>f.fecha.slice(0,7)))].sort().reverse();
   let base=[...state.finanzas];
@@ -708,6 +735,7 @@ function viewFinanzas(){
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
   const impagos=impagoCli+impagoManual;
+  const prev=previsionIngresos();
   let rows=[...base];
   if(finTipo!=='todos') rows=rows.filter(f=>f.tipo===finTipo);
   rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -729,6 +757,7 @@ function viewFinanzas(){
     <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono">${eur(ing)}</div><div class="sub">${scope}</div></div>
     <div class="kpi"><div class="label">Gastos</div><div class="val mono" style="color:#F97316">${eur(gas)}</div><div class="sub">${scope}</div></div>
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
+    <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#00b2ff">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
     <div class="kpi ${ing-gas>=0?'pos':'neg'}"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
   <div class="panel">
@@ -743,12 +772,12 @@ function viewFinanzas(){
     </div>
     <div class="filterbar">
       <div class="field"><label>Mes</label><select onchange="setFinMes(this.value)"><option value="todos"${finMes==='todos'?' selected':''}>Todos los meses</option>${mesesData.map(ym=>`<option value="${ym}"${finMes===ym?' selected':''}>${labelMes(ym)}</option>`).join('')}</select></div>
-      <div class="field"><label>Tipo</label><select onchange="setFinTipo(this.value)"><option value="todos"${finTipo==='todos'?' selected':''}>Todos</option><option value="ingreso"${finTipo==='ingreso'?' selected':''}>Ingresos</option><option value="gasto"${finTipo==='gasto'?' selected':''}>Gastos</option><option value="impago"${finTipo==='impago'?' selected':''}>Impagos</option></select></div>
+      <div class="field"><label>Tipo</label><select onchange="setFinTipo(this.value)"><option value="todos"${finTipo==='todos'?' selected':''}>Todos</option><option value="ingreso"${finTipo==='ingreso'?' selected':''}>Ingresos</option><option value="gasto"${finTipo==='gasto'?' selected':''}>Gastos</option><option value="impago"${finTipo==='impago'?' selected':''}>Impagos</option><option value="previsto"${finTipo==='previsto'?' selected':''}>Ingresos previstos</option></select></div>
       <div class="field"><label>Etiqueta</label><select onchange="setFinCat(this.value)"><option value="todos"${finCat==='todos'?' selected':''}>Todas</option>${CATEGORIAS.map(c=>`<option value="${c}"${finCat===c?' selected':''}>${c}</option>`).join('')}</select></div>
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Etiqueta</th><th>Tipo</th><th style="text-align:right">Importe</th><th></th></tr></thead><tbody>
-      ${rows.map(f=>{var tc=(f.tipo==='ingreso'?'#22D07B':(f.tipo==='impago'?'#FF2E3A':'#F97316'));var src=f.fuente?`<span style="background:#0d1119;color:${fuenteColor(f.fuente)};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">${esc(f.fuente)}</span>`:'';return `<tr style="background:${tc}14"><td class="num" style="border-left:3px solid ${tc}">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria&&f.categoria!=='Ingreso'?`<span class="badge b-gray">${esc(f.categoria)}</span>`:''}${src}</td><td><span class="badge ${f.tipo==='ingreso'?'b-green':(f.tipo==='impago'?'b-impago':'b-gasto')}">${f.tipo}</span></td><td class="num" style="text-align:right;color:${tc}">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right">${f.tipo==='impago'?`<button class="btn ghost sm" style="color:#22D07B" onclick="marcarPagadoMov('${f.id}')">✓ Cobrado</button> `:''}<button class="btn ghost sm" onclick="editarMovimiento('${f.id}')">Editar</button> <button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`;}).join('')}
+      ${finTipo==='previsto'?previsionRowsHTML(prev):rows.map(f=>{var tc=(f.tipo==='ingreso'?'#22D07B':(f.tipo==='impago'?'#FF2E3A':'#F97316'));var src=f.fuente?`<span style="background:#0d1119;color:${fuenteColor(f.fuente)};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">${esc(f.fuente)}</span>`:'';return `<tr style="background:${tc}14"><td class="num" style="border-left:3px solid ${tc}">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria&&f.categoria!=='Ingreso'?`<span class="badge b-gray">${esc(f.categoria)}</span>`:''}${src}</td><td><span class="badge ${f.tipo==='ingreso'?'b-green':(f.tipo==='impago'?'b-impago':'b-gasto')}">${f.tipo}</span></td><td class="num" style="text-align:right;color:${tc}">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right">${f.tipo==='impago'?`<button class="btn ghost sm" style="color:#22D07B" onclick="marcarPagadoMov('${f.id}')">✓ Cobrado</button> `:''}<button class="btn ghost sm" onclick="editarMovimiento('${f.id}')">Editar</button> <button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`;}).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin movimientos</b>${state.finanzas.length?'Ningún movimiento con este filtro.':'Pulsa «+ Movimiento» para registrar el primero.'}</div>`}
     </div>
   </div>`;

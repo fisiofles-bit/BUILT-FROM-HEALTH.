@@ -521,8 +521,9 @@ function recsDelDia(ds){
     var v=new Date(a.fechaVencimiento+'T00:00:00'); if(isNaN(v.getTime())) return;
     if(ymd(v)!==ds) return;
     var dias=Math.round((v-hoyD)/86400000);
-    if(dias<0||dias>30) return;
-    out.push({txt:'🔄 '+a.nombre+' ('+dias+'d)', nivel:(dias<=7?'rojo':'naranja'), id:a.id});
+    var nivel = dias<=7 ? 'rojo' : (dias<=30 ? 'naranja' : 'verde');
+    var lbl = dias<0 ? 'vencida' : dias+'d';
+    out.push({nombre:a.nombre, lbl:lbl, nivel:nivel, id:a.id});
   });
   return out;
 }
@@ -1174,7 +1175,7 @@ function chipHTML(e){
   }
   return '<div class="ev-chip" '+drag+' style="cursor:grab'+(_past?';opacity:.4':'')+'" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(e.hora?esc(e.hora)+' ':'')+esc(e.titulo)+x+'</div>';
 }
-function recHTML(r){ var bg=r.nivel==='rojo'?'#FF2E3A':'#F59E0B'; return '<div class="ev-venc" style="background:'+bg+';color:#fff;font-weight:600'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>'+esc(r.txt)+'</div>'; }
+function recHTML(r){ var c=r.nivel==='rojo'?'#FF2E3A':(r.nivel==='naranja'?'#F59E0B':'#22D07B'); return '<div class="ev-venc" style="background:#0d1119;border:1.5px solid '+c+';color:#fff;font-weight:600'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>🔄 '+esc(r.nombre)+' <span style="color:'+c+';font-weight:700">('+esc(r.lbl)+')</span></div>'; }
 function evTitulo(e){
   var org=e.origen||'';
   if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); return (t?urgEmoji(t.urgencia):'🟢')+' '+esc(t?t.titulo:(e.titulo||'').replace('✔ ','')); }

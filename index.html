@@ -330,7 +330,7 @@ let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tare
 const SPECS={
   altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
-  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada']]},
+  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada'],['pagoTipo','pago_tipo'],['mesesContratados','meses_contratados','num'],['ingresoGenerado','ingreso_generado','bool']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
   tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia'],['fechaFin','fecha_fin'],['horaInicio','hora_inicio'],['horaFin','hora_fin']]},
   equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas']]},
@@ -694,7 +694,8 @@ function viewResumen(){
   </div></div>`;
 }
 
-var finDesde='', finHasta='';
+var finDesde='', finHasta=''; var finVista='ingresos';
+function setFinVista(v){ finVista=v; render(); }
 function limpiarFin(){ finDesde=''; finHasta=''; render(); }
 function previsionIngresos(){
   var mes=hoy().slice(0,7); var now=new Date(), mm=now.getMonth(), yy=now.getFullYear();
@@ -707,8 +708,10 @@ function previsionIngresos(){
     else recurrentes.push({nombre:a.nombre, importe:+(a.tarifa||0), id:a.id});
   });
   (state.videollamadas||[]).forEach(function(v){
-    if((v.tipoLlamada||'').toLowerCase()!=='inicial') return;
-    if((v.estado||'')!=='pendiente') return;
+    var tll=(v.tipoLlamada||'').toLowerCase();
+    if(tll!=='inicial'&&tll!=='venta') return;
+    if((v.resultado||'')==='cerrada'||(v.resultado||'')==='no_cerrada') return;
+    if((v.estado||'')==='cancelada') return;
     cierres.push({nombre:v.atleta||'Lead', importe:+(v.importe||0), id:v.id});
   });
   var sum=function(arr){return arr.reduce(function(s,x){return s+x.importe;},0);};
@@ -731,11 +734,15 @@ function viewFinanzas(){
   if(finMes!=='todos') base=base.filter(f=>f.fecha.slice(0,7)===finMes);
   if(finCat!=='todos') base=base.filter(f=>(f.categoria||'Otros')===finCat);
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
+  const ventaCaja=base.filter(f=>f.tipo==='ingreso'&&f.fuente==='Venta').reduce((a,f)=>a+ +f.importe,0);
+  const dealsFull=(state.videollamadas||[]).filter(function(v){ if((v.resultado||'')!=='cerrada'||!(+(v.importe||0)>0)) return false; return finMes==='todos'?true:((v.fecha||'').slice(0,7)===finMes); }).reduce((a,v)=>a+ +(v.importe||0),0);
+  const fact=ing-ventaCaja+dealsFull;
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
   const impagos=impagoCli+impagoManual;
   const prev=previsionIngresos();
+  const facturacion=(state.videollamadas||[]).filter(function(v){ if(v.resultado!=='cerrada') return false; if(finMes==='todos') return true; return (v.fecha||'').slice(0,7)===finMes; }).reduce(function(s,v){return s+ +(v.importe||0);},0);
   let rows=[...base];
   if(finTipo!=='todos') rows=rows.filter(f=>f.tipo===finTipo);
   rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -743,6 +750,7 @@ function viewFinanzas(){
   return `
   <div class="page-head"><div><div class="eyebrow">Accounting</div><h1>Finances</h1>
   <p>Registra ingresos y gastos, etiquétalos y filtra por mes. El balance se recalcula según el filtro.</p></div>
+  <span style="display:inline-flex;gap:4px;margin-right:12px"><button class="btn ${finVista==='ingresos'?'':'ghost'} sm" onclick="setFinVista('ingresos')">Ingresos</button><button class="btn ${finVista==='facturacion'?'':'ghost'} sm" onclick="setFinVista('facturacion')">Facturación</button></span>
   <span style="display:inline-flex;align-items:center;gap:6px;margin-right:10px;color:var(--muted);font-size:12px">Del <input type="date" value="${finDesde}" onchange="finDesde=this.value;render()" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 7px"> al <input type="date" value="${finHasta}" onchange="finHasta=this.value;render()" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 7px">${(finDesde||finHasta)?`<button class="btn ghost sm" onclick="limpiarFin()">✕</button>`:''}</span><button class="btn ghost" onclick="exportTrimestre()">↓ Exportar trimestre</button> <button class="btn" onclick="toggleForm('f-form')">+ Movimiento</button></div>
 
   <div class="panel"><div class="panel-head"><h3>Saldos</h3><span class="muted-mini">Stripe automático · banco manual</span></div><div class="panel-body">
@@ -754,10 +762,11 @@ function viewFinanzas(){
     ${comparativaHTML()}
   </div></div>
   <div class="kpis">
-    <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono">${eur(ing)}</div><div class="sub">${scope}</div></div>
+    <div class="kpi"><div class="label">Facturación</div><div class="val mono" style="color:#FFFFFF">${eur(facturacion)}</div><div class="sub">total facturado</div></div>
+    <div class="kpi pos"><div class="label">${finVista==='facturacion'?'Facturación':'Ingresos'}</div><div class="val mono">${eur(finVista==='facturacion'?fact:ing)}</div><div class="sub">${finVista==='facturacion'?'todo lo facturado':'recibido \u00b7 '+scope}</div></div>
+    <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#D5EBFF">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
     <div class="kpi"><div class="label">Gastos</div><div class="val mono" style="color:#F97316">${eur(gas)}</div><div class="sub">${scope}</div></div>
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
-    <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#00b2ff">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
     <div class="kpi ${ing-gas>=0?'pos':'neg'}"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
   <div class="panel">
@@ -1131,17 +1140,33 @@ function editarVideo(id){
       <div class="field"><label>Hora</label><input type="time" id="ev-hora" value="${esc(v.hora||'')}"></div>
       <div class="field"><label>Estado</label><select id="ev-estado">${estados}</select></div>
       <div class="field"><label>Resultado</label><select id="ev-res">${res}</select></div>
-      <div class="field"><label>Facturación (€)</label><input type="number" step="0.01" id="ev-importe" value="${v.importe||0}"></div>
+      <div class="field"><label>Facturación total (€)</label><input type="number" step="0.01" id="ev-importe" value="${v.importe||0}"></div>
+      <div class="field"><label>Pago</label><select id="ev-pago"><option value="full"${(v.pagoTipo||'full')==='full'?' selected':''}>Full pay (todo de golpe)</option><option value="plazos"${v.pagoTipo==='plazos'?' selected':''}>A plazos (mensual)</option></select></div>
+      <div class="field"><label>Meses contratados</label><select id="ev-meses">${[1,3,6,9,12].map(function(mm){return '<option value="'+mm+'"'+((parseInt(v.mesesContratados,10)||6)===mm?' selected':'')+'>'+mm+' meses</option>';}).join('')}</select></div>
       <div class="field full"><label>Notas</label><input id="ev-notas" value="${esc(v.notas||'')}"></div>
     </div>
     <div class="fx-actions" style="margin-top:14px"><button class="btn" onclick="guardarVideoEdit('${v.id}')">Guardar</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>
   </div></div>`;
   document.body.classList.add('printing');
 }
+function generarIngresosVenta(v){
+  var total=+(v.importe||0); if(total<=0) return;
+  if(!state.finanzas) state.finanzas=[];
+  if(v.pagoTipo==='plazos'){
+    var meses=parseInt(v.mesesContratados,10)||1; if(meses<1) meses=1;
+    var cuota=Math.round((total/meses)*100)/100;
+    for(var i=0;i<meses;i++){ state.finanzas.push({id:uid(), fecha:addMonthsStr(hoy(), i), tipo:'ingreso', concepto:'Venta \u00b7 '+(v.atleta||'')+' ('+(i+1)+'/'+meses+')', categoria:'Ingreso', importe:cuota, cliente:'', fuente:'Venta'}); }
+  } else {
+    state.finanzas.push({id:uid(), fecha:hoy(), tipo:'ingreso', concepto:'Venta \u00b7 '+(v.atleta||''), categoria:'Ingreso', importe:total, cliente:'', fuente:'Venta'});
+  }
+  showToast('Venta cerrada: ingresos generados ('+(v.pagoTipo==='plazos'?'a plazos':'full pay')+').', false, 4500);
+}
 function guardarVideoEdit(id){
   var v=(state.videollamadas||[]).find(function(x){return x.id===id;}); if(!v) return;
   v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value;
   v.fecha=document.getElementById('ev-fecha').value||v.fecha; v.hora=val('ev-hora'); v.estado=document.getElementById('ev-estado').value; v.resultado=document.getElementById('ev-res').value; v.importe=parseFloat(document.getElementById('ev-importe').value)||0; v.notas=val('ev-notas');
+  var _pg=document.getElementById('ev-pago'); if(_pg) v.pagoTipo=_pg.value; var _ms=document.getElementById('ev-meses'); if(_ms) v.mesesContratados=parseInt(_ms.value,10)||0;
+  if(v.resultado==='cerrada' && !v.ingresoGenerado && (+(v.importe||0))>0){ generarIngresosVenta(v); v.ingresoGenerado=true; }
   syncEventoVid(v); cerrarFactura(); save(); render();
 }
 

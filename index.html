@@ -515,14 +515,14 @@ function cobrosRows(){
 }
 function recsDelDia(ds){
   var out=[];
+  var hoyD=new Date(hoy()+'T00:00:00');
   (state.altas||[]).forEach(function(a){
     if(a.estado!=='activo'||!a.fechaVencimiento) return;
     var v=new Date(a.fechaVencimiento+'T00:00:00'); if(isNaN(v.getTime())) return;
-    var m1=new Date(v); m1.setMonth(m1.getMonth()-1);
-    var d7=new Date(v); d7.setDate(d7.getDate()-7);
-    if(ymd(v)===ds) out.push({txt:'Vence '+a.nombre, urg:true, id:a.id});
-    else if(ymd(m1)===ds) out.push({txt:'Vence '+a.nombre+' (1 mes)', urg:false, id:a.id});
-    else if(ymd(d7)===ds) out.push({txt:'Vence '+a.nombre+' (7 días)', urg:true, id:a.id});
+    if(ymd(v)!==ds) return;
+    var dias=Math.round((v-hoyD)/86400000);
+    if(dias<0||dias>30) return;
+    out.push({txt:'🔄 '+a.nombre+' ('+dias+'d)', nivel:(dias<=7?'rojo':'naranja'), id:a.id});
   });
   return out;
 }
@@ -1160,20 +1160,21 @@ function chipHTML(e){
   var org=e.origen||'';
   var x='<span class="ev-x" title="Eliminar" onclick="event.stopPropagation();borrarEventoCal(\''+e.id+'\')">\u00d7</span>';
   var drag='draggable="true" ondragstart="dragEv(event,\''+e.id+'\')"';
+  var _past=(e.fecha||'')<hoy();
   if(org.indexOf('tarea:')===0){
     var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);});
     var emo=t?urgEmoji(t.urgencia):''; var tit=t?t.titulo:e.titulo;
-    return '<div class="ev-chip ev-tarea" '+drag+' title="Tarea · arrastra para mover, \u00d7 para borrar" style="cursor:grab;border-left:4px solid '+(t?catColor(t.categoria||''):'#8A94A0')+';background:'+(t?catColor(t.categoria||''):'#8A94A0')+'2E;color:#EAF0F5" onclick="event.stopPropagation();irTab(\'tareas\')">'+urgBoxHTML(t?t.urgencia:'baja')+(e.hora?esc(e.hora)+' ':'')+esc(tit)+x+'</div>';
+    return '<div class="ev-chip ev-tarea" '+drag+' title="Tarea · arrastra para mover, \u00d7 para borrar" style="cursor:grab;border-left:4px solid '+(t?catColor(t.categoria||''):'#8A94A0')+';background:'+(t?catColor(t.categoria||''):'#8A94A0')+'2E;color:#EAF0F5'+((_past||(t&&t.hecha))?';opacity:.4':'')+'" onclick="event.stopPropagation();irTab(\'tareas\')">'+urgBoxHTML(t?t.urgencia:'baja')+(e.hora?esc(e.hora)+' ':'')+esc(tit)+x+'</div>';
   }
   if(org.indexOf('vid:')===0){
     var v=(state.videollamadas||[]).find(function(x){return x.id===org.slice(4);});
     var vt=v?v.atleta:e.titulo;
     var tipo=(v&&v.tipoLlamada)?(' <span style="background:'+tllColor(v.tipoLlamada)+';color:#fff;border-radius:4px;padding:0 5px;font-size:10px;font-weight:700">'+tipoLlamadaLabel(v.tipoLlamada)+'</span>'):'';
-    return '<div class="ev-chip ev-vid" '+drag+' title="Videollamada · arrastra para mover, \u00d7 para borrar" style="cursor:grab" onclick="event.stopPropagation();irTab(\'videollamadas\')">📹 '+(e.hora?esc(e.hora)+' ':'')+esc(vt)+tipo+x+'</div>';
+    return '<div class="ev-chip ev-vid" '+drag+' title="Videollamada · arrastra para mover, \u00d7 para borrar" style="cursor:grab'+(_past?';opacity:.4':'')+'" onclick="event.stopPropagation();irTab(\'videollamadas\')">📹 '+(e.hora?esc(e.hora)+' ':'')+esc(vt)+tipo+x+'</div>';
   }
-  return '<div class="ev-chip" '+drag+' style="cursor:grab" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(e.hora?esc(e.hora)+' ':'')+esc(e.titulo)+x+'</div>';
+  return '<div class="ev-chip" '+drag+' style="cursor:grab'+(_past?';opacity:.4':'')+'" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(e.hora?esc(e.hora)+' ':'')+esc(e.titulo)+x+'</div>';
 }
-function recHTML(r){ return '<div class="ev-venc" style="background:rgba(232,147,12,.16);color:#F59E0B'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>'+esc(r.txt)+'</div>'; }
+function recHTML(r){ var bg=r.nivel==='rojo'?'#FF2E3A':'#F59E0B'; return '<div class="ev-venc" style="background:'+bg+';color:#fff;font-weight:600'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>'+esc(r.txt)+'</div>'; }
 function evTitulo(e){
   var org=e.origen||'';
   if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); return (t?urgEmoji(t.urgencia):'🟢')+' '+esc(t?t.titulo:(e.titulo||'').replace('✔ ','')); }
@@ -1907,4 +1908,3 @@ initApp();
 </script>
 </body>
 </html>
-

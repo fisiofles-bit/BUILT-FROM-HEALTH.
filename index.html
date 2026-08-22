@@ -1045,8 +1045,9 @@ function viewVideo(){
   var mesKpi=vidMes||hoy().slice(0,7);
   var rows=[...state.videollamadas]; if(vidMes) rows=rows.filter(v=>(v.fecha||'').slice(0,7)===vidMes);
   if(vidSort==='tipo') rows.sort((a,b)=>((a.tipoLlamada||'zzz').localeCompare(b.tipoLlamada||'zzz'))||((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||''))); else rows.sort((a,b)=>((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||'')));
-  const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red'};
-  const rE={cerrada:'b-cyan',no_cerrada:'b-red',pendiente:'b-gray'};
+  const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red',no_show:'b-impago'};
+  const bTxt={pendiente:'Pendiente',realizada:'Realizada',cancelada:'Cancelada',no_show:'No show'};
+  const rE={cerrada:'b-green',no_cerrada:'b-red',pendiente:'b-gray'};
   const rTxt={cerrada:'Cerrada',no_cerrada:'No cerrada',pendiente:'—'};
   const atletas=[...new Set(state.altas.map(a=>a.nombre))];
   const eq=(state.equipo||[]);
@@ -1055,8 +1056,11 @@ function viewVideo(){
   const delMesVenta=delMes.filter(v=>!v.tipoLlamada || v.tipoLlamada==='venta');
   const agendas=delMesVenta.length;
   const realizadas=delMesVenta.filter(v=>v.estado==='realizada').length;
-  const cerradas=delMesVenta.filter(v=>v.resultado==='cerrada').length;
-  const cierre=realizadas? Math.round(cerradas/realizadas*100):0;
+  const noShows=delMesVenta.filter(v=>v.estado==='no_show').length;
+  const pctNoShow=agendas? Math.round(noShows/agendas*100):0;
+  const decididas=delMesVenta.filter(v=>v.estado==='realizada'&&(v.resultado==='cerrada'||v.resultado==='no_cerrada')).length;
+  const cerradas=delMesVenta.filter(v=>v.estado==='realizada'&&v.resultado==='cerrada').length;
+  const cierre=decididas? Math.round(cerradas/decididas*100):0;
   const factLlamada=delMes.filter(v=>v.resultado==='cerrada').reduce((a,v)=>a+ +(v.importe||0),0);
   const LEADS=['Frío','Templado','Caliente','Referido','Cliente','Otro'];
   return `
@@ -1065,7 +1069,8 @@ function viewVideo(){
   <input type="month" value="${vidMes}" onchange="setVidMes(this.value)" title="Filtrar por mes" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${vidMes?`<button class="btn ghost sm" onclick="setVidMes('')" style="margin-right:8px">Ver todo</button>`:''}<select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
   <div class="kpis">
     <div class="kpi"><div class="label">Agendas de venta del mes</div><div class="val">${agendas}</div><div class="sub">${realizadas} realizadas</div></div>
-    <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${realizadas} realizadas</div></div>
+    <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${decididas} decididas</div></div>
+    <div class="kpi"><div class="label">% no shows</div><div class="val" style="color:#FF2E3A">${pctNoShow}%</div><div class="sub">${noShows} no shows</div></div>
     <div class="kpi"><div class="label">Facturación por llamada</div><div class="val mono">${eur(factLlamada)}</div><div class="sub">cerradas este mes</div></div>
   </div>
   <div class="panel">
@@ -1077,7 +1082,7 @@ function viewVideo(){
       <div class="field"><label>Fecha</label><input type="date" id="v-fecha" value="${hoy()}"></div>
       <div class="field"><label>Hora</label><input type="time" id="v-hora" value="17:00"></div>
       <div class="field"><label>Plataforma</label><select id="v-plat"><option>Zoom</option><option>Google Meet</option><option>WhatsApp</option><option>FaceTime</option><option>Otra</option></select></div>
-      <div class="field"><label>Estado</label><select id="v-estado"><option value="pendiente">Pendiente</option><option value="realizada">Realizada</option><option value="cancelada">Cancelada</option></select></div>
+      <div class="field"><label>Estado</label><select id="v-estado"><option value="pendiente">Pendiente</option><option value="realizada">Realizada</option><option value="no_show">No show</option><option value="cancelada">Cancelada</option></select></div>
       <div class="field"><label>Resultado</label><select id="v-res"><option value="pendiente">Pendiente</option><option value="cerrada">Cerrada</option><option value="no_cerrada">No cerrada</option></select></div>
       <div class="field"><label>Facturación (€ si cierra)</label><input type="number" id="v-importe" step="0.01" placeholder="0,00"></div>
       <div class="field full"><label>Notas</label><input id="v-notas" placeholder="Objetivo, observaciones…"></div>
@@ -1085,7 +1090,7 @@ function viewVideo(){
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
-      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(v=>`<tr><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${bTxt[v.estado]||esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin videollamadas</b>Programa la primera con «+ Videollamada».</div>`}
     </div>
   </div>`;

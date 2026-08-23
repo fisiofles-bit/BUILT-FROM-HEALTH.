@@ -1123,7 +1123,7 @@ function addVideo(){
 }
 function editarVideo(id){
   var v=(state.videollamadas||[]).find(function(x){return x.id===id;}); if(!v) return;
-  var estados=[['pendiente','Pendiente'],['realizada','Realizada'],['cancelada','Cancelada']].map(function(o){return '<option value="'+o[0]+'"'+((v.estado||'pendiente')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
+  var estados=[['pendiente','Pendiente'],['realizada','Realizada'],['no_show','No show'],['cancelada','Cancelada']].map(function(o){return '<option value="'+o[0]+'"'+((v.estado||'pendiente')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
   var res=[['pendiente','Pendiente'],['cerrada','Cerrada'],['no_cerrada','No cerrada']].map(function(o){return '<option value="'+o[0]+'"'+((v.resultado||'pendiente')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
   var tll=[['','—'],['venta','De venta'],['inicial','Inicial'],['control','De control']].map(function(o){return '<option value="'+o[0]+'"'+((v.tipoLlamada||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
   var eq=(state.equipo||[]);

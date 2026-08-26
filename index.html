@@ -338,7 +338,8 @@ const SPECS={
   leads:{table:'leads',cols:[['nombre','nombre'],['email','email'],['telefono','telefono'],['fuente','fuente'],['etapa','etapa'],['valor','valor','num'],['tipo','tipo'],['asignado','asignado_id'],['notas','notas'],['fecha','fecha']]},
   documentos:{table:'documentos',cols:[['clienteId','cliente_id'],['categoria','categoria'],['nombre','nombre'],['path','path']]},
   publicidad:{table:'campanas',cols:[['angulo','angulo'],['plataforma','plataforma'],['mes','mes'],['inversion','inversion','num'],['leads','leads','num'],['clientes','clientes','num'],['notas','notas']]},
-  renovLog:{table:'renovaciones',cols:[['clienteId','cliente_id'],['fecha','fecha'],['meses','meses','num'],['bajaAnterior','baja_anterior'],['bajaNueva','baja_nueva'],['planAnterior','plan_anterior','num'],['tarifa','tarifa','num']]}
+  renovLog:{table:'renovaciones',cols:[['clienteId','cliente_id'],['fecha','fecha'],['meses','meses','num'],['bajaAnterior','baja_anterior'],['bajaNueva','baja_nueva'],['planAnterior','plan_anterior','num'],['tarifa','tarifa','num']]},
+  gastosFuturos:{table:'gastos_futuros',cols:[['nombre','nombre'],['importe','importe','num'],['fecha','fecha'],['tipo','tipo'],['hecho','hecho','bool'],['movId','mov_id']]}
 };
 function rowToDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1]; var v=r[a]; if(v===undefined||v==='') v=null; o[d]=v; } return o; }
 function rowFromDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1],t=cols[i][2]; var v=r[d]; if(t==='num') v=(v==null?0:Number(v)); else if(t==='bool') v=!!v; else v=(v==null?'':v); o[a]=v; } return o; }
@@ -732,6 +733,7 @@ function viewFinanzas(){
   const dealNames=dealMes.map(function(v){return (v.atleta||'').trim().toLowerCase();});
   const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; return !(nm&&dealNames.indexOf(nm)>=0); }).reduce(function(a,f){return a+ +f.importe;},0);
   const fact=ingNoDeal+dealsFull;
+  const gastosFut=(state.gastosFuturos||[]).filter(function(g){return !g.hecho;}).reduce(function(a,g){return a+ +(g.importe||0);},0);
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
@@ -760,6 +762,7 @@ function viewFinanzas(){
     <div class="kpi pos"><div class="label">Ingresos</div><div class="val mono" style="color:#00b2ff">${eur(ing)}</div><div class="sub">recibido \u00b7 ${scope}</div></div>
     <div class="kpi" onclick="setFinTipo('previsto')" style="cursor:pointer"><div class="label">Ingresos estimados</div><div class="val mono" style="color:#8792A6">${eur(prev.total)}</div><div class="sub">previsto este mes</div></div>
     <div class="kpi"><div class="label">Gastos</div><div class="val mono" style="color:#F97316">${eur(gas)}</div><div class="sub">${scope}</div></div>
+    <div class="kpi"><div class="label">Gastos futuros</div><div class="val mono" style="color:#C89B6F">${eur(gastosFut)}</div><div class="sub">planificado</div></div>
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
     <div class="kpi ${ing-gas>=0?'pos':'neg'}" style="border:2px solid #22D07B;background:rgba(34,208,123,.10);box-shadow:0 6px 26px rgba(34,208,123,.42)"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
@@ -783,6 +786,7 @@ function viewFinanzas(){
       ${finTipo==='previsto'?previsionRowsHTML(prev):rows.map(f=>{var tc=(f.tipo==='ingreso'?'#22D07B':(f.tipo==='impago'?'#FF2E3A':'#F97316'));var src=f.fuente?`<span style="background:#0d1119;color:${fuenteColor(f.fuente)};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">${esc(f.fuente)}</span>`:'';return `<tr style="background:${tc}14"><td class="num" style="border-left:3px solid ${tc}">${fFecha(f.fecha)}</td><td><b>${esc(f.concepto)}</b>${f.cliente?`<br><span style="color:var(--muted);font-size:12px">${esc(clienteNombre(f.cliente))}</span>`:''}</td><td>${f.categoria&&f.categoria!=='Ingreso'?`<span class="badge b-gray">${esc(f.categoria)}</span>`:''}${src}</td><td><span class="badge ${f.tipo==='ingreso'?'b-green':(f.tipo==='impago'?'b-impago':'b-gasto')}">${f.tipo}</span></td><td class="num" style="text-align:right;color:${tc}">${f.tipo==='gasto'?'−':''}${eur(f.importe)}</td><td style="text-align:right">${f.tipo==='impago'?`<button class="btn ghost sm" style="color:#22D07B" onclick="marcarPagadoMov('${f.id}')">✓ Cobrado</button> `:''}<button class="btn ghost sm" onclick="editarMovimiento('${f.id}')">Editar</button> <button class="del" onclick="delItem('finanzas','${f.id}')">✕</button></td></tr>`;}).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin movimientos</b>${state.finanzas.length?'Ningún movimiento con este filtro.':'Pulsa «+ Movimiento» para registrar el primero.'}</div>`}
     </div>
+    <details class="panel" style="margin-top:16px"><summary class="panel-head" style="cursor:pointer"><h3>Gastos futuros</h3><span class="muted-mini">${(state.gastosFuturos||[]).filter(g=>!g.hecho).length} pendientes · ${eur(gastosFut)}</span></summary><div class="panel-body"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center"><input id="gf-nombre" placeholder="Nombre" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;min-width:150px"><input id="gf-importe" type="number" step="0.01" placeholder="Importe €" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;width:120px"><input id="gf-fecha" type="date" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px"><select id="gf-tipo" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px"><option>Material</option><option>Formación</option><option>Inversión</option><option>Software</option><option>Servicios</option><option>Otro</option></select><button class="btn" onclick="addGastoFuturo()">+ Añadir</button></div>${(state.gastosFuturos||[]).length?`<table><thead><tr><th></th><th>Nombre</th><th>Tipo</th><th>Fecha estimada</th><th class="num">Importe</th><th></th></tr></thead><tbody>${(state.gastosFuturos||[]).slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(g=>`<tr style="${g.hecho?'opacity:.45':''}"><td><input type="checkbox" ${g.hecho?'checked':''} onchange="togglePlanGasto('${g.id}',this.checked)" style="cursor:pointer;accent-color:#F97316"></td><td style="${g.hecho?'text-decoration:line-through':''}"><b>${esc(g.nombre)}</b></td><td><span class="badge b-gray">${esc(g.tipo||'—')}</span></td><td class="num">${g.fecha?fFecha(g.fecha):'—'}</td><td class="num" style="text-align:right;color:#F97316">${eur(g.importe)}</td><td style="text-align:right"><button class="del" onclick="borrarGastoFuturo('${g.id}')">✕</button></td></tr>`).join('')}</tbody></table>`:`<div class="empty"><b>Sin gastos futuros</b>Añade lo que quieres gastar y márcalo cuando lo hagas.</div>`}</div></details>
   </div>`;
 }
 
@@ -837,6 +841,34 @@ function guardarMovimiento(id){
   showToast('Movimiento actualizado.', false, 3000);
 }
 function borrarMovimiento(id){ cerrarFactura(); delItem('finanzas', id); }
+function addGastoFuturo(){
+  var nombre=(document.getElementById('gf-nombre').value||'').trim();
+  var importe=parseFloat(document.getElementById('gf-importe').value)||0;
+  var fecha=document.getElementById('gf-fecha').value||'';
+  var tipo=document.getElementById('gf-tipo').value||'Otro';
+  if(!nombre){ alert('Pon un nombre para el gasto.'); return; }
+  if(!state.gastosFuturos) state.gastosFuturos=[];
+  state.gastosFuturos.push({id:uid(), nombre:nombre, importe:importe, fecha:fecha, tipo:tipo, hecho:false, movId:''});
+  save(); render();
+}
+function togglePlanGasto(id, checked){
+  var g=(state.gastosFuturos||[]).find(function(x){return x.id===id;}); if(!g) return;
+  g.hecho=checked;
+  if(checked){
+    if(!g.movId){ if(!state.finanzas) state.finanzas=[]; var mid=uid(); state.finanzas.push({id:mid, fecha:hoy(), tipo:'gasto', concepto:g.nombre, categoria:(g.tipo||'Otro'), importe:+(g.importe||0), cliente:'', fuente:''}); g.movId=mid; showToast('Gasto registrado: '+eur(g.importe||0), false, 3000); }
+  } else {
+    if(g.movId){ dbDelete('finanzas', g.movId); state.finanzas=(state.finanzas||[]).filter(function(x){return x.id!==g.movId;}); g.movId=''; }
+  }
+  save(); render();
+}
+function borrarGastoFuturo(id){
+  var g=(state.gastosFuturos||[]).find(function(x){return x.id===id;}); if(!g) return;
+  if(!confirm('¿Eliminar este gasto futuro?')) return;
+  if(g.movId){ dbDelete('finanzas', g.movId); state.finanzas=(state.finanzas||[]).filter(function(x){return x.id!==g.movId;}); }
+  dbDelete('gastosFuturos', id);
+  state.gastosFuturos=(state.gastosFuturos||[]).filter(function(x){return x.id!==id;});
+  save(); render();
+}
 async function addFinanza(){
   const importe=parseFloat(document.getElementById('f-importe').value);
   const concepto=document.getElementById('f-concepto').value.trim();
@@ -1248,10 +1280,12 @@ function bandHTML(e, ds){
   var dow=new Date(ds+'T00:00:00').getDay(); var weekStart=(dow===1);
   var showText=(isStart||weekStart);
   var col=eventoColor(e);
+  var _org=e.origen||'', urg='';
+  if(showText && _org.indexOf('tarea:')===0){ var _t=(state.tareas||[]).find(function(x){return x.id===_org.slice(6);}); urg=urgBoxHTML(_t?_t.urgencia:'baja'); }
   var rl=(isStart?'6px':'0'), rr=(isEnd?'6px':'0');
   var x=isStart?('<span class="ev-x" title="Eliminar" onclick="event.stopPropagation();borrarEventoCal(\''+e.id+'\')">\u00d7</span>'):'';
   var drag=isStart?('draggable="true" ondragstart="dragEv(event,\''+e.id+'\')"'):'';
-  return '<div class="ev-chip" '+drag+' title="'+esc(e.titulo)+'" style="background:'+col+'2E;border-left:'+(isStart?('3px solid '+col):'0')+';border-radius:'+rl+' '+rr+' '+rr+' '+rl+';color:#EAF0F5;overflow:hidden;white-space:nowrap;cursor:grab" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(showText?esc(e.titulo):'&nbsp;')+x+'</div>';
+  return '<div class="ev-chip" '+drag+' title="'+esc(e.titulo)+'" style="background:'+col+'2E;border-left:'+(isStart?('3px solid '+col):'0')+';border-radius:'+rl+' '+rr+' '+rr+' '+rl+';color:#EAF0F5;overflow:hidden;white-space:nowrap;cursor:grab" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(showText?(urg+esc(e.titulo)):'&nbsp;')+x+'</div>';
 }
 function mkChip(e, ds){ var f1=e.fechaFin||e.fecha; return (f1&&f1>e.fecha)?bandHTML(e,ds):chipHTML(e); }
 function chipsDia(ds, limit){

@@ -276,6 +276,34 @@ tr:hover td{background:#1D232B}
 #topbar-profile .pf-ph{color:#04222E}
 .wa-btn{background:#25D366;color:#fff;border:0;border-radius:6px;min-width:24px;height:22px;cursor:pointer;vertical-align:middle;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:6px}
 .wa-btn:hover{filter:brightness(1.12)}
+.spills{display:flex;gap:8px;margin-bottom:16px}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:#121a26;border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.pill.on{background:rgba(0,178,255,.14);border-color:#00b2ff;color:#00b2ff}
+.scols{display:flex;gap:16px;align-items:flex-start}
+.sfolders{width:210px;flex-shrink:0}
+.sfol{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:9px;font-size:12px;margin-bottom:4px;background:rgba(20,27,38,.7);border:1px solid var(--line);cursor:pointer;color:var(--text)}
+.sfol.on{border-color:#00b2ff;background:rgba(0,178,255,.08)}
+.sfc{color:var(--muted);font-size:10px}
+.sfol-new{color:#00b2ff;font-size:11px;font-weight:600;padding:8px 11px;cursor:pointer}
+.sarch{color:var(--muted);font-size:11px;padding:9px 11px;border-top:1px solid var(--line);margin-top:6px;cursor:pointer}
+.scontent{flex:1;min-width:0}
+.sinsight{background:rgba(155,123,240,.08);border:1px solid #9B7BF0;border-radius:14px;padding:13px 15px;margin-bottom:16px}
+.sit{font-size:11px;color:#9B7BF0;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{background:#0d1119;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.pn{font-weight:600;font-size:12px;color:#fff;margin-bottom:5px}
+.pfz{background:rgba(155,123,240,.2);color:#9B7BF0;border-radius:5px;padding:1px 6px;font-size:9px;font-weight:700}
+.pl{font-size:11px;color:#AEB8C0;margin-bottom:2px}
+.pl span{color:var(--muted)}
+.sgh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sgh h3{font-size:14px;color:#fff}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scard{background:rgba(20,27,38,.9);border:1px solid var(--line);border-radius:14px;padding:13px;cursor:pointer}
+.sct{font-weight:600;font-size:13px;color:#fff;margin-bottom:5px}
+.scs{font-size:11px;color:#AEB8C0;line-height:1.5;margin-bottom:9px;min-height:32px}
+.scf{display:flex;justify-content:space-between;align-items:center}
+.stag{border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700}
+.stm{font-size:10px;color:var(--muted)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
@@ -295,7 +323,8 @@ tr:hover td{background:#1D232B}
   <button class="nav-btn" data-tab="calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="lbl">My Office</span></button>
   <button class="nav-btn" data-tab="videollamadas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="lbl">My Calls</span></button>
   <button class="nav-btn" data-tab="tareas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="lbl">My Tasks</span></button>
-  <button class="nav-btn" data-tab="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span class="lbl">My CRM</span></button>
+  <button class="nav-btn" data-tab="studio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="lbl">My Studio</span></button>
+        <button class="nav-btn" data-tab="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span class="lbl">My CRM</span></button>
   <button class="nav-btn" data-tab="publicidad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l15-5v12L3 14z"/><path d="M11 16.5a2.5 2.5 0 0 1-4.9-.6"/></svg><span class="lbl">My Ads</span></button>
   <button class="nav-btn" data-tab="equipo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">My Team</span></button>
   <button class="nav-btn" data-tab="facturas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg><span class="lbl">My Invoices</span></button>
@@ -339,7 +368,10 @@ const SPECS={
   documentos:{table:'documentos',cols:[['clienteId','cliente_id'],['categoria','categoria'],['nombre','nombre'],['path','path']]},
   publicidad:{table:'campanas',cols:[['angulo','angulo'],['plataforma','plataforma'],['mes','mes'],['inversion','inversion','num'],['leads','leads','num'],['clientes','clientes','num'],['notas','notas']]},
   renovLog:{table:'renovaciones',cols:[['clienteId','cliente_id'],['fecha','fecha'],['meses','meses','num'],['bajaAnterior','baja_anterior'],['bajaNueva','baja_nueva'],['planAnterior','plan_anterior','num'],['tarifa','tarifa','num']]},
-  gastosFuturos:{table:'gastos_futuros',cols:[['nombre','nombre'],['importe','importe','num'],['fecha','fecha'],['tipo','tipo'],['hecho','hecho','bool'],['movId','mov_id'],['link','link']]}
+  gastosFuturos:{table:'gastos_futuros',cols:[['nombre','nombre'],['importe','importe','num'],['fecha','fecha'],['tipo','tipo'],['hecho','hecho','bool'],['movId','mov_id'],['link','link']]},
+  studioPerfiles:{table:'studio_perfiles',cols:[['nombre','nombre'],['perfil','perfil'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['fuente','fuente']]},
+  studioCarpetas:{table:'studio_carpetas',cols:[['nombre','nombre'],['canal','canal'],['modo','modo'],['archivada','archivada','bool']]},
+  studioGuiones:{table:'studio_guiones',cols:[['carpetaId','carpeta_id'],['titulo','titulo'],['cuerpo','cuerpo'],['etiqueta','etiqueta'],['canal','canal'],['modo','modo'],['perfilId','perfil_id'],['archivado','archivado','bool'],['creado','creado'],['editado','editado']]}
 };
 function rowToDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1]; var v=r[a]; if(v===undefined||v==='') v=null; o[d]=v; } return o; }
 function rowFromDB(coll,r){ var o={id:r.id}; var cols=SPECS[coll].cols; for(var i=0;i<cols.length;i++){ var a=cols[i][0],d=cols[i][1],t=cols[i][2]; var v=r[d]; if(t==='num') v=(v==null?0:Number(v)); else if(t==='bool') v=!!v; else v=(v==null?'':v); o[a]=v; } return o; }
@@ -570,6 +602,7 @@ function render(){
   else if(tab==='tareas') m.innerHTML=viewTareas();
   else if(tab==='equipo') m.innerHTML=viewEquipo();
   else if(tab==='facturas') m.innerHTML=viewFacturas();
+  else if(tab==='studio') m.innerHTML=viewStudio();
   else if(tab==='datos') m.innerHTML=viewDatos();
 }
 
@@ -720,6 +753,104 @@ function previsionRowsHTML(p){
   if(!out) out='<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:16px">No hay ingresos previstos pendientes este mes.</td></tr>';
   return out;
 }
+var studioCanal='instagram', studioModo='organico', studioCarpeta=null, studioArch=false;
+var FLD="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:7px 9px";
+function nowStamp(){ var n=new Date(); function p(x){return String(x).padStart(2,'0');} return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+' '+p(n.getHours())+':'+p(n.getMinutes()); }
+function etiquetaColor(e){ e=(e||'').toLowerCase(); if(e.indexOf('gancho')===0) return '#FF3547'; if(e.indexOf('prueba')===0) return '#F59E0B'; if(e.indexOf('cta')===0) return '#22D07B'; if(e.indexOf('educ')===0) return '#9B7BF0'; if(e.indexOf('oferta')===0) return '#00b2ff'; return '#8A94A0'; }
+function setStudioCanal(c){ studioCanal=c; studioModo=(c==='instagram'?'organico':'videos'); studioCarpeta=null; studioArch=false; render(); }
+function setStudioModo(m){ studioModo=m; studioCarpeta=null; studioArch=false; render(); }
+function setStudioCarpeta(id){ studioCarpeta=id; render(); }
+function toggleStudioArch(){ studioArch=!studioArch; studioCarpeta=null; render(); }
+function addCarpeta(){ var nombre=(prompt('Nombre de la carpeta (p. ej. FB Ads \u00b7 Agosto):')||'').trim(); if(!nombre) return; if(!state.studioCarpetas) state.studioCarpetas=[]; var id=uid(); state.studioCarpetas.push({id:id, nombre:nombre, canal:studioCanal, modo:studioModo, archivada:false}); studioCarpeta=id; save(); render(); }
+function archivarCarpeta(id){ var c=(state.studioCarpetas||[]).find(function(x){return x.id===id;}); if(!c) return; c.archivada=!c.archivada; studioCarpeta=null; save(); render(); }
+function delCarpeta(id){ var c=(state.studioCarpetas||[]).find(function(x){return x.id===id;}); if(!c) return; if(!confirm('\u00bfEliminar la carpeta "'+c.nombre+'" y todos sus guiones?')) return; (state.studioGuiones||[]).filter(function(g){return g.carpetaId===id;}).forEach(function(g){ dbDelete('studioGuiones', g.id); }); state.studioGuiones=(state.studioGuiones||[]).filter(function(g){return g.carpetaId!==id;}); dbDelete('studioCarpetas', id); state.studioCarpetas=(state.studioCarpetas||[]).filter(function(x){return x.id!==id;}); studioCarpeta=null; save(); render(); }
+function addGuion(){ var cars=(state.studioCarpetas||[]).filter(function(c){return c.canal===studioCanal && c.modo===studioModo && !c.archivada;}); var cid=studioCarpeta || (cars[0]?cars[0].id:null); if(!cid){ alert('Crea primero una carpeta.'); return; } if(!state.studioGuiones) state.studioGuiones=[]; var id=uid(); var now=nowStamp(); state.studioGuiones.push({id:id, carpetaId:cid, titulo:'Nuevo guion', cuerpo:'', etiqueta:'Gancho', canal:studioCanal, modo:studioModo, perfilId:'', archivado:false, creado:now, editado:now}); save(); abrirGuion(id); }
+function abrirGuion(id){
+  var g=(state.studioGuiones||[]).find(function(x){return x.id===id;}); if(!g) return;
+  var cars=(state.studioCarpetas||[]).filter(function(c){return c.canal===g.canal && c.modo===g.modo;});
+  var carOpts=cars.map(function(c){return '<option value="'+c.id+'"'+(g.carpetaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>';}).join('');
+  var etqs=['Gancho','Prueba social','CTA','Educativo','Oferta','Otro'];
+  var etqOpts=etqs.map(function(e){return '<option'+(g.etiqueta===e?' selected':'')+'>'+e+'</option>';}).join('');
+  var perfs=(state.studioPerfiles||[]);
+  var perfOpts='<option value="">\u2014 Sin perfil \u2014</option>'+perfs.map(function(p){return '<option value="'+p.id+'"'+(g.perfilId===p.id?' selected':'')+'>'+esc(p.nombre)+'</option>';}).join('');
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:640px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px"><input id="gd-titulo" value="'+esc(g.titulo)+'" style="background:transparent;border:0;color:#fff;font-size:19px;font-weight:700;flex:1;font-family:inherit"><button class="btn ghost sm" onclick="archivarGuion(\''+g.id+'\')">'+(g.archivado?'Desarchivar':'Archivar')+'</button></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><select id="gd-etq" style="'+FLD+'">'+etqOpts+'</select><select id="gd-carpeta" style="'+FLD+'">'+carOpts+'</select>'+(g.modo==='ads'?('<select id="gd-perfil" style="'+FLD+'">'+perfOpts+'</select>'):'')+'</div>'
+    +'<textarea id="gd-cuerpo" style="'+FLD+';width:100%;min-height:240px;line-height:1.6;resize:vertical" placeholder="Escribe tu guion\u2026">'+esc(g.cuerpo)+'</textarea>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:8px">Creado: '+esc(g.creado||'\u2014')+' \u00b7 Editado: '+esc(g.editado||'\u2014')+'</div>'
+    +'<div class="fx-actions" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center"><button class="btn ghost" style="color:#FF3547" onclick="delGuion(\''+g.id+'\')">Eliminar</button> <button class="btn ghost" onclick="descargarGuionPDF(\''+g.id+'\')">↓ PDF</button><span><button class="btn ghost" onclick="cerrarFactura()">Cancelar</button> <button class="btn" onclick="guardarGuion(\''+g.id+'\')">Guardar</button></span></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+function guardarGuion(id){ var g=(state.studioGuiones||[]).find(function(x){return x.id===id;}); if(!g) return; g.titulo=(document.getElementById('gd-titulo').value||'Sin t\u00edtulo').trim(); g.cuerpo=document.getElementById('gd-cuerpo').value||''; g.etiqueta=document.getElementById('gd-etq').value; g.carpetaId=document.getElementById('gd-carpeta').value||g.carpetaId; var pf=document.getElementById('gd-perfil'); if(pf) g.perfilId=pf.value; g.editado=nowStamp(); cerrarFactura(); save(); render(); showToast('Guion guardado.', false, 2500); }
+function delGuion(id){ if(!confirm('\u00bfEliminar este guion?')) return; dbDelete('studioGuiones', id); state.studioGuiones=(state.studioGuiones||[]).filter(function(x){return x.id!==id;}); cerrarFactura(); save(); render(); }
+function archivarGuion(id){ var g=(state.studioGuiones||[]).find(function(x){return x.id===id;}); if(!g) return; g.archivado=!g.archivado; g.editado=nowStamp(); cerrarFactura(); save(); render(); }
+function addPerfil(){ editarPerfil(null); }
+function editarPerfil(id){
+  var p=id?(state.studioPerfiles||[]).find(function(x){return x.id===id;}):{nombre:'',perfil:'',angulo:'',objecion:'',disparador:'',fuente:'manual'};
+  if(!p) return;
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:520px">'
+    +'<h3 style="margin:0 0 14px">'+(id?'Editar perfil':'Nuevo perfil de cliente')+'</h3>'
+    +'<div class="form-grid">'
+    +'<div class="field full"><label>Nombre del perfil</label><input id="pf-nombre" value="'+esc(p.nombre||'')+'" placeholder="Ej: Futbolista amateur LCA"></div>'
+    +'<div class="field full"><label>Perfil (qui\u00e9n es)</label><input id="pf-perfil" value="'+esc(p.perfil||'')+'"></div>'
+    +'<div class="field full"><label>\u00c1ngulo a atacar</label><input id="pf-angulo" value="'+esc(p.angulo||'')+'"></div>'
+    +'<div class="field full"><label>Objeci\u00f3n principal</label><input id="pf-objecion" value="'+esc(p.objecion||'')+'"></div>'
+    +'<div class="field full"><label>Disparador</label><input id="pf-disparador" value="'+esc(p.disparador||'')+'"></div>'
+    +'</div>'
+    +'<div class="fx-actions" style="margin-top:14px;display:flex;justify-content:'+(id?'space-between':'flex-end')+';align-items:center">'+(id?('<button class="btn ghost" style="color:#FF3547" onclick="delPerfil(\''+id+'\')">Eliminar</button>'):'')+'<span><button class="btn ghost" onclick="cerrarFactura()">Cancelar</button> <button class="btn" onclick="guardarPerfil(\''+(id||'')+'\')">Guardar</button></span></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+function guardarPerfil(id){ var d={ nombre:(document.getElementById('pf-nombre').value||'').trim(), perfil:(document.getElementById('pf-perfil').value||'').trim(), angulo:(document.getElementById('pf-angulo').value||'').trim(), objecion:(document.getElementById('pf-objecion').value||'').trim(), disparador:(document.getElementById('pf-disparador').value||'').trim() }; if(!d.nombre){ alert('Ponle un nombre al perfil.'); return; } if(!state.studioPerfiles) state.studioPerfiles=[]; if(id){ var p=state.studioPerfiles.find(function(x){return x.id===id;}); if(p){ p.nombre=d.nombre;p.perfil=d.perfil;p.angulo=d.angulo;p.objecion=d.objecion;p.disparador=d.disparador; } } else { state.studioPerfiles.push({id:uid(), nombre:d.nombre, perfil:d.perfil, angulo:d.angulo, objecion:d.objecion, disparador:d.disparador, fuente:'manual'}); } cerrarFactura(); save(); render(); }
+function delPerfil(id){ if(!confirm('\u00bfEliminar este perfil?')) return; dbDelete('studioPerfiles', id); state.studioPerfiles=(state.studioPerfiles||[]).filter(function(x){return x.id!==id;}); cerrarFactura(); save(); render(); }
+function descargarGuionPDF(id){
+  var g=(state.studioGuiones||[]).find(function(x){return x.id===id;}); if(!g) return;
+  var tEl=document.getElementById('gd-titulo'), cEl=document.getElementById('gd-cuerpo'), eEl=document.getElementById('gd-etq');
+  var titulo=(tEl?tEl.value:g.titulo)||'Guion';
+  var cuerpo=(cEl?cEl.value:g.cuerpo)||'';
+  var etiqueta=(eEl?eEl.value:g.etiqueta)||'';
+  var JS=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF||(typeof jsPDF!=='undefined'?jsPDF:null);
+  if(!JS){ alert('El generador de PDF a\u00fan se est\u00e1 cargando. Reint\u00e9ntalo en un par de segundos.'); return; }
+  var doc=new JS({unit:'mm',format:'a4'});
+  var W=210, M=18, y=22;
+  doc.setTextColor(17,17,17);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  var tl=doc.splitTextToSize(titulo, W-2*M);
+  doc.text(tl, M, y); y+=tl.length*8+2;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(120,120,120);
+  doc.text((etiqueta?etiqueta+'  \u00b7  ':'')+'Editado: '+(g.editado||'-'), M, y); y+=7;
+  doc.setDrawColor(215,215,215); doc.line(M, y-2, W-M, y-2); y+=5;
+  doc.setTextColor(28,28,28); doc.setFont('helvetica','normal'); doc.setFontSize(12);
+  var lines=doc.splitTextToSize(cuerpo.replace(/\r/g,''), W-2*M);
+  for(var i=0;i<lines.length;i++){ if(y>285){ doc.addPage(); y=20; } doc.text(lines[i], M, y); y+=6; }
+  var fn=(titulo.replace(/[\/:*?"<>|]/g,'-').slice(0,60)||'guion')+'.pdf';
+  doc.save(fn);
+}
+
+function viewStudio(){
+  var canal=studioCanal;
+  var modos = canal==='instagram' ? [['organico','Org\u00e1nico'],['ads','Ads']] : [['videos','V\u00eddeos'],['ideas','Ideas / borradores']];
+  if(!modos.some(function(m){return m[0]===studioModo;})) studioModo=modos[0][0];
+  var modo=studioModo;
+  var carpetas=(state.studioCarpetas||[]).filter(function(c){return c.canal===canal && c.modo===modo && (studioArch? c.archivada : !c.archivada);});
+  var carSel=(studioCarpeta && carpetas.some(function(c){return c.id===studioCarpeta;}))?studioCarpeta:(carpetas[0]?carpetas[0].id:null);
+  var guiones=(state.studioGuiones||[]).filter(function(g){return g.carpetaId===carSel && !g.archivado;}).sort(function(a,b){return (b.editado||'').localeCompare(a.editado||'');});
+  var perfs=(state.studioPerfiles||[]);
+  function gCount(cid){ return (state.studioGuiones||[]).filter(function(g){return g.carpetaId===cid && !g.archivado;}).length; }
+  var canalBtn=function(c,txt){ return '<button class="btn '+(canal===c?'':'ghost')+' sm" onclick="setStudioCanal(\''+c+'\')">'+txt+'</button>'; };
+  var modoPills=modos.map(function(m){ return '<button class="pill'+(modo===m[0]?' on':'')+'" onclick="setStudioModo(\''+m[0]+'\')">'+m[1]+'</button>'; }).join('');
+  var folHTML=carpetas.map(function(c){ return '<div class="sfol'+(c.id===carSel?' on':'')+'" onclick="setStudioCarpeta(\''+c.id+'\')"><span>'+esc(c.nombre)+'</span><span class="sfc">'+gCount(c.id)+'</span></div>'; }).join('');
+  var guionHTML = carSel ? (guiones.length? guiones.map(function(g){ var col=etiquetaColor(g.etiqueta); var snip=(g.cuerpo||'').replace(/\s+/g,' ').slice(0,90); return '<div class="scard" style="border-left:3px solid '+col+'" onclick="abrirGuion(\''+g.id+'\')"><div class="sct">'+esc(g.titulo)+'</div><div class="scs">'+esc(snip)+(snip.length>=90?'\u2026':'')+'</div><div class="scf"><span class="stag" style="background:'+col+'22;color:'+col+'">'+esc(g.etiqueta||'')+'</span><span class="stm">'+esc(g.editado||'')+'</span></div></div>'; }).join('') : '<div class="empty"><b>Sin guiones aqu\u00ed</b>Pulsa \u00ab+ Nuevo guion\u00bb para empezar.</div>') : '<div class="empty"><b>Crea una carpeta</b>Organiza tus guiones por campa\u00f1a o mes.</div>';
+  var perfilPanel = (modo==='ads') ? ('<div class="sinsight"><div class="sit">Perfiles de cliente \u00b7 del cuestionario y propios <button class="btn sm" style="float:right;margin-top:-3px" onclick="addPerfil()">+ Nuevo perfil</button></div>'+(perfs.length? '<div class="pgrid">'+perfs.map(function(p){ return '<div class="pcard" onclick="editarPerfil(\''+p.id+'\')"><div class="pn">'+esc(p.nombre)+(p.fuente==='cuestionario'?' <span class="pfz">cuestionario</span>':'')+'</div><div class="pl"><span>\u00c1ngulo:</span> '+esc(p.angulo||'\u2014')+'</div><div class="pl"><span>Objeci\u00f3n:</span> '+esc(p.objecion||'\u2014')+'</div></div>'; }).join('')+'</div>' : '<div style="color:var(--muted);font-size:12px;padding:6px 0">A\u00fan no hay perfiles. Crea uno con \u00ab+ Nuevo perfil\u00bb o p\u00eddeme que analice tu cuestionario.</div>')+'</div>') : '';
+  return '<div class="page-head"><div><div class="eyebrow">Content \u00b7 Guiones</div><h1>Studio</h1></div><span style="display:inline-flex;gap:4px">'+canalBtn('instagram','Instagram')+canalBtn('youtube','YouTube')+'</span></div>'
+    +'<div class="spills">'+modoPills+'</div>'
+    +'<div class="scols"><div class="sfolders"><div class="sfol-new" onclick="addCarpeta()">+ Nueva carpeta</div>'+folHTML+'<div class="sarch" onclick="toggleStudioArch()">'+(studioArch?'\u2190 Volver a activas':'Ver archivadas')+'</div>'+(carSel?'<div style="margin-top:8px;display:flex;gap:6px"><button class="btn ghost sm" onclick="archivarCarpeta(\''+carSel+'\')">Archivar</button><button class="btn ghost sm" style="color:#FF3547" onclick="delCarpeta(\''+carSel+'\')">Eliminar</button></div>':'')+'</div>'
+    +'<div class="scontent">'+perfilPanel+'<div class="sgh"><h3>Guiones</h3>'+(carSel?'<button class="btn" onclick="addGuion()">+ Nuevo guion</button>':'')+'</div><div class="sgrid">'+guionHTML+'</div></div></div>';
+}
+
 function viewFinanzas(){
   const mesesData=[...new Set(state.finanzas.map(f=>f.fecha.slice(0,7)))].sort().reverse();
   let base=[...state.finanzas];

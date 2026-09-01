@@ -569,7 +569,7 @@ function segRows(){
 const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 let tab='resumen'; let calRef=new Date();
-let finMes='todos'; let finCat='todos';
+let finMes=hoy().slice(0,7); let finCat='todos';
 const CATEGORIAS=['Suscripción','Material','Formación','Facebook Ads / Publicidad','Otros'];
 function labelMes(ym){const [y,m]=ym.split('-');const s=meses[+m-1]+' '+y;return s.charAt(0).toUpperCase()+s.slice(1);}
 function setFinMes(v){finMes=v;render();}
@@ -852,7 +852,7 @@ function viewStudio(){
 }
 
 function viewFinanzas(){
-  const mesesData=[...new Set(state.finanzas.map(f=>f.fecha.slice(0,7)))].sort().reverse();
+  const mesesData=[...new Set([hoy().slice(0,7)].concat(state.finanzas.map(f=>f.fecha.slice(0,7))))].sort().reverse();
   let base=[...state.finanzas];
   if(finDesde) base=base.filter(f=>f.fecha>=finDesde);
   if(finHasta) base=base.filter(f=>f.fecha<=finHasta);
@@ -906,6 +906,7 @@ function viewFinanzas(){
       <div class="field"><label id="f-cat-label">Por dónde se hizo</label><select id="f-cat">${['Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field"><label>Importe (€)</label><input type="number" id="f-importe" step="0.01" placeholder="0,00"></div>
       <div class="field"><label>Cliente (si es un pago)</label><select id="f-cli"><option value="">— ninguno —</option>${state.altas.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Cliente nuevo</label><div style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-clinuevo" style="accent-color:#00b2ff;cursor:pointer" onchange="document.getElementById('f-clinom').disabled=!this.checked;if(this.checked)document.getElementById('f-clinom').focus();"><input id="f-clinom" placeholder="Nombre del nuevo cliente" disabled style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px"></div></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('f-form')">Cancelar</button><button class="btn sm" onclick="addFinanza()">Guardar</button></div>
     </div>
     <div class="filterbar">
@@ -1006,8 +1007,10 @@ async function addFinanza(){
   const importe=parseFloat(document.getElementById('f-importe').value);
   const concepto=document.getElementById('f-concepto').value.trim();
   if(!concepto||isNaN(importe)){ alert('Añade concepto e importe.'); return; }
-  const cli=(document.getElementById('f-cli')||{}).value||'';
+  let cli=(document.getElementById('f-cli')||{}).value||'';
   const tipo=document.getElementById('f-tipo').value; const etq=document.getElementById('f-cat').value;
+  var esNuevo=(document.getElementById('f-clinuevo')||{}).checked; var nuevoNom=((document.getElementById('f-clinom')||{}).value||'').trim();
+  if(esNuevo && nuevoNom){ if(!state.altas) state.altas=[]; var cid=uid(); state.altas.push({id:cid, nombre:nuevoNom, estado:'activo', tarifa:0, fechaAlta:hoy(), duracionPlan:0, pagoUnico:false, fuentePago:(tipo==='ingreso'?etq:'')}); cli=cid; showToast('Cliente \"'+nuevoNom+'\" a\u00f1adido a tu lista.', false, 3000); }
   const mov={id:uid(),fecha:document.getElementById('f-fecha').value||hoy(),tipo,concepto,categoria:(tipo==='ingreso'?'Ingreso':etq),importe,cliente:cli,fuente:(tipo==='ingreso'?etq:'')};
   state.finanzas.push(mov);
   if(mov.tipo==='ingreso'&&cli){ await generarFacturaDesdePago(mov); }

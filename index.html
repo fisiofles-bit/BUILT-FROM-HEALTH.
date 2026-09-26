@@ -276,6 +276,8 @@ tr:hover td{background:#1D232B}
 #topbar-profile .pf-ph{color:#04222E}
 .wa-btn{background:#25D366;color:#fff;border:0;border-radius:6px;min-width:24px;height:22px;cursor:pointer;vertical-align:middle;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:6px}
 .wa-btn:hover{filter:brightness(1.12)}
+.mchip{padding:5px 11px;border-radius:18px;font-size:11px;font-weight:600;background:#121a26;border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.mchip.on{background:rgba(0,178,255,.14);border-color:#00b2ff;color:#00b2ff}
 .spills{display:flex;gap:8px;margin-bottom:16px}
 .pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:#121a26;border:1px solid var(--line);color:var(--muted);cursor:pointer}
 .pill.on{background:rgba(0,178,255,.14);border-color:#00b2ff;color:#00b2ff}
@@ -357,7 +359,7 @@ let loaded=false;
 let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[], publicidad:[], renovLog:[] };
 
 const SPECS={
-  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
+  altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['pagador','pagador'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada'],['pagoTipo','pago_tipo'],['mesesContratados','meses_contratados','num'],['ingresoGenerado','ingreso_generado','bool']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
@@ -390,7 +392,9 @@ async function loadAll(){
   var sr=await sb.from('factura_series').select('*');
   state.series={}; (sr.data||[]).forEach(function(r){ state.series[r.serie+'|'+r.anio]=r.ultimo; });
   pruneEventos();
+  var _hoyv=hoy(); var _vchg=false; (state.videollamadas||[]).forEach(function(v){ if(v.estado==='pendiente' && (v.fecha||'') && (v.fecha||'')<_hoyv){ v.estado='realizada'; v.resultado='pendiente'; _vchg=true; } });
   loaded=true;
+  if(_vchg) save();
 }
 
 var saving=false, saveQueued=false;
@@ -403,11 +407,10 @@ async function save(){
       var rows=(state[coll]||[]).map(function(r){return rowToDB(coll,r);});
       if(rows.length){ var up=await sb.from(SPECS[coll].table).upsert(rows); if(up.error){ console.error('upsert',SPECS[coll].table,up.error); __fail=true; } }
     }
-    var cats=state.tareaCats||[];
-    if(cats.length){ await sb.from('tarea_categorias').upsert(cats.map(function(n){return {nombre:n};})); }
     var em=state.emisor||{};
     await sb.from('config').update({emisor_nombre:em.nombre||null,emisor_nif:em.nif||null,emisor_direccion:em.direccion||null,emisor_email:em.email||null,emisor_iban:em.iban||null,iva_default:(em.ivaDefault||0),tipo_default:(em.tipoDefault||'auto'),saldo_banco:(em.saldoBanco||0),foto_perfil:(em.fotoPerfil||null)}).eq('id',1);
   }catch(e){ console.error(e); __fail=true; }
+  try{ var cats=state.tareaCats||[]; var _ex=await sb.from('tarea_categorias').select('nombre'); var _exn=(_ex.data||[]).map(function(x){return x.nombre;}); for(var _i=0;_i<_exn.length;_i++){ if(cats.indexOf(_exn[_i])<0){ await sb.from('tarea_categorias').delete().eq('nombre',_exn[_i]); } } if(cats.length){ await sb.from('tarea_categorias').upsert(cats.map(function(n){return {nombre:n};})); } }catch(e){ console.error('cats',e); }
   saving=false; if(__fail) showToast('⚠️ No se pudo guardar todo en la nube. Revisa tu conexión e inténtalo otra vez.', true, 9000);
   if(saveQueued){ saveQueued=false; save(); }
 }
@@ -569,10 +572,11 @@ function segRows(){
 const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 let tab='resumen'; let calRef=new Date();
-let finMes=hoy().slice(0,7); let finCat='todos';
+let finMeses=[hoy().slice(0,7)]; let finCat='todos';
 const CATEGORIAS=['Suscripción','Material','Formación','Facebook Ads / Publicidad','Otros'];
 function labelMes(ym){const [y,m]=ym.split('-');const s=meses[+m-1]+' '+y;return s.charAt(0).toUpperCase()+s.slice(1);}
-function setFinMes(v){finMes=v;render();}
+function toggleFinMes(m){ if(m==='todos'){ finMeses=[]; } else { var i=finMeses.indexOf(m); if(i>=0) finMeses.splice(i,1); else finMeses.push(m); } render(); }
+function mesActivo(ym){ return finMeses.length===0 || finMeses.indexOf(ym)>=0; }
 function setFinCat(v){finCat=v;render();}
 let finTipo='todos'; function setFinTipo(v){finTipo=v;render();}
 let semRef=new Date(); let tareaFiltroCat='todas';
@@ -830,6 +834,49 @@ function descargarGuionPDF(id){
   doc.save(fn);
 }
 
+function autoRealizarVideos(){
+  var hoyStr=hoy(); var changed=false;
+  (state.videollamadas||[]).forEach(function(v){
+    if(v.estado==='pendiente' && v.fecha && v.fecha < hoyStr){ v.estado='realizada'; if(!v.resultado || v.resultado==='' ) v.resultado='pendiente'; changed=true; }
+  });
+  if(changed) save();
+}
+function crearClienteDesdeVid(vidId){
+  var v=(state.videollamadas||[]).find(function(x){return x.id===vidId;}); if(!v) return;
+  var nom=v.atleta||'';
+  var tarSug=(v.importe&&v.mesesContratados)?Math.round((v.importe/v.mesesContratados)*100)/100:'';
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:520px">'
+    +'<h3 style="margin:0 0 4px">Nuevo cliente desde videollamada</h3>'
+    +'<p style="color:var(--muted);font-size:12px;margin:0 0 14px">La inicial de <b>'+esc(nom)+'</b> se ha cerrado. Rellena su plan para enlazar facturaci\u00f3n y pagos.</p>'
+    +'<div class="form-grid">'
+    +'<div class="field full"><label>Nombre (debe coincidir con el del pago)</label><input id="nc-nombre" value="'+esc(nom)+'"></div>'
+    +'<div class="field"><label>Tarifa mensual (\u20ac)</label><input type="number" step="0.01" id="nc-tarifa" value="'+tarSug+'"></div>'
+    +'<div class="field"><label>Plan (meses)</label><select id="nc-meses">'+[1,3,6,9,12].map(function(m){return '<option value="'+m+'"'+((parseInt(v.mesesContratados,10)||3)===m?' selected':'')+'>'+m+(m===1?' mes':' meses')+'</option>';}).join('')+'</select></div>'
+    +'<div class="field"><label>Pago</label><select id="nc-pago"><option value="plazos"'+(v.pagoTipo!=='full'?' selected':'')+'>A plazos</option><option value="full"'+(v.pagoTipo==='full'?' selected':'')+'>Full pay</option></select></div>'
+    +'<div class="field"><label>D\u00eda de cobro</label><input type="number" id="nc-dia" min="1" max="31" value="'+(new Date().getDate())+'"></div>'
+    +'<div class="field full"><label>Pagador (opcional, si paga un familiar u otra persona)</label><input id="nc-pagador" placeholder="Nombre que aparecer\u00e1 en el pago"></div>'
+    +'</div>'
+    +'<div class="fx-actions" style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px"><button class="btn ghost" onclick="cerrarFactura()">Ahora no</button><button class="btn" onclick="guardarClienteDesdeVid(\''+v.id+'\')">Crear cliente</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+function guardarClienteDesdeVid(vidId){
+  var v=(state.videollamadas||[]).find(function(x){return x.id===vidId;}); if(!v) return;
+  var nombre=(document.getElementById('nc-nombre').value||'').trim(); if(!nombre){ alert('El nombre es obligatorio.'); return; }
+  var tarifa=parseFloat(document.getElementById('nc-tarifa').value)||0;
+  var meses=parseInt(document.getElementById('nc-meses').value,10)||1;
+  var pago=document.getElementById('nc-pago').value;
+  var dia=parseInt(document.getElementById('nc-dia').value,10)||1;
+  var pagador=(document.getElementById('nc-pagador').value||'').trim();
+  if(!state.altas) state.altas=[];
+  var cid=uid();
+  state.altas.push({id:cid, nombre:nombre, estado:'activo', tarifa:tarifa, fechaAlta:hoy(), duracionPlan:meses, diaCobro:dia, fechaVencimiento:addMonthsStr(hoy(),meses), pagoUnico:(pago==='full'), fuentePago:'Stripe', pagador:pagador});
+  v.importe=Math.round(tarifa*meses*100)/100; v.pagoTipo=pago; v.mesesContratados=meses;
+  cerrarFactura(); save(); render();
+  showToast('Cliente "'+nombre+'" creado y enlazado a la videollamada.', false, 4000);
+}
+
 function viewStudio(){
   var canal=studioCanal;
   var modos = canal==='instagram' ? [['organico','Org\u00e1nico'],['ads','Ads']] : [['videos','V\u00eddeos'],['ideas','Ideas / borradores']];
@@ -851,18 +898,50 @@ function viewStudio(){
     +'<div class="scontent">'+perfilPanel+'<div class="sgh"><h3>Guiones</h3>'+(carSel?'<button class="btn" onclick="addGuion()">+ Nuevo guion</button>':'')+'</div><div class="sgrid">'+guionHTML+'</div></div></div>';
 }
 
+function renovarAviso(id){
+  var a=(state.altas||[]).find(function(x){return x.id===id;}); if(!a) return;
+  var opts=[1,3,6,9,12].map(function(m){return '<option value="'+m+'"'+((parseInt(a.duracionPlan,10)||3)===m?' selected':'')+'>'+m+(m===1?' mes':' meses')+'</option>';}).join('');
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:420px">'
+    +'<h3 style="margin:0 0 6px">Renovar a '+esc(a.nombre)+'</h3>'
+    +'<p style="color:var(--muted);font-size:12px;margin:0 0 14px">Baja actual: '+fFecha(a.fechaVencimiento||hoy())+'</p>'
+    +'<div class="field full"><label>Plan de renovaci\u00f3n</label><select id="rav-plan">'+opts+'</select></div>'
+    +'<div class="fx-actions" style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px"><button class="btn ghost" onclick="cerrarFactura()">Cancelar</button><button class="btn" onclick="confirmarRenovAviso(\''+id+'\')">Renovar</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+function confirmarRenovAviso(id){
+  var a=(state.altas||[]).find(function(x){return x.id===id;}); if(!a) return;
+  var dur=parseInt(document.getElementById('rav-plan').value,10)||0; if(!dur) return;
+  var base=a.fechaVencimiento||hoy(); var nueva=addMonthsStr(base,dur);
+  if(!state.renovLog) state.renovLog=[];
+  state.renovLog.push({id:uid(), clienteId:id, fecha:hoy(), meses:dur, bajaAnterior:base, bajaNueva:nueva, planAnterior:(parseInt(a.duracionPlan,10)||0), tarifa:a.tarifa||0});
+  a.fechaVencimiento=nueva; a.duracionPlan=dur; a.renovaciones=(parseInt(a.renovaciones,10)||0)+1;
+  cerrarFactura(); save(); render();
+  showToast('Renovado ('+planLabel(dur)+') \u00b7 nueva baja: '+fFecha(nueva), false, 5000);
+}
+function asignarPago(movId, clienteId){
+  if(!clienteId) return;
+  var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
+  f.cliente=clienteId; save(); render();
+  showToast('Pago asignado al cliente.', false, 2500);
+}
+function pagosSinAsignar(){
+  return (state.finanzas||[]).filter(function(f){ return f.tipo==='ingreso' && !f.cliente && f.fuente && f.fuente.trim()!=='' && f.fuente.toLowerCase().indexOf('otro')<0; });
+}
+
 function viewFinanzas(){
   const mesesData=[...new Set([hoy().slice(0,7)].concat(state.finanzas.map(f=>f.fecha.slice(0,7))))].sort().reverse();
   let base=[...state.finanzas];
   if(finDesde) base=base.filter(f=>f.fecha>=finDesde);
   if(finHasta) base=base.filter(f=>f.fecha<=finHasta);
-  if(finMes!=='todos') base=base.filter(f=>f.fecha.slice(0,7)===finMes);
+  if(finMeses.length) base=base.filter(f=>finMeses.indexOf(f.fecha.slice(0,7))>=0);
   if(finCat!=='todos') base=base.filter(f=>(f.categoria||'Otros')===finCat);
   const ing=base.filter(f=>f.tipo==='ingreso').reduce((a,f)=>a+ +f.importe,0);
-  const dealMes=(state.videollamadas||[]).filter(function(v){ return (v.tipoLlamada||'').toLowerCase()==='inicial' && (v.resultado||'')==='cerrada' && +(v.importe||0)>0 && (finMes==='todos'||(v.fecha||'').slice(0,7)===finMes); });
+  const dealMes=(state.videollamadas||[]).filter(function(v){ return (v.tipoLlamada||'').toLowerCase()==='inicial' && (v.resultado||'')==='cerrada' && +(v.importe||0)>0 && mesActivo((v.fecha||'').slice(0,7)); });
   const dealsFull=dealMes.reduce(function(s,v){return s+ +(v.importe||0);},0);
   const dealNames=dealMes.map(function(v){return (v.atleta||'').trim().toLowerCase();});
-  const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; return !(nm&&dealNames.indexOf(nm)>=0); }).reduce(function(a,f){return a+ +f.importe;},0);
+  const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; var pg=cli?(cli.pagador||'').trim().toLowerCase():''; return !((nm&&dealNames.indexOf(nm)>=0)||(pg&&dealNames.indexOf(pg)>=0)); }).reduce(function(a,f){return a+ +f.importe;},0);
   const fact=ingNoDeal+dealsFull;
   const gastosFut=(state.gastosFuturos||[]).filter(function(g){return !g.hecho;}).reduce(function(a,g){return a+ +(g.importe||0);},0);
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
@@ -870,11 +949,11 @@ function viewFinanzas(){
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
   const impagos=impagoCli+impagoManual;
   const prev=previsionIngresos();
-  const facturacion=(state.videollamadas||[]).filter(function(v){ if(v.resultado!=='cerrada') return false; if(finMes==='todos') return true; return (v.fecha||'').slice(0,7)===finMes; }).reduce(function(s,v){return s+ +(v.importe||0);},0);
+  const facturacion=(state.videollamadas||[]).filter(function(v){ if(v.resultado!=='cerrada') return false; return mesActivo((v.fecha||'').slice(0,7)); }).reduce(function(s,v){return s+ +(v.importe||0);},0);
   let rows=[...base];
   if(finTipo!=='todos') rows=rows.filter(f=>f.tipo===finTipo);
   rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  const scope=(finMes==='todos'?'todos los meses':labelMes(finMes))+(finCat==='todos'?'':' · '+finCat);
+  const scope=(finMeses.length===0?'todos los meses':(finMeses.length===1?labelMes(finMeses[0]):finMeses.length+' meses'))+(finCat==='todos'?'':' · '+finCat);
   return `
   <div class="page-head"><div><div class="eyebrow">Accounting</div><h1>Finances</h1>
   <p>Registra ingresos y gastos, etiquétalos y filtra por mes. El balance se recalcula según el filtro.</p></div>
@@ -897,7 +976,8 @@ function viewFinanzas(){
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
     <div class="kpi ${ing-gas>=0?'pos':'neg'}" style="border:2px solid #22D07B;background:rgba(34,208,123,.10);box-shadow:0 6px 26px rgba(34,208,123,.42)"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
-  <div class="panel">
+  ${(function(){ var sa=pagosSinAsignar(); if(!sa.length) return ''; var co=(state.altas||[]).map(function(c){return '<option value="'+c.id+'">'+esc(c.nombre)+'</option>';}).join(''); return '<div class="panel" style="border:1px solid #F59E0B;background:rgba(245,158,11,.06);margin-bottom:16px"><div class="panel-head"><h3 style="color:#F59E0B;margin:0">\u26a0 Pagos sin asignar ('+sa.length+')</h3><span class="muted-mini">asigna cada pago a su cliente</span></div><div class="panel-body"><table><tbody>'+sa.map(function(f){return '<tr><td class="num">'+fFecha(f.fecha)+'</td><td><b>'+esc(f.concepto)+'</b> <span class="badge b-gray">'+esc(f.fuente)+'</span></td><td class="num" style="text-align:right;color:#22D07B">'+eur(f.importe)+'</td><td style="text-align:right"><select onchange="asignarPago(\''+f.id+'\',this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 8px"><option value="">\u2014 asignar a \u2014</option>'+co+'</select></td></tr>';}).join('')+'</tbody></table></div></div>'; })()}
+    <div class="panel">
     <div class="panel-head" style="border-bottom:1px solid var(--line);margin-bottom:12px;padding-bottom:10px"><h3 style="color:#fff;margin:0">Transacciones generales</h3></div>
     <div class="form-grid hidden" id="f-form">
       <div class="field"><label>Fecha</label><input type="date" id="f-fecha" value="${hoy()}"></div>
@@ -906,11 +986,11 @@ function viewFinanzas(){
       <div class="field"><label id="f-cat-label">Por dónde se hizo</label><select id="f-cat">${['Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field"><label>Importe (€)</label><input type="number" id="f-importe" step="0.01" placeholder="0,00"></div>
       <div class="field"><label>Cliente (si es un pago)</label><select id="f-cli"><option value="">— ninguno —</option>${state.altas.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
-      <div class="field"><label>Cliente nuevo</label><div style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-clinuevo" style="accent-color:#00b2ff;cursor:pointer" onchange="document.getElementById('f-clinom').disabled=!this.checked;if(this.checked)document.getElementById('f-clinom').focus();"><input id="f-clinom" placeholder="Nombre del nuevo cliente" disabled style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px"></div></div>
+      <div class="field" style="grid-column:1/-1"><label>Cliente nuevo (marca si no está en tu lista)</label><div style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-clinuevo" style="accent-color:#00b2ff;cursor:pointer" onchange="document.getElementById('f-clinom').disabled=!this.checked;if(this.checked)document.getElementById('f-clinom').focus();"><input id="f-clinom" placeholder="Nombre del nuevo cliente" disabled style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px"></div></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('f-form')">Cancelar</button><button class="btn sm" onclick="addFinanza()">Guardar</button></div>
     </div>
     <div class="filterbar">
-      <div class="field"><label>Mes</label><select onchange="setFinMes(this.value)"><option value="todos"${finMes==='todos'?' selected':''}>Todos los meses</option>${mesesData.map(ym=>`<option value="${ym}"${finMes===ym?' selected':''}>${labelMes(ym)}</option>`).join('')}</select></div>
+      <div class="field" style="grid-column:1/-1"><label>Meses (elige uno o varios)</label><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="mchip${finMeses.length===0?' on':''}" onclick="toggleFinMes('todos')">Todos</button>${mesesData.map(ym=>`<button class="mchip${finMeses.indexOf(ym)>=0?' on':''}" onclick="toggleFinMes('${ym}')">${labelMes(ym)}</button>`).join('')}</div></div>
       <div class="field"><label>Tipo</label><select onchange="setFinTipo(this.value)"><option value="todos"${finTipo==='todos'?' selected':''}>Todos</option><option value="ingreso"${finTipo==='ingreso'?' selected':''}>Ingresos</option><option value="gasto"${finTipo==='gasto'?' selected':''}>Gastos</option><option value="impago"${finTipo==='impago'?' selected':''}>Impagos</option><option value="previsto"${finTipo==='previsto'?' selected':''}>Ingresos previstos</option></select></div>
       <div class="field"><label>Etiqueta</label><select onchange="setFinCat(this.value)"><option value="todos"${finCat==='todos'?' selected':''}>Todas</option>${CATEGORIAS.map(c=>`<option value="${c}"${finCat===c?' selected':''}>${c}</option>`).join('')}</select></div>
     </div>
@@ -1017,6 +1097,14 @@ async function addFinanza(){
   save(); render();
 }
 
+function avisoDuplicados(){
+  var bn={};
+  (state.altas||[]).forEach(function(a){ var k=(a.nombre||'').trim().toLowerCase(); if(!k) return; (bn[k]=bn[k]||[]).push(a); });
+  var dp=Object.keys(bn).filter(function(k){return bn[k].length>1;});
+  if(!dp.length) return '';
+  return '<div class="panel" style="border:1px solid #FF3547;background:rgba(255,53,71,.07);margin:14px 0"><div class="panel-head"><h3 style="color:#FF3547;margin:0">\u26a0 Clientes duplicados ('+dp.length+')</h3><span class="muted-mini">mismo nombre en varias fichas \u00b7 revisa y elimina el repetido</span></div><div class="panel-body">'+dp.map(function(k){ var g=bn[k]; return '<div style="margin-bottom:8px"><b style="color:#fff">'+esc(g[0].nombre)+'</b> <span class="muted-mini">'+g.length+' fichas:</span> '+g.map(function(a){ return '<span onclick="fichaCliente(\''+a.id+'\')" style="cursor:pointer;color:#00b2ff;margin-left:8px">ver \u203a ('+esc(a.estado||'-')+')</span>'; }).join('')+'</div>'; }).join('')+'</div></div>';
+}
+
 function viewAltas(){
   const ae=altaEdit||{};
   const rows=[...state.altas]; if(altaSort==='alfabetico') rows.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='plan') rows.sort((a,b)=>((a.duracionPlan||99)-(b.duracionPlan||99))||(a.nombre||'').localeCompare(b.nombre||'')); else rows.sort((a,b)=>((a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999'))||(a.nombre||'').localeCompare(b.nombre||''));
@@ -1027,6 +1115,7 @@ function viewAltas(){
   <div class="page-head"><div><div class="eyebrow">Clients</div><h1>Clients</h1>
   <p>Ficha de cada atleta: lesión, tarifa, entrenador asignado y datos para facturación.</p></div>
   <button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
+  ${avisoDuplicados()}
   <details class="panel" ${segOpen?'open':''} ontoggle="segOpen=this.open"><summary class="panel-head" style="cursor:pointer"><h3>Seguimiento de contacto</h3><span class="muted-mini">azul=hoy · verde <24h · naranja 1 día · rojo 2+</span></summary><div class="panel-body" style="padding:6px 0">${segRows()}</div></details>
   
   <div class="panel">
@@ -1035,6 +1124,7 @@ function viewAltas(){
       <div class="field"><label>Email</label><input id="a-email" placeholder="para cobros Stripe / facturación" value="${esc(ae.email||'')}"></div>
       <div class="field"><label>Teléfono</label><input id="a-tel" value="${esc(ae.telefono||'')}"></div>
       <div class="field"><label>Día de cobro</label><input type="number" id="a-diacobro" min="1" max="31" placeholder="1-31" value="${ae.diaCobro||''}"></div>
+      <div class="field"><label>Pagador (si paga otra persona)</label><input id="a-pagador" placeholder="Nombre en el pago" value="${esc(ae.pagador||'')}"></div>
       <div class="field"><label>Fecha de alta (1er cobro)</label><input type="date" id="a-fecha" value="${ae.fechaAlta||hoy()}" onchange="calcVenc()"></div>
       <div class="field"><label>Duración de plan</label><select id="a-duracion" onchange="calcVenc()"><option value="0">— sin plan —</option>${[1,3,6,9,12].map(n=>`<option value="${n}"${(ae.duracionPlan==n)?' selected':''}>${n} meses</option>`).join('')}</select></div>
       <div class="field"><label>Forma de pago</label><select id="a-pagou"><option value="fraccionado"${ae.pagoUnico?'':' selected'}>Fraccionado (mensual)</option><option value="unico"${ae.pagoUnico?' selected':''}>Pago único (al inicio)</option></select></div>
@@ -1202,7 +1292,7 @@ function guardarAlta(){
   var dur=parseInt((document.getElementById('a-duracion')||{}).value,10)||0;
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
-  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),nombreFacturacion:val('a-nomfact'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico')};
+  var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),nombreFacturacion:val('a-nomfact'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico'),pagador:val('a-pagador')};
   if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); registrarIngresoAlta(obj); }
   altaEdit=null; save(); render();
 }
@@ -1217,8 +1307,8 @@ function viewVideo(){
   if(vidSort==='tipo') rows.sort((a,b)=>((a.tipoLlamada||'zzz').localeCompare(b.tipoLlamada||'zzz'))||((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||''))); else rows.sort(function(a,b){ var pa=(a.estado==='pendiente')?0:1, pb=(b.estado==='pendiente')?0:1; if(pa!==pb) return pa-pb; var ka=(a.fecha||'')+(a.hora||''), kb=(b.fecha||'')+(b.hora||''); return pa===0? ka.localeCompare(kb) : kb.localeCompare(ka); });
   const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red',no_show:'b-impago'};
   const bTxt={pendiente:'Pendiente',realizada:'Realizada',cancelada:'Cancelada',no_show:'No show'};
-  const rE={cerrada:'b-green',no_cerrada:'b-red',pendiente:'b-gray'};
-  const rTxt={cerrada:'Cerrada',no_cerrada:'No cerrada',pendiente:'—'};
+  const rE={cerrada:'b-green',no_cerrada:'b-red',pendiente:'b-amber'};
+  const rTxt={cerrada:'Cerrada',no_cerrada:'No cerrada',pendiente:'Pendiente'};
   const atletas=[...new Set(state.altas.map(a=>a.nombre))];
   const eq=(state.equipo||[]);
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
@@ -1335,7 +1425,10 @@ function guardarVideoEdit(id){
   v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value;
   v.fecha=document.getElementById('ev-fecha').value||v.fecha; v.hora=val('ev-hora'); v.estado=document.getElementById('ev-estado').value; v.resultado=document.getElementById('ev-res').value; v.importe=parseFloat(document.getElementById('ev-importe').value)||0; v.notas=val('ev-notas');
   var _pg=document.getElementById('ev-pago'); if(_pg) v.pagoTipo=_pg.value; var _ms=document.getElementById('ev-meses'); if(_ms) v.mesesContratados=parseInt(_ms.value,10)||0;
-  syncEventoVid(v); cerrarFactura(); save(); render();
+  syncEventoVid(v);
+  var _trig=((v.tipoLlamada||'')==='inicial' && v.resultado==='cerrada' && v.atleta && !(state.altas||[]).some(function(a){return (a.nombre||'').trim().toLowerCase()===(v.atleta||'').trim().toLowerCase();}));
+  cerrarFactura(); save(); render();
+  if(_trig){ crearClienteDesdeVid(v.id); }
 }
 
 var calView='mes';
@@ -1387,7 +1480,8 @@ function chipHTML(e){
   if(org.indexOf('tarea:')===0){
     var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);});
     var emo=t?urgEmoji(t.urgencia):''; var tit=t?t.titulo:e.titulo;
-    return '<div class="ev-chip ev-tarea" '+drag+' title="Tarea · arrastra para mover, \u00d7 para borrar" style="cursor:grab;border-left:4px solid '+(t?catColor(t.categoria||''):'#8A94A0')+';background:'+(t?catColor(t.categoria||''):'#8A94A0')+'2E;color:#EAF0F5'+((_past||(t&&t.hecha))?';opacity:.4':'')+'" onclick="event.stopPropagation();irTab(\'tareas\')">'+urgBoxHTML(t?t.urgencia:'baja')+(e.hora?esc(e.hora)+' ':'')+esc(tit)+x+'</div>';
+    var col=t?catColor(t.categoria||''):'#8A94A0'; var esRCD=(t&&(t.categoria||'').toUpperCase().indexOf('RCD')>=0); if(esRCD) col='#00b2ff';
+    return '<div class="ev-chip ev-tarea" '+drag+' title="Tarea · arrastra para mover, \u00d7 para borrar" style="cursor:grab;border-left:4px solid '+col+';background:'+col+(esRCD?'33':'2E')+';color:#EAF0F5'+(esRCD?';box-shadow:0 0 0 2px #00b2ff,0 0 16px rgba(0,178,255,.85);font-weight:700':'')+((_past||(t&&t.hecha))?';opacity:.4':'')+'" onclick="event.stopPropagation();irTab(\'tareas\')">'+urgBoxHTML(t?t.urgencia:'baja')+(e.hora?esc(e.hora)+' ':'')+esc(tit)+x+'</div>';
   }
   if(org.indexOf('vid:')===0){
     var v=(state.videollamadas||[]).find(function(x){return x.id===org.slice(4);});
@@ -1397,7 +1491,7 @@ function chipHTML(e){
   }
   return '<div class="ev-chip" '+drag+' style="cursor:grab'+(_past?';opacity:.4':'')+'" onclick="event.stopPropagation();editarEvento(\''+e.id+'\')">'+(e.hora?esc(e.hora)+' ':'')+esc(e.titulo)+x+'</div>';
 }
-function recHTML(r){ var c=r.nivel==='rojo'?'#FF2E3A':(r.nivel==='naranja'?'#F59E0B':'#22D07B'); return '<div class="ev-venc" style="background:#0d1119;border:1.5px solid '+c+';color:#fff;font-weight:600'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>🔄 '+esc(r.nombre)+' <span style="color:'+c+';font-weight:700">('+esc(r.lbl)+')</span></div>'; }
+function recHTML(r){ var c=r.nivel==='rojo'?'#FF2E3A':(r.nivel==='naranja'?'#F59E0B':'#22D07B'); return '<div class="ev-venc" style="background:#0d1119;border:1.5px solid '+c+';color:#fff;font-weight:600'+(r.id?';cursor:pointer':'')+'"'+(r.id?' onclick="event.stopPropagation();fichaCliente(\''+r.id+'\')"':'')+'>🔄 '+esc(r.nombre)+' <span style="color:'+c+';font-weight:700">('+esc(r.lbl)+')</span>'+(r.id?' <span onclick="event.stopPropagation();renovarAviso(\''+r.id+'\')" title="Renovar" style="cursor:pointer;font-weight:700;color:#22D07B;margin-left:2px">↻</span>':'')+'</div>'; }
 function evTitulo(e){
   var org=e.origen||'';
   if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); return (t?urgEmoji(t.urgencia):'🟢')+' '+esc(t?t.titulo:(e.titulo||'').replace('✔ ','')); }
@@ -1406,7 +1500,7 @@ function evTitulo(e){
 }
 function eventoColor(e){
   var org=e.origen||'';
-  if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); return t?catColor(t.categoria||''):'#8A94A0'; }
+  if(org.indexOf('tarea:')===0){ var t=(state.tareas||[]).find(function(x){return x.id===org.slice(6);}); if(t&&(t.categoria||'').toUpperCase().indexOf('RCD')>=0) return '#00b2ff'; return t?catColor(t.categoria||''):'#8A94A0'; }
   if(org.indexOf('vid:')===0) return '#3F4680';
   return '#00b2ff';
 }
@@ -1584,7 +1678,7 @@ function addTarea(){
 }
 function toggleTarea(id){ const t=state.tareas.find(x=>x.id===id); if(t){ t.hecha=!t.hecha; save(); render(); } }
 function addCat(){ const el=document.getElementById('t-newcat'); const v=el.value.trim(); if(!v) return; if(!state.tareaCats) state.tareaCats=[]; if(!state.tareaCats.includes(v)) state.tareaCats.push(v); save(); render(); }
-function delCat(name){ state.tareaCats=(state.tareaCats||[]).filter(c=>c!==name); try{ sb.from('tarea_categorias').delete().eq('nombre',name); }catch(e){} save(); render(); }
+async function delCat(name){ state.tareaCats=(state.tareaCats||[]).filter(c=>c!==name); try{ await sb.from('tarea_categorias').delete().eq('nombre',name); }catch(e){} save(); render(); }
 function setSemana(n){ semRef.setDate(semRef.getDate()+n*7); render(); }
 function setSemanaHoy(){ semRef=new Date(); render(); }
 function setTareaCat(v){ tareaFiltroCat=v; render(); }
@@ -2139,7 +2233,7 @@ async function doLogin(){
 }
 async function entrar(){
   var g=document.getElementById('login-gate'); if(g) g.style.display='none';
-  await loadAll(); render();
+  await loadAll(); autoRealizarVideos(); render();
   var s=document.getElementById('storeState'); if(s){ s.textContent='nube · Supabase'; s.style.color='var(--accent)'; }
 }
 function tickClock(){ var el=document.getElementById('clockTime'), ed=document.getElementById('clockDate'); if(!el) return; var n=new Date(); function p(x){return String(x).padStart(2,'0');} el.textContent=p(n.getHours())+':'+p(n.getMinutes()); if(ed) ed.textContent=n.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); }

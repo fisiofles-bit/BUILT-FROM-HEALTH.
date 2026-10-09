@@ -361,7 +361,7 @@ let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tare
 const SPECS={
   altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['pagador','pagador'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
   finanzas:{table:'finanzas',cols:[['fecha','fecha'],['tipo','tipo'],['concepto','concepto'],['categoria','categoria'],['importe','importe','num'],['cliente','cliente_id'],['stripeInvoice','stripe_invoice'],['fuente','fuente_pago']]},
-  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada'],['pagoTipo','pago_tipo'],['mesesContratados','meses_contratados','num'],['ingresoGenerado','ingreso_generado','bool']]},
+  videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['agendadoPor','agendado_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada'],['pagoTipo','pago_tipo'],['mesesContratados','meses_contratados','num'],['ingresoGenerado','ingreso_generado','bool']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
   tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia'],['fechaFin','fecha_fin'],['horaInicio','hora_inicio'],['horaFin','hora_fin']]},
   equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas']]},
@@ -678,8 +678,10 @@ function viewResumen(){
   const avisosP=[]; const avisosS=[];
   const impagos=state.altas.filter(a=>{var e=pagoEstado(a);return e&&e.impago;});
   if(impagos.length) avisosP.push(['red', impagos.length+(impagos.length===1?' cliente en impago':' clientes en impago'), impagos.slice(0,6).map(a=>a.nombre).join('  ·  ')]);
-  const urgentes=(state.tareas||[]).filter(t=>!t.hecha&&t.urgencia==='alta');
-  if(urgentes.length) avisosP.push(['red', urgentes.length+(urgentes.length===1?' tarea urgente':' tareas urgentes'), urgentes.slice(0,5).map(t=>t.titulo).join('  ·  ')]);
+  var _man=new Date(hoyD); _man.setDate(_man.getDate()+1); var _manStr=ymd(_man);
+  const urgentes=(state.tareas||[]).filter(t=>!t.hecha&&t.urgencia==='alta'&&t.fecha&&(t.fecha===hoyStr||t.fecha===_manStr));
+  if(urgentes.length) avisosP.push(['red', urgentes.length+(urgentes.length===1?' tarea urgente (hoy/mañana)':' tareas urgentes (hoy/mañana)'), urgentes.slice(0,5).map(t=>t.titulo).join('  ·  ')]);
+  var tareas7=(state.tareas||[]).filter(function(t){return !t.hecha&&t.fecha&&t.fecha>hoyStr&&new Date(t.fecha)<=en7;}); if(tareas7.length) avisosS.push(['amber', tareas7.length+' tareas próximos 7 días', tareas7.slice(0,6).map(function(t){return t.titulo;}).join('  ·  ')]);
   const renov=state.altas.filter(a=>a.estado==='activo'&&a.fechaVencimiento&&(function(){var dd=diasHasta(a.fechaVencimiento);return dd!==null&&dd>=0&&dd<=30;})());
   if(renov.length) avisosS.push(['amber', renov.length+(renov.length===1?' renovación próxima':' renovaciones próximas'), renov.map(a=>a.nombre+' ('+diasHasta(a.fechaVencimiento)+'d)').slice(0,6).join('  ·  ')]);
   if(sinContacto.length) avisosS.push(['red', sinContacto.length+(sinContacto.length===1?' cliente sin contacto +2 días':' clientes sin contacto +2 días'), sinContacto.slice(0,6).map(a=>{const d=diasDesde(a.ultimoContacto);return a.nombre+(d===null?' (nunca)':' ('+d+'d)');}).join('  ·  ')]);
@@ -694,7 +696,7 @@ function viewResumen(){
   <div class="page-head"><div><div class="eyebrow">${labelMes(hoyStr.slice(0,7))}</div><h1>Dashboard</h1>
   <p>Lo importante de hoy y las métricas clave del negocio de un vistazo.</p></div></div>
 
-  <details class="panel avisos-det prio" open>
+  <details class="panel avisos-det prio">
     <summary class="panel-head"><h3>Prioridad</h3><span class="muted-mini">urgente y de hoy · ${fechaLarga}</span></summary>
     <div class="panel-body">
       ${avisosP.length? avisosP.map(a=>`<div class="aviso"><span class="dot-${a[0]}"></span><div><b>${esc(a[1])}</b>${a[2]?`<span>${esc(a[2])}</span>`:''}</div></div>`).join('') : `<div class="empty" style="padding:22px 20px"><b>Nada urgente</b>No hay tareas urgentes ni cosas para hoy.</div>`}
@@ -927,7 +929,73 @@ function asignarPago(movId, clienteId){
   showToast('Pago asignado al cliente.', false, 2500);
 }
 function pagosSinAsignar(){
-  return (state.finanzas||[]).filter(function(f){ return f.tipo==='ingreso' && !f.cliente && f.fuente && f.fuente.trim()!=='' && f.fuente.toLowerCase().indexOf('otro')<0; });
+  return (state.finanzas||[]).filter(function(f){ return f.tipo==='ingreso' && !f.cliente && f.categoria!=='Personal' && f.fuente && f.fuente.trim()!=='' && f.fuente.toLowerCase().indexOf('otro')<0; });
+}
+
+function trayPagosHTML(){
+  var sa=pagosSinAsignar();
+  if(!sa.length) return '';
+  var co=(state.altas||[]).map(function(c){return '<option value="'+c.id+'">'+esc(c.nombre)+'</option>';}).join('');
+  var selStyle='background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 8px';
+  var rows=sa.map(function(f){
+    return '<tr><td class="num">'+fFecha(f.fecha)+'</td>'
+      +'<td><b>'+esc(f.concepto)+'</b> <span class="badge b-gray">'+esc(f.fuente)+'</span></td>'
+      +'<td class="num" style="text-align:right;color:#22D07B">'+eur(f.importe)+'</td>'
+      +'<td style="text-align:right">'
+        +'<select onchange="tipoPagoSel(\''+f.id+'\',this.value)" style="'+selStyle+';margin-right:6px"><option value="">\u2014 tipo \u2014</option><option value="cliente">Ingreso de cliente</option><option value="personal">Ingreso personal</option></select>'
+        +'<select onchange="asignarPagoSel(\''+f.id+'\',this.value)" style="'+selStyle+'"><option value="">\u2014 asignar a cliente \u2014</option>'+co+'<option value="__nuevo__">\u2795 Nuevo cliente</option></select>'
+      +'</td></tr>';
+  }).join('');
+  return '<div class="panel" style="border:1px solid #F59E0B;background:rgba(245,158,11,.06);margin-bottom:16px"><div class="panel-head"><h3 style="color:#F59E0B;margin:0">\u26a0 Pagos sin asignar ('+sa.length+')</h3><span class="muted-mini">elige el tipo y asigna a su cliente (o crea uno nuevo)</span></div><div class="panel-body"><table><tbody>'+rows+'</tbody></table></div></div>';
+}
+function tipoPagoSel(movId, tipo){
+  if(tipo==='personal'){ marcarPersonal(movId); }
+}
+function marcarPersonal(movId){
+  var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
+  f.categoria='Personal'; f.cliente=''; save(); render();
+  showToast('Marcado como ingreso personal.', false, 2500);
+}
+function asignarPagoSel(movId, value){
+  if(!value) return;
+  if(value==='__nuevo__'){ crearClienteDesdePago(movId); return; }
+  asignarPago(movId, value);
+}
+function crearClienteDesdePago(movId){
+  var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
+  var nom=((f.concepto||'').indexOf(' - ')>=0) ? (f.concepto.split(' - ').slice(1).join(' - ')).trim() : '';
+  var imp=+(f.importe||0);
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit" style="max-width:520px">'
+    +'<h3 style="margin:0 0 4px">Nuevo cliente desde pago</h3>'
+    +'<p style="color:var(--muted);font-size:12px;margin:0 0 14px">Se crear\u00e1 la ficha, se enlazar\u00e1 este pago ('+eur(imp)+') y se generar\u00e1 su factura.</p>'
+    +'<div class="form-grid">'
+    +'<div class="field full"><label>Nombre</label><input id="np-nombre" value="'+esc(nom)+'"></div>'
+    +'<div class="field"><label>Tarifa mensual (\u20ac)</label><input type="number" id="np-tarifa" value="'+imp+'"></div>'
+    +'<div class="field"><label>Meses contratados</label><input type="number" id="np-meses" value="1" min="1"></div>'
+    +'<div class="field"><label>Pago</label><select id="np-pago"><option value="plazos">A plazos</option><option value="full">Full pay</option></select></div>'
+    +'<div class="field"><label>D\u00eda de cobro</label><input type="number" id="np-dia" min="1" max="31" value="'+(new Date().getDate())+'"></div>'
+    +'<div class="field full"><label>Pagador (si paga otra persona)</label><input id="np-pagador" placeholder="Nombre en el pago"></div>'
+    +'</div>'
+    +'<div class="fx-actions" style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px"><button class="btn ghost" onclick="cerrarFactura()">Cancelar</button><button class="btn" onclick="guardarClienteDesdePago(\''+movId+'\')">Crear y enlazar</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+async function guardarClienteDesdePago(movId){
+  var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
+  var nombre=(document.getElementById('np-nombre').value||'').trim(); if(!nombre){ alert('El nombre es obligatorio.'); return; }
+  var tarifa=parseFloat(document.getElementById('np-tarifa').value)||0;
+  var meses=parseInt(document.getElementById('np-meses').value,10)||1;
+  var pago=document.getElementById('np-pago').value;
+  var dia=parseInt(document.getElementById('np-dia').value,10)||1;
+  var pagador=(document.getElementById('np-pagador').value||'').trim();
+  if(!state.altas) state.altas=[];
+  var cid=uid();
+  state.altas.push({id:cid, nombre:nombre, estado:'activo', tarifa:tarifa, fechaAlta:hoy(), duracionPlan:meses, diaCobro:dia, fechaVencimiento:addMonthsStr(hoy(),meses), pagoUnico:(pago==='full'), fuentePago:(f.fuente||'Stripe'), pagador:pagador});
+  f.cliente=cid;
+  cerrarFactura(); save(); render();
+  try{ if(typeof generarFacturaDesdePago==='function'){ await generarFacturaDesdePago(f); save(); render(); } }catch(e){ console.error('factura',e); }
+  showToast('Cliente creado y pago enlazado.', false, 4000);
 }
 
 function viewFinanzas(){
@@ -944,6 +1012,13 @@ function viewFinanzas(){
   const ingNoDeal=base.filter(function(f){ if(f.tipo!=='ingreso') return false; var cli=(state.altas||[]).find(function(x){return x.id===f.cliente;}); var nm=cli?(cli.nombre||'').trim().toLowerCase():''; var pg=cli?(cli.pagador||'').trim().toLowerCase():''; return !((nm&&dealNames.indexOf(nm)>=0)||(pg&&dealNames.indexOf(pg)>=0)); }).reduce(function(a,f){return a+ +f.importe;},0);
   const fact=ingNoDeal+dealsFull;
   const gastosFut=(state.gastosFuturos||[]).filter(function(g){return !g.hecho;}).reduce(function(a,g){return a+ +(g.importe||0);},0);
+  var altasMes=(state.altas||[]).filter(function(a){return a.fechaAlta && mesActivo((a.fechaAlta||'').slice(0,7));});
+  var numAltas=altasMes.length;
+  var ingresosAltas=base.filter(function(f){ return f.tipo==='ingreso' && altasMes.some(function(a){return a.id===f.cliente;}); }).reduce(function(s,f){return s+ +f.importe;},0);
+  var facturacionAltas=altasMes.reduce(function(s,a){ return s + (+(a.tarifa||0) * (parseInt(a.duracionPlan,10)||1)); },0);
+  var invAds=(state.publicidad||[]).filter(function(c){return mesActivo(c.mes||'');}).reduce(function(s,c){return s+ +(c.inversion||0);},0);
+  var roasTotal=invAds>0 ? (fact/invAds) : 0;
+  var roasAds=invAds>0 ? (facturacionAltas/invAds) : 0;
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
   const impagoManual=base.filter(f=>f.tipo==='impago').reduce((a,f)=>a+ +f.importe,0);
   const impagoCli=(state.altas||[]).reduce((s,a)=>{var st=pagoEstado(a); return s+((st&&st.impago)?+(a.tarifa||0):0);},0);
@@ -976,7 +1051,8 @@ function viewFinanzas(){
     <div class="kpi"><div class="label">Impagos</div><div class="val mono" style="color:#FF2E3A">${eur(impagos)}</div><div class="sub">esperados sin cobrar</div></div>
     <div class="kpi ${ing-gas>=0?'pos':'neg'}" style="border:2px solid #22D07B;background:rgba(34,208,123,.10);box-shadow:0 6px 26px rgba(34,208,123,.42)"><div class="label">Balance</div><div class="val mono" style="color:${ing-gas>=0?'#22D07B':'#FF3547'}">${eur(ing-gas)}</div><div class="sub">${scope}</div></div>
   </div>
-  ${(function(){ var sa=pagosSinAsignar(); if(!sa.length) return ''; var co=(state.altas||[]).map(function(c){return '<option value="'+c.id+'">'+esc(c.nombre)+'</option>';}).join(''); return '<div class="panel" style="border:1px solid #F59E0B;background:rgba(245,158,11,.06);margin-bottom:16px"><div class="panel-head"><h3 style="color:#F59E0B;margin:0">\u26a0 Pagos sin asignar ('+sa.length+')</h3><span class="muted-mini">asigna cada pago a su cliente</span></div><div class="panel-body"><table><tbody>'+sa.map(function(f){return '<tr><td class="num">'+fFecha(f.fecha)+'</td><td><b>'+esc(f.concepto)+'</b> <span class="badge b-gray">'+esc(f.fuente)+'</span></td><td class="num" style="text-align:right;color:#22D07B">'+eur(f.importe)+'</td><td style="text-align:right"><select onchange="asignarPago(\''+f.id+'\',this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 8px"><option value="">\u2014 asignar a \u2014</option>'+co+'</select></td></tr>';}).join('')+'</tbody></table></div></div>'; })()}
+  <div class="kpis" style="margin-top:12px"><div class="kpi"><div class="label">Altas del mes</div><div class="val">${numAltas}</div><div class="sub">clientes nuevos</div></div><div class="kpi"><div class="label">Ingresos de altas</div><div class="val mono" style="color:#22D07B">${eur(ingresosAltas)}</div><div class="sub">cobrado de nuevos</div></div><div class="kpi"><div class="label">Inversión ads</div><div class="val mono" style="color:#F97316">${eur(invAds)}</div><div class="sub">campañas del mes</div></div><div class="kpi"><div class="label">ROAS total</div><div class="val" style="color:#00b2ff">${invAds>0?(roasTotal.toFixed(2)+'x'):'—'}</div><div class="sub">facturación ÷ inversión</div></div><div class="kpi"><div class="label">ROAS ads</div><div class="val" style="color:#00b2ff">${invAds>0?(roasAds.toFixed(2)+'x'):'—'}</div><div class="sub">altas ÷ inversión</div></div></div>
+    ${trayPagosHTML()}
     <div class="panel">
     <div class="panel-head" style="border-bottom:1px solid var(--line);margin-bottom:12px;padding-bottom:10px"><h3 style="color:#fff;margin:0">Transacciones generales</h3></div>
     <div class="form-grid hidden" id="f-form">
@@ -1296,7 +1372,7 @@ function guardarAlta(){
   if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); registrarIngresoAlta(obj); }
   altaEdit=null; save(); render();
 }
-var vidMes='', vidSort='fecha', vidEstado='';
+var vidMes=hoy().slice(0,7), vidSort='fecha', vidEstado='';
 function setVidEstado(v){ vidEstado=v; render(); }
 function setVidMes(v){ vidMes=v; render(); }
 function setVidSort(v){ vidSort=v; render(); }
@@ -1321,6 +1397,9 @@ function viewVideo(){
   const decididas=delMesVenta.filter(v=>v.estado==='realizada'&&(v.resultado==='cerrada'||v.resultado==='no_cerrada')).length;
   const cerradas=delMesVenta.filter(v=>v.estado==='realizada'&&v.resultado==='cerrada').length;
   const cierre=decididas? Math.round(cerradas/decididas*100):0;
+  const invAds=(state.publicidad||[]).filter(function(c){return (c.mes||'')===mesKpi;}).reduce(function(s,c){return s+ +(c.inversion||0);},0);
+  const costeAgenda=agendas? Math.round(invAds/agendas) : 0;
+  const costeLlamada=realizadas? Math.round(invAds/realizadas) : 0;
   const factLlamada=delMes.filter(v=>v.resultado==='cerrada').reduce((a,v)=>a+ +(v.importe||0),0);
   const LEADS=['Frío','Templado','Caliente','Referido','Cliente','Otro'];
   return `
@@ -1332,6 +1411,8 @@ function viewVideo(){
     <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${decididas} decididas</div></div>
     <div class="kpi"><div class="label">% no shows</div><div class="val" style="color:#FF2E3A">${pctNoShow}%</div><div class="sub">${noShows} no shows</div></div>
     <div class="kpi"><div class="label">Facturación por llamada</div><div class="val mono">${eur(factLlamada)}</div><div class="sub">cerradas este mes</div></div>
+    <div class="kpi"><div class="label">Coste por agenda</div><div class="val mono" style="color:#F59E0B">${eur(costeAgenda)}</div><div class="sub">inversión ÷ agendas</div></div>
+    <div class="kpi"><div class="label">Coste por llamada</div><div class="val mono" style="color:#F59E0B">${eur(costeLlamada)}</div><div class="sub">inversión ÷ realizadas</div></div>
   </div>
   <div class="panel">
     <div class="form-grid hidden" id="v-form">
@@ -1339,6 +1420,7 @@ function viewVideo(){
       <div class="field"><label>Tipo de lead</label><select id="v-lead">${LEADS.map(l=>`<option>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Tipo de videollamada</label><select id="v-tll"><option value="">—</option><option value="venta">De venta</option><option value="inicial">Inicial</option><option value="control">De control</option></select></div>
       <div class="field"><label>Realizada por</label><select id="v-por"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Agendada por</label><select id="v-agen"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha</label><input type="date" id="v-fecha" value="${hoy()}"></div>
       <div class="field"><label>Hora</label><input type="time" id="v-hora" value="17:00"></div>
       <div class="field"><label>Plataforma</label><select id="v-plat"><option>Zoom</option><option>Google Meet</option><option>WhatsApp</option><option>FaceTime</option><option>Otra</option></select></div>
@@ -1350,7 +1432,7 @@ function viewVideo(){
     </div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
-      ${rows.map(v=>`<tr${v.estado==='realizada'?' style="background:rgba(0,178,255,.09)"':''}><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${bTxt[v.estado]||esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
+      ${rows.map(v=>`<tr${v.estado==='realizada'?' style="background:rgba(0,178,255,.09)"':''}><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}${v.agendadoPor?`<br><span style="color:var(--muted);font-size:11px">agendó: ${esc(miembroNombre(v.agendadoPor))}</span>`:''}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${bTxt[v.estado]||esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin videollamadas</b>Programa la primera con «+ Videollamada».</div>`}
     </div>
   </div>`;
@@ -1376,7 +1458,7 @@ function syncEventoTarea(t){ if(!t.fecha) return; if(!state.eventos) state.event
 function addVideo(){
   var atleta=document.getElementById('v-atleta').value.trim();
   if(!atleta){ alert('Indica el nombre / lead.'); return; }
-  var v={id:uid(),atleta:atleta,tipoLead:document.getElementById('v-lead').value,tipoLlamada:document.getElementById('v-tll').value,realizadaPor:document.getElementById('v-por').value,fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()};
+  var v={id:uid(),atleta:atleta,tipoLead:document.getElementById('v-lead').value,tipoLlamada:document.getElementById('v-tll').value,realizadaPor:document.getElementById('v-por').value,agendadoPor:(document.getElementById('v-agen')||{}).value||'',fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()};
   if(!state.videollamadas) state.videollamadas=[]; state.videollamadas.push(v);
   syncEventoVid(v);
   save(); render();
@@ -1388,6 +1470,7 @@ function editarVideo(id){
   var tll=[['','—'],['venta','De venta'],['inicial','Inicial'],['control','De control']].map(function(o){return '<option value="'+o[0]+'"'+((v.tipoLlamada||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
   var eq=(state.equipo||[]);
   var por=['<option value="">—</option>'].concat(eq.map(function(m){return '<option value="'+m.id+'"'+((v.realizadaPor||'')===m.id?' selected':'')+'>'+esc(m.nombre)+'</option>';})).join('');
+  var agen=['<option value="">—</option>'].concat(eq.map(function(m){return '<option value="'+m.id+'"'+((v.agendadoPor||'')===m.id?' selected':'')+'>'+esc(m.nombre)+'</option>';})).join('');
   var ov=getOverlay();
   ov.innerHTML=`<div class="fx-overlay"><div class="fx-edit">
     <h3 style="margin:0 0 14px">Editar videollamada</h3>
@@ -1395,6 +1478,7 @@ function editarVideo(id){
       <div class="field"><label>Nombre / lead</label><input id="ev-atleta" value="${esc(v.atleta||'')}"></div>
       <div class="field"><label>Tipo de videollamada</label><select id="ev-tll">${tll}</select></div>
       <div class="field"><label>Realizada por</label><select id="ev-por">${por}</select></div>
+      <div class="field"><label>Agendada por</label><select id="ev-agen">${agen}</select></div>
       <div class="field"><label>Fecha</label><input type="date" id="ev-fecha" value="${v.fecha||''}"></div>
       <div class="field"><label>Hora</label><input type="time" id="ev-hora" value="${esc(v.hora||'')}"></div>
       <div class="field"><label>Estado</label><select id="ev-estado">${estados}</select></div>
@@ -1422,7 +1506,7 @@ function generarIngresosVenta(v){
 }
 function guardarVideoEdit(id){
   var v=(state.videollamadas||[]).find(function(x){return x.id===id;}); if(!v) return;
-  v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value;
+  v.atleta=val('ev-atleta'); v.tipoLlamada=document.getElementById('ev-tll').value; v.realizadaPor=document.getElementById('ev-por').value; v.agendadoPor=(document.getElementById('ev-agen')||{}).value||'';
   v.fecha=document.getElementById('ev-fecha').value||v.fecha; v.hora=val('ev-hora'); v.estado=document.getElementById('ev-estado').value; v.resultado=document.getElementById('ev-res').value; v.importe=parseFloat(document.getElementById('ev-importe').value)||0; v.notas=val('ev-notas');
   var _pg=document.getElementById('ev-pago'); if(_pg) v.pagoTipo=_pg.value; var _ms=document.getElementById('ev-meses'); if(_ms) v.mesesContratados=parseInt(_ms.value,10)||0;
   syncEventoVid(v);
@@ -1668,13 +1752,15 @@ function guardarTareaEdit(id){
   syncEventoTarea(t); cerrarFactura(); save(); render();
 }
 function addTarea(){
-  var titulo=document.getElementById('t-titulo').value.trim();
+  var V=function(id){ var el=document.getElementById(id); return el?el.value:''; };
+  var titulo=(V('t-titulo')||'').trim();
   if(!titulo){ alert('Escribe la tarea.'); return; }
   if(!state.tareas) state.tareas=[];
-  var t={id:uid(),titulo:titulo,categoria:document.getElementById('t-cat').value,asignado:document.getElementById('t-asig').value,urgencia:(document.getElementById('t-urg')||{}).value||'media',fecha:document.getElementById('t-fecha').value||null,fechaFin:document.getElementById('t-fecha-fin').value||null,horaInicio:(document.getElementById('t-hini')||{}).value||'',horaFin:(document.getElementById('t-hfin')||{}).value||'',hecha:false};
+  var t={id:uid(),titulo:titulo,categoria:V('t-cat'),asignado:V('t-asig'),urgencia:V('t-urg')||'media',fecha:V('t-fecha')||null,fechaFin:V('t-fecha-fin')||null,horaInicio:V('t-hini'),horaFin:V('t-hfin'),hecha:false};
   state.tareas.push(t);
-  syncEventoTarea(t);
+  try{ syncEventoTarea(t); }catch(e){ console.error('syncEventoTarea',e); }
   save(); render();
+  var ff=document.getElementById('t-titulo'); if(ff) ff.value='';
 }
 function toggleTarea(id){ const t=state.tareas.find(x=>x.id===id); if(t){ t.hecha=!t.hecha; save(); render(); } }
 function addCat(){ const el=document.getElementById('t-newcat'); const v=el.value.trim(); if(!v) return; if(!state.tareaCats) state.tareaCats=[]; if(!state.tareaCats.includes(v)) state.tareaCats.push(v); save(); render(); }
@@ -1716,9 +1802,9 @@ function addMiembro(){
 
 function viewFacturas(){
   const em=state.emisor||{};
-  const prov=provFacturas();
-  const borr=(state.facturas||[]).filter(f=>f.estado!=='emitida').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-  const emit=(state.facturas||[]).filter(f=>f.estado==='emitida').sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const prov=(provFacturas()||[]).filter(function(p){return facEnFiltro(p.fecha);});
+  const borr=(state.facturas||[]).filter(f=>f.estado!=='emitida'&&facEnFiltro(f.fecha)).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  const emit=(state.facturas||[]).filter(f=>f.estado==='emitida'&&facEnFiltro(f.fecha)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const fs=borr.concat(emit);
   const nsel=Object.keys(selFacturas).filter(function(k){return selFacturas[k];}).length;
   const clientes=state.altas;
@@ -1727,6 +1813,7 @@ function viewFacturas(){
   <div class="page-head"><div><div class="eyebrow">Billing</div><h1>Invoices</h1>
   <p>Facturas de cobros de Stripe, de ingresos de cliente y manuales. Numeración correlativa por serie.</p></div>
   <button class="btn" onclick="toggleForm('fac-form')">+ Factura</button></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:12px 0"><span class="muted-mini">Filtrar:</span><button class="mchip${facFiltro==='todos'?' on':''}" onclick="setFacFiltro('todos')">Todos</button><button class="mchip${facFiltro==='Q1'?' on':''}" onclick="setFacFiltro('Q1')">T1</button><button class="mchip${facFiltro==='Q2'?' on':''}" onclick="setFacFiltro('Q2')">T2</button><button class="mchip${facFiltro==='Q3'?' on':''}" onclick="setFacFiltro('Q3')">T3</button><button class="mchip${facFiltro==='Q4'?' on':''}" onclick="setFacFiltro('Q4')">T4</button><input type="month" value="${(facFiltro.charAt(0)!=='Q'&&facFiltro!=='todos')?facFiltro:''}" onchange="setFacFiltro(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:5px 8px;margin-left:6px"></div>
   <div class="panel">
     <div class="panel-head"><h3>Datos de emisor</h3><span class="muted-mini">Tus datos; aparecen en todas tus facturas</span><button class="btn ghost sm" onclick="toggleForm('em-form')">Editar</button></div>
     <div class="form-grid ${emisorOK?'hidden':''}" id="em-form">
@@ -1942,6 +2029,9 @@ function guardarEventoEdit(id){
   cerrarFactura(); save(); render();
 }
 function cerrarFactura(){ const ov=getOverlay(); if(ov) ov.innerHTML=''; document.body.classList.remove('printing'); }
+var facFiltro='todos';
+function setFacFiltro(v){ facFiltro=v||'todos'; render(); }
+function facEnFiltro(fecha){ if(facFiltro==='todos') return true; if(!fecha) return false; if(facFiltro.charAt(0)==='Q'){ var q=parseInt(facFiltro.slice(1),10); var m=parseInt(fecha.slice(5,7),10); return fecha.slice(0,4)===hoy().slice(0,4) && m>=(q-1)*3+1 && m<=q*3; } return fecha.slice(0,7)===facFiltro; }
 function provFacturas(){
   var map={}, groups={};
   (state.facturas||[]).forEach(function(f){ if(f.estado!=='emitida' && !f.numero){ var anio=(f.fecha||hoy()).slice(0,4); var key=f.tipo+'|'+anio; (groups[key]=groups[key]||[]).push(f); } });

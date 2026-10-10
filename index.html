@@ -1873,6 +1873,7 @@ async function addFactura(){
   var ivaPct=+document.getElementById('fac-iva').value;
   var irpfPct=+document.getElementById('fac-irpf').value||0;
   var ivaCuota=base*ivaPct/100, irpfCuota=base*irpfPct/100, total=base+ivaCuota-irpfCuota;
+  if(total>400) tipo='nominativa';
   var fac={id:uid(),numero:'',estado:'borrador',fecha:val('fac-fecha')||hoy(),tipo:tipo,periodo:document.getElementById('fac-periodo').value,concepto:val('fac-concepto')||'Servicio',clienteNombre:val('fac-clinom'),clienteNif:val('fac-clinif'),clienteDir:val('fac-clidir'),base:base,ivaPct:ivaPct,ivaCuota:ivaCuota,irpfPct:irpfPct,irpfCuota:irpfCuota,total:total,origen:''};
   if(!state.facturas) state.facturas=[];
   state.facturas.push(fac);
@@ -2096,6 +2097,7 @@ function guardarFacturaEdit(id){
   f.base=base; f.ivaPct=ivaPct; f.irpfPct=irpfPct;
   f.ivaCuota=Number((base*ivaPct/100).toFixed(2)); f.irpfCuota=Number((base*irpfPct/100).toFixed(2));
   f.total=Number((base+f.ivaCuota-f.irpfCuota).toFixed(2));
+  if(f.total>400) f.tipo='nominativa';
   if(f.numero){ var pp=String(f.numero).split('/'); var pn=parseInt(pp[0],10); var pa=parseInt(pp[1]||(f.fecha||hoy()).slice(0,4),10); if(!isNaN(pn)&&!isNaN(pa)){ if(!state.series)state.series={}; var k=f.tipo+'|'+pa; state.series[k]=Math.max(state.series[k]||0,pn); try{ sb.rpc('bump_factura_series',{p_serie:f.tipo,p_anio:pa,p_n:pn}); }catch(e){} } }
   cerrarFactura(); save(); render();
 }

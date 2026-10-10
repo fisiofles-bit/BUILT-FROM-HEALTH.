@@ -2044,7 +2044,7 @@ function facEnFiltro(fecha){ if(facFiltro==='todos') return true; if(!fecha) ret
 function provFacturas(){
   var map={}, groups={};
   (state.facturas||[]).forEach(function(f){ if(f.estado!=='emitida' && !f.numero){ var anio=(f.fecha||hoy()).slice(0,4); var key=f.tipo+'|'+anio; (groups[key]=groups[key]||[]).push(f); } });
-  Object.keys(groups).forEach(function(key){ var anio=key.split('|')[1]; var base=(state.series&&state.series[key]!=null)?state.series[key]:0; groups[key].slice().sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');}).forEach(function(f,i){ map[f.id]=(base+i+1)+'/'+anio; }); });
+  Object.keys(groups).forEach(function(key){ var parts=key.split('|'); var tipo=parts[0]; var anio=parts[1]; var base=(state.series&&state.series[key]!=null)?state.series[key]:0; (state.facturas||[]).forEach(function(f){ if(f.tipo===tipo && String(f.fecha||'').slice(0,4)===anio && f.numero){ var n=parseInt(String(f.numero).replace(/^[A-Za-z]-/,'').split('/')[0],10); if(!isNaN(n)&&n>base) base=n; } }); var pre=(parseInt(anio,10)>=2027)?((tipo==='nominativa')?'N-':'S-'):''; groups[key].slice().sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');}).forEach(function(f,i){ map[f.id]=pre+(base+i+1)+'/'+anio; }); });
   return map;
 }
 function facRow(f, prov){
@@ -2055,9 +2055,9 @@ function facRow(f, prov){
   return `<tr><td>${chk}</td><td class="num"><b>${numero}</b></td><td class="num">${fFecha(f.fecha)}</td><td>${esc(f.clienteNombre||'—')}</td><td><span class="badge ${emitida?'b-green':'b-gray'}">${emitida?'Emitida':'Borrador'}</span></td><td class="num" style="text-align:right">${eur(f.total)}</td><td style="text-align:right">${acc}</td></tr>`;
 }
 function facBloque(tipo, titulo, prov){
-  var borr=(state.facturas||[]).filter(function(f){return f.tipo===tipo && f.estado!=='emitida';}).sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
-  var emit=(state.facturas||[]).filter(function(f){return f.tipo===tipo && f.estado==='emitida';}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
-  var fs=borr.concat(emit);
+  var borr=(state.facturas||[]).filter(function(f){return f.tipo===tipo && f.estado!=='emitida' && facEnFiltro(f.fecha);});
+  var emit=(state.facturas||[]).filter(function(f){return f.tipo===tipo && f.estado==='emitida' && facEnFiltro(f.fecha);});
+  var fs=borr.concat(emit).sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
   return `<div class="panel"><div class="panel-head"><h3>${titulo}</h3><span class="muted-mini">${borr.length} borrador(es) · ${emit.length} emitida(s)</span>${borr.length?`<button class="btn sm" onclick="emitirTodos('${tipo}')">Emitir borradores</button>`:''}</div>
     <div class="panel-body">${fs.length?`<table><thead><tr><th></th><th>Nº</th><th>Fecha pago</th><th>Cliente</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>${fs.map(function(f){return facRow(f,prov);}).join('')}</tbody></table>`:`<div class="empty" style="padding:24px"><b>Sin facturas ${tipo==='nominativa'?'nominativas':'simplificadas'}</b>Se irán creando como borrador con cada cobro o ingreso.</div>`}</div></div>`;
 }

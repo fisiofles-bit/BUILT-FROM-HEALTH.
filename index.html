@@ -523,7 +523,7 @@ function togglePagoManual(id,checked){
   if(checked){
     c.pagoManual=mes;
     var existe=(state.finanzas||[]).some(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==id) return false; var d=new Date(fx.fecha); return d.getMonth()===mm&&d.getFullYear()===yy; });
-    if(!existe){ if(!state.finanzas) state.finanzas=[]; state.finanzas.push({id:uid(), fecha:hoy(), tipo:'ingreso', concepto:'Cuota '+mes+' · '+(c.nombre||''), categoria:'Ingreso', importe:(c.tarifa||0), cliente:id, fuente:(c.fuentePago||'')}); showToast('Cobro registrado: '+eur(c.tarifa||0), false, 3000); }
+    if(!existe){ if(!state.finanzas) state.finanzas=[]; var _mp={id:uid(), fecha:hoy(), tipo:'ingreso', concepto:'Cuota '+mes+' · '+(c.nombre||''), categoria:'Ingreso', importe:(c.tarifa||0), cliente:id, fuente:(c.fuentePago||'')}; state.finanzas.push(_mp); try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(_mp); }catch(e){} showToast('Cobro registrado: '+eur(c.tarifa||0), false, 3000); }
   } else {
     c.pagoManual='';
     var quitar=(state.finanzas||[]).filter(function(fx){ if(fx.tipo!=='ingreso'||fx.cliente!==id) return false; var d=new Date(fx.fecha); if(!(d.getMonth()===mm&&d.getFullYear()===yy)) return false; return (fx.concepto||'').indexOf('Cuota ')===0; });
@@ -925,8 +925,8 @@ function confirmarRenovAviso(id){
 function asignarPago(movId, clienteId){
   if(!clienteId) return;
   var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
-  f.cliente=clienteId; save(); render();
-  showToast('Pago asignado al cliente.', false, 2500);
+  f.cliente=clienteId; try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(f); }catch(e){} save(); render();
+  showToast('Pago asignado y factura creada.', false, 2500);
 }
 function pagosSinAsignar(){
   return (state.finanzas||[]).filter(function(f){ return f.tipo==='ingreso' && !f.cliente && f.categoria!=='Personal' && f.fuente && f.fuente.trim()!=='' && f.fuente.toLowerCase().indexOf('otro')<0; });
@@ -2105,12 +2105,12 @@ async function emitirFactura(id){
   if(!confirm('¿Emitir esta factura? El número quedará fijado.')) return;
   var anio=parseInt((f.fecha||hoy()).slice(0,4),10); var k=f.tipo+'|'+anio;
   if(f.numero){
-    var pn=parseInt(String(f.numero).split('/')[0],10); f.estado='emitida';
+    var pn=parseInt(String(f.numero).replace(/^[A-Za-z]-/,'').split('/')[0],10); f.estado='emitida';
     if(!isNaN(pn)){ if(!state.series) state.series={}; state.series[k]=Math.max(state.series[k]||0,pn); try{ await sb.rpc('bump_factura_series',{p_serie:f.tipo,p_anio:anio,p_n:pn}); }catch(e){} }
   } else {
     var r=await sb.rpc('next_factura_numero',{p_serie:f.tipo,p_anio:anio});
     if(r.error||!r.data){ alert('No se pudo emitir la factura.'); return; }
-    f.numero=r.data; f.estado='emitida';
+    f.numero=(anio>=2027?((f.tipo==='nominativa')?'N-':'S-'):'')+r.data; f.estado='emitida';
     if(!state.series) state.series={}; state.series[k]=parseInt(String(r.data).split('/')[0],10);
   }
   save(); render();
@@ -2133,14 +2133,44 @@ async function generarFacturaDesdePago(mov){
   var em=state.emisor||{};
   if(!em.nombre||!em.nif) return null;
   var c=state.altas.find(function(x){return x.id===mov.cliente;})||{};
+  if((state.facturas||[]).some(function(x){return x.origen===mov.id;})) return null;
   var ivaPct=(em.ivaDefault!=null)?+em.ivaDefault:0;
-  var tipo=em.tipoDefault||'auto'; if(tipo==='auto') tipo=c.nif?'nominativa':'simplificada';
   var total=+mov.importe;
+  var tipo=(total>400)?'nominativa':'simplificada';
   var base=ivaPct>0? total/(1+ivaPct/100) : total;
   var ivaCuota=total-base;
   var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:mov.concepto||'Servicio',clienteNombre:(c.nombreFacturacion||c.nombre||''),clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
   if(!state.facturas) state.facturas=[];
-  state.facturas.push(fac); return fac;
+  state.facturas.push(fac);
+  if(tipo==='nominativa' && (!c.nif || !(c.direccion&&String(c.direccion).trim()))){
+    showToast('\u26a0 Factura de '+(c.nombre||'cliente')+' (>400\u20ac, nominativa): falta NIF y/o dirección en su ficha. Complétalos y emítela.', true, 7000);
+  } else {
+    var _an=parseInt((fac.fecha||hoy()).slice(0,4),10);
+    var _pre=function(t){ return (_an>=2027)?((t==='nominativa')?'N-':'S-'):''; };
+    var _np=function(nn){ return parseInt(String(nn||'').replace(/^[A-Za-z]-/,'').split('/')[0],10)||0; };
+    var _fmt=function(n,t){ return _pre(t)+n+'/'+_an; };
+    var _emit=(state.facturas||[]).filter(function(x){ return x.estado==='emitida' && x.tipo===fac.tipo && String(x.fecha||'').slice(0,4)===String(_an) && x.id!==fac.id; });
+    var _post=_emit.filter(function(x){ return String(x.fecha||'') > String(fac.fecha||''); });
+    var _hecho=false;
+    if(_post.length){
+      var _lista=_post.map(function(x){return x.numero;}).join(', ');
+      if(confirm('Este cobro ('+fFecha(fac.fecha)+') es ANTERIOR a '+_post.length+' factura(s) ya emitida(s): '+_lista+'.\n\nPara mantener el orden por fecha, esas facturas se RENUMERARAN (+1) y volveran a BORRADOR para que las vuelvas a emitir. Esta nueva tomara el numero que les corresponde.\n\nContinuar?   (Cancelar = numerar esta al final, sin tocar las demas.)')){
+        var _newN=Math.min.apply(null, _post.map(function(x){return _np(x.numero);}));
+        _post.slice().sort(function(a,b){return _np(b.numero)-_np(a.numero);}).forEach(function(x){ x.numero=_fmt(_np(x.numero)+1, x.tipo); x.estado='borrador'; });
+        fac.numero=_fmt(_newN, fac.tipo); fac.estado='borrador';
+        var _max=_newN+_post.length;
+        var _k=fac.tipo+'|'+_an; if(!state.series) state.series={}; state.series[_k]=Math.max(state.series[_k]||0,_max);
+        try{ await sb.rpc('bump_factura_series',{p_serie:fac.tipo,p_anio:_an,p_n:_max}); }catch(e){}
+        showToast('Renumeradas '+_post.length+' factura(s) -> ahora en BORRADOR para reemitir: '+_lista+'. La nueva es '+fac.numero+'.', false, 10000);
+        _hecho=true;
+      }
+    }
+    if(!_hecho){
+      try{ var _r=await sb.rpc('next_factura_numero',{p_serie:fac.tipo,p_anio:_an}); if(!_r.error&&_r.data){ fac.numero=_fmt(_np(_r.data), fac.tipo); fac.estado='emitida'; var _k2=fac.tipo+'|'+_an; if(!state.series) state.series={}; state.series[_k2]=Math.max(state.series[_k2]||0,_np(_r.data)); } }catch(e){ console.error('numerar',e); }
+    }
+  }
+  save(); render();
+  return fac;
 }
 
 var pubMes=''; var angOpen=false;

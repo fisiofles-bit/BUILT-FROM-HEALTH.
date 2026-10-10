@@ -932,6 +932,14 @@ function pagosSinAsignar(){
   return (state.finanzas||[]).filter(function(f){ return f.tipo==='ingreso' && !f.cliente && f.categoria!=='Personal' && f.fuente && f.fuente.trim()!=='' && f.fuente.toLowerCase().indexOf('otro')<0; });
 }
 
+function nuevoClienteDesdePago(movId){
+  var f=(state.finanzas||[]).find(function(x){return x.id===movId;}); if(!f) return;
+  var nom=((f.concepto||'').indexOf(' - ')>=0) ? (f.concepto.split(' - ').slice(1).join(' - ')).trim() : '';
+  altaEdit={ nombre:nom, fechaAlta:(f.fecha||hoy()), estado:'activo', fuentePago:(f.fuente||'Stripe') };
+  window._pagoPendiente=movId;
+  irTab('altas');
+  setTimeout(function(){ var el=document.getElementById('a-form'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'}); },80);
+}
 function trayPagosHTML(){
   var sa=pagosSinAsignar();
   if(!sa.length) return '';
@@ -958,7 +966,7 @@ function marcarPersonal(movId){
 }
 function asignarPagoSel(movId, value){
   if(!value) return;
-  if(value==='__nuevo__'){ crearClienteDesdePago(movId); return; }
+  if(value==='__nuevo__'){ nuevoClienteDesdePago(movId); return; }
   asignarPago(movId, value);
 }
 function crearClienteDesdePago(movId){
@@ -1183,7 +1191,7 @@ function avisoDuplicados(){
 
 function viewAltas(){
   const ae=altaEdit||{};
-  const rows=[...state.altas]; if(altaSort==='alfabetico') rows.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='plan') rows.sort((a,b)=>((a.duracionPlan||99)-(b.duracionPlan||99))||(a.nombre||'').localeCompare(b.nombre||'')); else rows.sort((a,b)=>((a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999'))||(a.nombre||'').localeCompare(b.nombre||''));
+  const rows=[...state.altas]; if(altaSort==='alfabetico') rows.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='plan') rows.sort((a,b)=>((a.duracionPlan||99)-(b.duracionPlan||99))||(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='alta_desc') rows.sort((a,b)=>(b.fechaAlta||'').localeCompare(a.fechaAlta||'')); else if(altaSort==='alta_asc') rows.sort((a,b)=>(a.fechaAlta||'9999').localeCompare(b.fechaAlta||'9999')); else if(altaSort==='baja_asc') rows.sort((a,b)=>(a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999')); else if(altaSort==='baja_desc') rows.sort((a,b)=>(b.fechaVencimiento||'').localeCompare(a.fechaVencimiento||'')); else rows.sort((a,b)=>((a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999'))||(a.nombre||'').localeCompare(b.nombre||''));
   rows.sort(function(a,b){return (a.estado==='baja'?1:0)-(b.estado==='baja'?1:0);});
   const bE={activo:'b-cyan',pausa:'b-amber',alta:'b-ink',baja:'b-gray'};
   const ents=(state.equipo||[]).filter(m=>m.rol==='Entrenador');
@@ -1217,7 +1225,7 @@ function viewAltas(){
       <div class="field full"><label>Observaciones</label><input id="a-notas" value="${esc(ae.notas||'')}"></div>
       <div class="form-actions"><button class="btn ghost sm" onclick="cancelarAlta()">Cancelar</button><button class="btn sm" onclick="guardarAlta()">${altaEdit?'Guardar cambios':'Guardar'}</button></div>
     </div>
-    <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"> <select class="inl" style="margin-left:8px" onchange="setAltaSort(this.value)"><option value="renovacion"${altaSort==='renovacion'?' selected':''}>Renovación más cercana</option><option value="plan"${altaSort==='plan'?' selected':''}>Tipo de plan</option><option value="alfabetico"${altaSort==='alfabetico'?' selected':''}>Alfabético</option></select></div>
+    <div style="padding:12px 20px;border-bottom:1px solid var(--line)"><input class="buscador" placeholder="Buscar cliente por nombre…" oninput="filtrarAltas(this.value)"> <select class="inl" style="margin-left:8px" onchange="setAltaSort(this.value)"><option value="renovacion"${altaSort==='renovacion'?' selected':''}>Renovación más cercana</option><option value="plan"${altaSort==='plan'?' selected':''}>Tipo de plan</option><option value="alfabetico"${altaSort==='alfabetico'?' selected':''}>Alfabético</option><option value="alta_desc"${altaSort==='alta_desc'?' selected':''}>Alta ↓ (reciente)</option><option value="alta_asc"${altaSort==='alta_asc'?' selected':''}>Alta ↑ (antigua)</option><option value="baja_asc"${altaSort==='baja_asc'?' selected':''}>Baja ↑ (próxima)</option><option value="baja_desc"${altaSort==='baja_desc'?' selected':''}>Baja ↓ (lejana)</option></select></div>
     <div class="panel-body">
       ${rows.length?`<table><thead><tr><th>Atleta</th><th>Deporte</th><th>Lesión</th><th>Tipo</th><th>Entrenador</th><th>Estado</th><th>Alta</th><th>Baja</th><th>Plan</th><th style="text-align:right">Tarifa</th><th>Vía</th><th>Pago mes</th><th>Renovación</th><th></th></tr></thead><tbody>
       ${rows.map(a=>a.estado==='baja'?bajaRowHTML(a):`<tr class="alta-row" data-n="${esc((a.nombre||'').toLowerCase())}"><td><b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px" onclick="fichaCliente('${a.id}')">${esc(a.nombre)}</b>${a.telefono?waBtn(a.id):''}</td><td>${esc(a.deporte||'—')}</td><td>${esc(a.lesion||'—')}</td><td>${a.tipoCliente?`<span class="badge b-gray">${esc(a.tipoCliente)}</span>`:'—'}</td><td>${a.entrenador?esc(miembroNombre(a.entrenador)):'—'}</td><td><select class="inl" style="color:${estadoCol(a.estado)};background:${estadoBg(a.estado)};border:0;border-radius:20px;padding:4px 12px;font-weight:600;font-size:12px" onchange="setCampo('${a.id}','estado',this.value)">${[['activo','Activo'],['pausa','Pausado'],['baja','Baja']].map(o=>`<option value="${o[0]}"${(a.estado===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td class="num">${fFecha(a.fechaAlta)}</td><td><input type="date" class="inl" value="${a.fechaVencimiento||''}" onchange="setCampo('${a.id}','fechaVencimiento',this.value)" style="width:132px;color:${bajaColor(a.fechaVencimiento)}"></td><td><select class="inl" onchange="setCampo('${a.id}','duracionPlan',this.value)" style="color:${planColor(a.duracionPlan)}">${[['0','—'],['1','Mensual'],['3','Trimestral'],['6','Semestral'],['9','9 meses'],['12','Anual']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select></td><td style="text-align:right"><input type="number" step="0.01" class="inl" value="${a.tarifa||''}" onchange="setCampo('${a.id}','tarifa',this.value)" style="width:82px;text-align:right;color:${planColor(a.duracionPlan)}"></td><td><select class="inl" onchange="setCampo('${a.id}','fuentePago',this.value)" style="color:${fuenteColor(a.fuentePago)}">${['','Abanca/Transf.','Stripe','Hotmart','Efectivo','Otro'].map(o=>`<option value="${o}"${((a.fuentePago||'')===o)?' selected':''}>${o||'—'}</option>`).join('')}</select></td><td>${(()=>{const s=pagoEstado(a); if(!s) return '—'; const paid=(s.txt==='Pagado'); return `<span class="badge ${s.cls}">${s.txt}</span> <input type="checkbox" title="Marcar cobrado este mes" ${paid?'checked':''} onchange="togglePagoManual('${a.id}',this.checked)" style="vertical-align:middle;cursor:pointer;accent-color:#22D07B">`;})()}</td><td>${a.renovaciones?`<span class="badge b-green">×${a.renovaciones}</span> `:''}<select class="inl" id="renov-${a.id}" style="width:60px;padding:3px 4px">${[['1','1m'],['3','3m'],['6','6m'],['9','9m'],['12','12m']].map(o=>`<option value="${o[0]}"${(String(a.duracionPlan||0)===o[0])?' selected':''}>${o[1]}</option>`).join('')}</select> <button class="btn ghost sm" onclick="renovar('${a.id}')">Renovar</button></td><td style="text-align:right"><button class="btn ghost sm" onclick="fichaCliente('${a.id}')">Ficha</button> <button class="btn ghost sm" onclick="editarAlta('${a.id}')">Editar</button> <button class="del" onclick="delItem('altas','${a.id}')">✕</button></td></tr>`).join('')}
@@ -1369,7 +1377,7 @@ function guardarAlta(){
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
   var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),nombreFacturacion:val('a-nomfact'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico'),pagador:val('a-pagador')};
-  if(altaEdit&&altaEdit.id){ Object.assign(altaEdit,obj); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); registrarIngresoAlta(obj); }
+  if(altaEdit&&altaEdit.id){ var _oldNom=altaEdit.nombre; Object.assign(altaEdit,obj); (state.facturas||[]).forEach(function(fac){ if(fac.estado!=='emitida' && _oldNom && fac.clienteNombre===_oldNom){ fac.clienteNombre=obj.nombre; if(obj.nif) fac.clienteNif=obj.nif; if(obj.direccion) fac.clienteDir=obj.direccion; } }); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); if(window._pagoPendiente){ var _fp=(state.finanzas||[]).find(function(x){return x.id===window._pagoPendiente;}); if(_fp){ _fp.cliente=obj.id; try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(_fp); }catch(e){} } window._pagoPendiente=null; } else { registrarIngresoAlta(obj); } }
   altaEdit=null; save(); render();
 }
 var vidMes=hoy().slice(0,7), vidSort='fecha', vidEstado='';
@@ -1802,7 +1810,7 @@ function addMiembro(){
 
 function viewFacturas(){
   const em=state.emisor||{};
-  const prov=(provFacturas()||[]).filter(function(p){return facEnFiltro(p.fecha);});
+  const prov=provFacturas();
   const borr=(state.facturas||[]).filter(f=>f.estado!=='emitida'&&facEnFiltro(f.fecha)).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   const emit=(state.facturas||[]).filter(f=>f.estado==='emitida'&&facEnFiltro(f.fecha)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const fs=borr.concat(emit);

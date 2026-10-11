@@ -1930,7 +1930,7 @@ function descargarPDF(id){
   var emLines=[]; if(em.nombre) emLines.push(em.nombre); if(em.nif) emLines.push('NIF: '+em.nif); if(em.direccion) emLines.push(em.direccion); if(em.email) emLines.push(em.email);
   var emBottom=drawBoxPDF(doc, 123, 16, W-M-123, 'EMISOR', emLines.length?emLines:['\u2014']);
   var cy=Math.max(y, emBottom)+10;
-  var clLines=[]; if(f.clienteNombre) clLines.push(f.clienteNombre); if(f.tipo==='nominativa'){ if(f.clienteNif) clLines.push('NIF: '+f.clienteNif); if(f.clienteDir) clLines.push(f.clienteDir); }
+  var clLines=[]; if(f.clienteNombre) clLines.push(f.clienteNombre); if(f.clienteNif) clLines.push('NIF: '+f.clienteNif); if(f.clienteDir) clLines.push(f.clienteDir);
   if(clLines.length){ cy=drawBoxPDF(doc, M, cy, W-2*M, 'CLIENTE', clLines)+9; }
   var ty=cy;
   doc.setFillColor(244,244,244); doc.rect(M, ty, W-2*M, 8, 'F');
@@ -2052,7 +2052,7 @@ function facRow(f, prov){
   var numero = emitida ? esc(f.numero) : (f.numero ? esc(f.numero)+' <span class="prov">(manual)</span>' : `<span style="color:var(--muted)">${prov[f.id]||'—'} <span class="prov">(prov.)</span></span>`);
   var chk = emitida?'':`<input type="checkbox" onchange="toggleSelFac('${f.id}',this.checked)" ${selFacturas[f.id]?'checked':''}>`;
   var acc = `<button class="btn ghost sm" onclick="editarFactura('${f.id}')">Editar</button> `+(emitida?'':`<button class="btn sm" onclick="emitirFactura('${f.id}')">Emitir</button> `)+`<button class="btn ghost sm" onclick="verFactura('${f.id}')">Ver</button> <button class="btn ghost sm" onclick="descargarPDF('${f.id}')">PDF</button> <button class="del" onclick="delItem('facturas','${f.id}')">✕</button>`;
-  return `<tr><td>${chk}</td><td class="num"><b>${numero}</b></td><td class="num">${fFecha(f.fecha)}</td><td>${esc(f.clienteNombre||'—')}</td><td><span class="badge ${emitida?'b-green':'b-gray'}">${emitida?'Emitida':'Borrador'}</span></td><td class="num" style="text-align:right">${eur(f.total)}</td><td style="text-align:right">${acc}</td></tr>`;
+  return `<tr${(!f.clienteNif||!f.clienteDir)?' style="background:rgba(255,53,71,.08)"':''}><td>${chk}</td><td class="num"><b>${numero}</b></td><td class="num">${fFecha(f.fecha)}</td><td>${esc(f.clienteNombre||'—')}${(f.clienteNif||f.clienteDir)?`<br><span style="font-size:11px;color:var(--muted)">${f.clienteNif?('NIF: '+esc(f.clienteNif)):''}${(f.clienteNif&&f.clienteDir)?' · ':''}${f.clienteDir?esc(f.clienteDir):''}</span>`:''}${(!f.clienteNif||!f.clienteDir)?`<br><span style="font-size:11px;color:#FF3547;font-weight:600">\u26a0 falta ${!f.clienteNif?'NIF':''}${(!f.clienteNif&&!f.clienteDir)?' y ':''}${!f.clienteDir?'dirección':''}</span>`:''}</td><td><span class="badge ${emitida?'b-green':'b-gray'}">${emitida?'Emitida':'Borrador'}</span></td><td class="num" style="text-align:right">${eur(f.total)}</td><td style="text-align:right">${acc}</td></tr>`;
 }
 function facBloque(tipo, titulo, prov){
   var borr=(state.facturas||[]).filter(function(f){return f.tipo===tipo && f.estado!=='emitida' && facEnFiltro(f.fecha);});
@@ -2103,6 +2103,7 @@ function guardarFacturaEdit(id){
 }
 async function emitirFactura(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f||f.estado==='emitida') return;
+  if(f.tipo==='simplificada') f.concepto='Pago Mensual Built From Health - Servicio Online 1a1 de Recuperación';
   if(f.tipo==='nominativa' && (!f.clienteNif || !f.clienteDir)){ if(!confirm('Una factura NOMINATIVA debe incluir NIF/DNI y dirección del cliente, y faltan. Cancela para editarla y añadirlos, o Aceptar para emitir igualmente.')) return; }
   if(!confirm('¿Emitir esta factura? El número quedará fijado.')) return;
   var anio=parseInt((f.fecha||hoy()).slice(0,4),10); var k=f.tipo+'|'+anio;
@@ -2141,7 +2142,7 @@ async function generarFacturaDesdePago(mov){
   var tipo=(total>400)?'nominativa':'simplificada';
   var base=ivaPct>0? total/(1+ivaPct/100) : total;
   var ivaCuota=total-base;
-  var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:mov.concepto||'Servicio',clienteNombre:(c.nombreFacturacion||c.nombre||''),clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
+  var fac={id:uid(),numero:'',estado:'borrador',fecha:mov.fecha||hoy(),tipo:tipo,periodo:(mov.fecha||hoy()).slice(0,7),concepto:(tipo==='simplificada')?'Pago Mensual Built From Health - Servicio Online 1a1 de Recuperación':(mov.concepto||'Servicio'),clienteNombre:(c.nombreFacturacion||c.nombre||''),clienteNif:c.nif||'',clienteDir:c.direccion||'',base:+base.toFixed(2),ivaPct:ivaPct,ivaCuota:+ivaCuota.toFixed(2),irpfPct:0,irpfCuota:0,total:+total.toFixed(2),origen:mov.id};
   if(!state.facturas) state.facturas=[];
   state.facturas.push(fac);
   if(tipo==='nominativa' && (!c.nif || !(c.direccion&&String(c.direccion).trim()))){

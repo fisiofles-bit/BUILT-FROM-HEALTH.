@@ -2073,6 +2073,13 @@ function facBloque(tipo, titulo, prov){
   return `<div class="panel"><div class="panel-head"><h3>${titulo}</h3><span class="muted-mini">${borr.length} borrador(es) · ${emit.length} emitida(s)</span>${borr.length?`<button class="btn sm" onclick="emitirTodos('${tipo}')">Emitir borradores</button>`:''}</div>
     <div class="panel-body">${fs.length?`<table><thead><tr><th></th><th>Nº</th><th>Fecha pago</th><th>Cliente</th><th>Estado</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>${fs.map(function(f){return facRow(f,prov);}).join('')}</tbody></table>`:`<div class="empty" style="padding:24px"><b>Sin facturas ${tipo==='nominativa'?'nominativas':'simplificadas'}</b>Se irán creando como borrador con cada cobro o ingreso.</div>`}</div></div>`;
 }
+function rellenarClienteFactura(cid){
+  if(!cid) return;
+  var c=(state.altas||[]).find(function(x){return x.id===cid;}); if(!c) return;
+  var nom=(c.nombreFacturacion&&String(c.nombreFacturacion).trim())?String(c.nombreFacturacion).trim():(c.nombre||'');
+  var set=function(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  set('ef-clinom', nom); set('ef-clinif', c.nif||''); set('ef-clidir', c.direccion||'');
+}
 function editarFactura(id){
   var f=(state.facturas||[]).find(function(x){return x.id===id;}); if(!f) return;
   var opts=[['nominativa','Nominativa (completa)'],['simplificada','Simplificada']].map(function(o){return '<option value="'+o[0]+'"'+(f.tipo===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
@@ -2085,7 +2092,8 @@ function editarFactura(id){
       <div class="field"><label>Tipo</label><select id="ef-tipo">${opts}</select></div>
       <div class="field"><label>Periodo</label><input type="month" id="ef-periodo" value="${esc(f.periodo||'')}"></div>
       <div class="field"><label>Concepto</label><input id="ef-concepto" value="${esc(f.concepto||'')}"></div>
-      <div class="field"><label>Cliente</label><input id="ef-clinom" value="${esc(f.clienteNombre||'')}"></div>
+      <div class="field full"><label>Asignar cliente (rellena sus datos al elegirlo)</label><select id="ef-cliente" onchange="rellenarClienteFactura(this.value)"><option value="">— elegir cliente —</option>${(state.altas||[]).map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Cliente (nombre en factura)</label><input id="ef-clinom" value="${esc(f.clienteNombre||'')}"></div>
       <div class="field"><label>NIF cliente</label><input id="ef-clinif" value="${esc(f.clienteNif||'')}"></div>
       <div class="field"><label>Dirección cliente</label><input id="ef-clidir" value="${esc(f.clienteDir||'')}"></div>
       <div class="field"><label>Base imponible (€)</label><input type="number" step="0.01" id="ef-base" value="${f.base||0}"></div>

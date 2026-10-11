@@ -1370,6 +1370,18 @@ function registrarIngresoAlta(obj){
   if(!state.finanzas) state.finanzas=[];
   state.finanzas.push({id:uid(), fecha:(obj.fechaAlta||hoy()), tipo:'ingreso', concepto:(obj.pagoUnico?'Pago único - ':'Cuota - ')+(obj.nombre||''), categoria:'Suscripción', importe:imp, cliente:obj.id, fuente:(obj.fuentePago||'')});
 }
+function sincronizarFacturasCliente(c, oldNom, oldFact){
+  if(!c) return;
+  var nombreFact=(c.nombreFacturacion&&String(c.nombreFacturacion).trim())?String(c.nombreFacturacion).trim():(c.nombre||'');
+  var names=[oldNom,oldFact,c.nombre,c.nombreFacturacion].filter(function(x){return x;});
+  (state.facturas||[]).forEach(function(fac){
+    if(fac.estado==='emitida') return;
+    var linked=false;
+    if(fac.origen){ var mov=(state.finanzas||[]).find(function(m){return m.id===fac.origen;}); if(mov && mov.cliente===c.id) linked=true; }
+    if(!linked && names.indexOf(fac.clienteNombre)>=0) linked=true;
+    if(linked){ fac.clienteNombre=nombreFact; fac.clienteNif=c.nif||''; fac.clienteDir=c.direccion||''; }
+  });
+}
 function guardarAlta(){
   var nombre=document.getElementById('a-nombre').value.trim();
   if(!nombre){ alert('El nombre es obligatorio.'); return; }
@@ -1377,7 +1389,7 @@ function guardarAlta(){
   var falta=document.getElementById('a-fecha').value||hoy();
   var venc=val('a-venc'); if(dur>0&&falta) venc=addMonthsStr(falta,dur);
   var obj={nombre:nombre,deporte:val('a-dep'),lesion:val('a-lesion'),entrenador:document.getElementById('a-ent').value,fechaAlta:falta,tarifa:parseFloat(document.getElementById('a-tarifa').value)||0,estado:document.getElementById('a-estado').value,nif:val('a-nif'),direccion:val('a-dir'),nombreFacturacion:val('a-nomfact'),email:val('a-email'),tipoCliente:val('a-tipocli'),diaCobro:parseInt(document.getElementById('a-diacobro').value,10)||0,duracionPlan:dur,fechaVencimiento:venc,telefono:val('a-tel'),notas:val('a-notas'),pagoUnico:((document.getElementById('a-pagou')||{}).value==='unico'),pagador:val('a-pagador')};
-  if(altaEdit&&altaEdit.id){ var _oldNom=altaEdit.nombre; Object.assign(altaEdit,obj); (state.facturas||[]).forEach(function(fac){ if(fac.estado!=='emitida' && _oldNom && fac.clienteNombre===_oldNom){ fac.clienteNombre=obj.nombre; if(obj.nif) fac.clienteNif=obj.nif; if(obj.direccion) fac.clienteDir=obj.direccion; } }); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); if(window._pagoPendiente){ var _fp=(state.finanzas||[]).find(function(x){return x.id===window._pagoPendiente;}); if(_fp){ _fp.cliente=obj.id; try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(_fp); }catch(e){} } window._pagoPendiente=null; } else { registrarIngresoAlta(obj); } }
+  if(altaEdit&&altaEdit.id){ var _oldNom=altaEdit.nombre; var _oldFact=altaEdit.nombreFacturacion; Object.assign(altaEdit,obj); sincronizarFacturasCliente(altaEdit, _oldNom, _oldFact); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); if(window._pagoPendiente){ var _fp=(state.finanzas||[]).find(function(x){return x.id===window._pagoPendiente;}); if(_fp){ _fp.cliente=obj.id; try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(_fp); }catch(e){} } window._pagoPendiente=null; } else { registrarIngresoAlta(obj); } }
   altaEdit=null; save(); render();
 }
 var vidMes=hoy().slice(0,7), vidSort='fecha', vidEstado='';

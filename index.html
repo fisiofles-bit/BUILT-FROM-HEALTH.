@@ -393,6 +393,8 @@ async function loadAll(){
   state.series={}; (sr.data||[]).forEach(function(r){ state.series[r.serie+'|'+r.anio]=r.ultimo; });
   pruneEventos();
   var _hoyv=hoy(); var _vchg=false; (state.videollamadas||[]).forEach(function(v){ if(v.estado==='pendiente' && (v.fecha||'') && (v.fecha||'')<_hoyv){ v.estado='realizada'; v.resultado='pendiente'; _vchg=true; } });
+  var _CS='Pago Mensual Built From Health - Servicio Online 1a1 de Recuperación';
+  (state.facturas||[]).forEach(function(fac){ if(fac.tipo==='simplificada' && fac.concepto!==_CS){ fac.concepto=_CS; _vchg=true; } });
   loaded=true;
   if(_vchg) save();
 }
@@ -571,7 +573,7 @@ function segRows(){
 }
 const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-let tab='resumen'; let calRef=new Date();
+let tab='resumen'; var userRol='admin', userEquipoId='', userNombre=''; let calRef=new Date();
 let finMeses=[hoy().slice(0,7)]; let finCat='todos';
 const CATEGORIAS=['Suscripción','Material','Formación','Facebook Ads / Publicidad','Otros'];
 function labelMes(ym){const [y,m]=ym.split('-');const s=meses[+m-1]+' '+y;return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -594,6 +596,7 @@ function urgRank(t){var u=(t&&t.urgencia)||'media';return u==='alta'?0:(u==='med
 function val(id){const e=document.getElementById(id);return e?e.value.trim():'';}
 let tareaSemana=new Date(); let tFormFecha=null;
 function render(){
+  if(userRol==='agendador' && tab!=='videollamadas' && tab!=='calendario') tab='videollamadas';
   const m=document.getElementById('main');
   try{var _pfi=document.getElementById('pf-img'); if(_pfi){ var _f=(state.emisor&&state.emisor.fotoPerfil)||(function(){try{return localStorage.getItem('pf_foto');}catch(e){return null;}})(); if(_f){ if(_pfi.getAttribute('src')!==_f) _pfi.src=_f; if(_pfi.parentElement) _pfi.parentElement.classList.add('has-photo'); } }}catch(e){}
   if(tab==='resumen') m.innerHTML=viewResumen();
@@ -879,6 +882,65 @@ function guardarClienteDesdeVid(vidId){
   showToast('Cliente "'+nombre+'" creado y enlazado a la videollamada.', false, 4000);
 }
 
+function plantillaGuionStudio(tipo, p){
+  var ang=p.angulo||'volver a jugar al 100%';
+  var obj=p.objecion||'';
+  var disp=p.disparador||'';
+  var perf=p.perfil||'';
+  var T={
+'Gancho':
+'[Reel 15-25s · Instagram]\n\n'+
+'GANCHO (0-3s) — prueba 1-2:\n'+
+'• "Si eres futbolista y te lesionaste, esto es lo que ojalá te hubieran dicho el día 1."\n'+
+'• "El mayor error tras lesionarte jugando NO es físico."\n\n'+
+'DESARROLLO (3-15s):\n'+ang+'\n'+
+'Lo que frena a la mayoría: '+obj+'\n\n'+
+'POR QUÉ NOSOTROS:\n'+disp+'\n\n'+
+'CTA:\nComenta "JUGAR" o escríbeme por DM y te cuento tu caso.',
+'Historia':
+'[Reel 30-45s · Instagram]\n\n'+
+'APERTURA:\n"Cuando [NOMBRE] llegó, pensaba que '+obj+'"\n\n'+
+'NUDO:\nQué hicimos distinto: '+ang+'\n'+
+'Cómo le acompañamos: '+disp+'\n\n'+
+'DESENLACE:\n"Hoy [resultado: volvió a jugar / sin dolor / sin miedo a recaer]."\n\n'+
+'CTA:\n¿Tu caso se parece? Escríbeme y vemos cómo volver a jugar.',
+'Educativo':
+'[Carrusel o Reel · Instagram]\n\n'+
+'TÍTULO:\n"3 errores que retrasan tu vuelta al fútbol tras una lesión"\n\n'+
+'PUNTOS:\n1. Parar del todo y perder fuerza.\n2. Volver sin readaptación de campo (sin gestos reales de juego).\n3. '+obj+' → por eso necesitas seguimiento, no un plan genérico.\n\n'+
+'CIERRE:\n'+ang+'\nGuárdalo si te estás recuperando. CTA: DM "PLAN".',
+'Rompe-objeción':
+'[Reel 20-30s · Instagram]\n\n'+
+'GANCHO:\n"'+obj+'"\n\n'+
+'CONTRASTE:\nEso pasa con la mayoría. Aquí NO: '+disp+'\n\n'+
+'PROMESA:\n'+ang+'\n\n'+
+'CTA:\nSi quieres acompañamiento de verdad, escríbeme "REAL".',
+'Oferta':
+'[Reel / Story · Instagram]\n\n'+
+'GANCHO:\n"Plazas limitadas para readaptación 1-a-1 de futbolistas lesionados."\n\n'+
+'PARA TI SI:\n'+perf+'\n\n'+
+'OFERTA:\n'+ang+'\n\n'+
+'ROMPE-OBJECIÓN:\n'+obj+' → por eso el plan es individual y con seguimiento diario.\n\n'+
+'CTA:\nEscríbeme "EMPEZAR" antes de que se llenen las plazas.'
+  };
+  return T[tipo]||T['Gancho'];
+}
+function generarGuionStudio(){
+  var pe=document.getElementById('gen-perfil'), tp=document.getElementById('gen-tipo');
+  var pid=pe?pe.value:'', tipo=tp?tp.value:'Gancho';
+  if(!pid){ alert('Elige un perfil de cliente.'); return; }
+  var p=(state.studioPerfiles||[]).find(function(x){return x.id===pid;}); if(!p){ alert('Perfil no encontrado.'); return; }
+  var cars=(state.studioCarpetas||[]).filter(function(c){return c.canal===studioCanal && c.modo===studioModo && !c.archivada;});
+  var cid=studioCarpeta || (cars[0]?cars[0].id:null);
+  if(!cid){ alert('Crea primero una carpeta para guardar el guion.'); return; }
+  var et='Gancho';
+  if(tipo==='Educativo') et='Educativo'; else if(tipo==='Oferta') et='Oferta'; else if(tipo==='Historia'||tipo==='Rompe-objeción') et='Prueba social';
+  if(!state.studioGuiones) state.studioGuiones=[];
+  var id=uid(); var now=nowStamp();
+  state.studioGuiones.push({id:id, carpetaId:cid, titulo:tipo+' · '+(p.nombre||''), cuerpo:plantillaGuionStudio(tipo,p), etiqueta:et, canal:studioCanal, modo:studioModo, perfilId:pid, archivado:false, creado:now, editado:now});
+  save(); abrirGuion(id);
+}
+
 function viewStudio(){
   var canal=studioCanal;
   var modos = canal==='instagram' ? [['organico','Org\u00e1nico'],['ads','Ads']] : [['videos','V\u00eddeos'],['ideas','Ideas / borradores']];
@@ -894,10 +956,11 @@ function viewStudio(){
   var folHTML=carpetas.map(function(c){ return '<div class="sfol'+(c.id===carSel?' on':'')+'" onclick="setStudioCarpeta(\''+c.id+'\')"><span>'+esc(c.nombre)+'</span><span class="sfc">'+gCount(c.id)+'</span></div>'; }).join('');
   var guionHTML = carSel ? (guiones.length? guiones.map(function(g){ var col=etiquetaColor(g.etiqueta); var snip=(g.cuerpo||'').replace(/\s+/g,' ').slice(0,90); return '<div class="scard" style="border-left:3px solid '+col+'" onclick="abrirGuion(\''+g.id+'\')"><div class="sct">'+esc(g.titulo)+'</div><div class="scs">'+esc(snip)+(snip.length>=90?'\u2026':'')+'</div><div class="scf"><span class="stag" style="background:'+col+'22;color:'+col+'">'+esc(g.etiqueta||'')+'</span><span class="stm">'+esc(g.editado||'')+'</span></div></div>'; }).join('') : '<div class="empty"><b>Sin guiones aqu\u00ed</b>Pulsa \u00ab+ Nuevo guion\u00bb para empezar.</div>') : '<div class="empty"><b>Crea una carpeta</b>Organiza tus guiones por campa\u00f1a o mes.</div>';
   var perfilPanel = (modo==='ads') ? ('<div class="sinsight"><div class="sit">Perfiles de cliente \u00b7 del cuestionario y propios <button class="btn sm" style="float:right;margin-top:-3px" onclick="addPerfil()">+ Nuevo perfil</button></div>'+(perfs.length? '<div class="pgrid">'+perfs.map(function(p){ return '<div class="pcard" onclick="editarPerfil(\''+p.id+'\')"><div class="pn">'+esc(p.nombre)+(p.fuente==='cuestionario'?' <span class="pfz">cuestionario</span>':'')+'</div><div class="pl"><span>\u00c1ngulo:</span> '+esc(p.angulo||'\u2014')+'</div><div class="pl"><span>Objeci\u00f3n:</span> '+esc(p.objecion||'\u2014')+'</div></div>'; }).join('')+'</div>' : '<div style="color:var(--muted);font-size:12px;padding:6px 0">A\u00fan no hay perfiles. Crea uno con \u00ab+ Nuevo perfil\u00bb o p\u00eddeme que analice tu cuestionario.</div>')+'</div>') : '';
+  var genPanel = (modo==='ads') ? ('<div class="sinsight" style="border-color:#00b2ff;background:rgba(0,178,255,.06)"><div class="sit" style="color:#00b2ff">\u26a1 Generador de guiones</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="gen-perfil" style="'+FLD+'"><option value="">\u2014 Perfil \u2014</option>'+perfs.map(function(p){return '<option value="'+p.id+'">'+esc(p.nombre)+'</option>';}).join('')+'</select><select id="gen-tipo" style="'+FLD+'"><option>Gancho</option><option>Historia</option><option>Educativo</option><option>Rompe-objeci\u00f3n</option><option>Oferta</option></select><button class="btn" onclick="generarGuionStudio()">Generar guion</button></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Crea un borrador a partir del perfil y los datos del cuestionario. Luego lo editas y guardas.</div></div>') : '';
   return '<div class="page-head"><div><div class="eyebrow">Content \u00b7 Guiones</div><h1>Studio</h1></div><span style="display:inline-flex;gap:4px">'+canalBtn('instagram','Instagram')+canalBtn('youtube','YouTube')+'</span></div>'
     +'<div class="spills">'+modoPills+'</div>'
     +'<div class="scols"><div class="sfolders"><div class="sfol-new" onclick="addCarpeta()">+ Nueva carpeta</div>'+folHTML+'<div class="sarch" onclick="toggleStudioArch()">'+(studioArch?'\u2190 Volver a activas':'Ver archivadas')+'</div>'+(carSel?'<div style="margin-top:8px;display:flex;gap:6px"><button class="btn ghost sm" onclick="archivarCarpeta(\''+carSel+'\')">Archivar</button><button class="btn ghost sm" style="color:#FF3547" onclick="delCarpeta(\''+carSel+'\')">Eliminar</button></div>':'')+'</div>'
-    +'<div class="scontent">'+perfilPanel+'<div class="sgh"><h3>Guiones</h3>'+(carSel?'<button class="btn" onclick="addGuion()">+ Nuevo guion</button>':'')+'</div><div class="sgrid">'+guionHTML+'</div></div></div>';
+    +'<div class="scontent">'+perfilPanel+genPanel+'<div class="sgh"><h3>Guiones</h3>'+(carSel?'<button class="btn" onclick="addGuion()">+ Nuevo guion</button>':'')+'</div><div class="sgrid">'+guionHTML+'</div></div></div>';
 }
 
 function renovarAviso(id){
@@ -1440,7 +1503,7 @@ function viewVideo(){
       <div class="field"><label>Tipo de lead</label><select id="v-lead">${LEADS.map(l=>`<option>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Tipo de videollamada</label><select id="v-tll"><option value="">—</option><option value="venta">De venta</option><option value="inicial">Inicial</option><option value="control">De control</option></select></div>
       <div class="field"><label>Realizada por</label><select id="v-por"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
-      <div class="field"><label>Agendada por</label><select id="v-agen"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Agendada por</label><select id="v-agen"><option value="">—</option>${eq.map(m=>`<option value="${m.id}"${(userRol==='agendador'&&userEquipoId===m.id)?' selected':''}>${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha</label><input type="date" id="v-fecha" value="${hoy()}"></div>
       <div class="field"><label>Hora</label><input type="time" id="v-hora" value="17:00"></div>
       <div class="field"><label>Plataforma</label><select id="v-plat"><option>Zoom</option><option>Google Meet</option><option>WhatsApp</option><option>FaceTime</option><option>Otra</option></select></div>
@@ -1478,7 +1541,7 @@ function syncEventoTarea(t){ if(!t.fecha) return; if(!state.eventos) state.event
 function addVideo(){
   var atleta=document.getElementById('v-atleta').value.trim();
   if(!atleta){ alert('Indica el nombre / lead.'); return; }
-  var v={id:uid(),atleta:atleta,tipoLead:document.getElementById('v-lead').value,tipoLlamada:document.getElementById('v-tll').value,realizadaPor:document.getElementById('v-por').value,agendadoPor:(document.getElementById('v-agen')||{}).value||'',fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()};
+  var v={id:uid(),atleta:atleta,tipoLead:document.getElementById('v-lead').value,tipoLlamada:document.getElementById('v-tll').value,realizadaPor:document.getElementById('v-por').value,agendadoPor:((document.getElementById('v-agen')||{}).value||''),fecha:document.getElementById('v-fecha').value||hoy(),hora:document.getElementById('v-hora').value,plataforma:document.getElementById('v-plat').value,estado:document.getElementById('v-estado').value,resultado:document.getElementById('v-res').value,importe:parseFloat(document.getElementById('v-importe').value)||0,notas:document.getElementById('v-notas').value.trim()};
   if(!state.videollamadas) state.videollamadas=[]; state.videollamadas.push(v);
   syncEventoVid(v);
   save(); render();
@@ -1904,7 +1967,7 @@ function facturaDocHTML(f){
       ${f.irpfPct?`<div><span>Retención IRPF (${f.irpfPct}%)</span><span>−${eur(f.irpfCuota)}</span></div>`:''}
       <div class="fx-total"><span>TOTAL</span><span>${eur(f.total)}</span></div>
     </div>
-    ${em.iban?`<div class="fx-pay">Forma de pago — transferencia: ${esc(em.iban)}</div>`:''}
+    ${f.tipo==='simplificada'?`<div class="fx-pay">Forma de pago — Pago por Stripe</div>`:`<div class="fx-pay">Forma de pago — Pago completo por transferencia bancaria${em.iban?` · ${esc(em.iban)}`:''}</div>`}
     ${f.ivaPct===0?`<div class="fx-note">Operación exenta de IVA.</div>`:''}`;
 }
 function verFactura(id){
@@ -1962,7 +2025,7 @@ function descargarPDF(id){
   doc.setDrawColor(17,17,17); doc.setLineWidth(0.5); doc.line(tx, yy-2, W-M, yy-2); yy+=3;
   row('TOTAL', eur2(f.total), true);
   yy+=8; doc.setTextColor(68,68,68); doc.setFont('helvetica','normal'); doc.setFontSize(10);
-  if(em.iban){ doc.text('Forma de pago \u2014 transferencia: '+em.iban, M, yy); yy+=6; }
+  if(f.tipo==='simplificada'){ doc.text('Forma de pago \u2014 Pago por Stripe', M, yy); yy+=6; } else { doc.text('Forma de pago \u2014 Pago completo por transferencia bancaria'+(em.iban?' \u00b7 '+em.iban:''), M, yy); yy+=6; }
   if((f.ivaPct||0)===0){ doc.setTextColor(102,102,102); doc.setFontSize(9); doc.text('Operaci\u00f3n exenta de IVA.', M, yy); }
   doc.save('Factura-'+String(f.numero||'borrador').replace(/\//g,'-')+'.pdf');
 }
@@ -2382,9 +2445,12 @@ async function doLogin(){
   if(res.error){ err.textContent='No se pudo entrar: '+res.error.message; return; }
   await entrar();
 }
+function aplicarRol(){ if(userRol!=='agendador') return; document.querySelectorAll('.nav-btn').forEach(function(b){ var t=b.dataset.tab; if(t!=='videollamadas'&&t!=='calendario') b.style.display='none'; }); }
 async function entrar(){
   var g=document.getElementById('login-gate'); if(g) g.style.display='none';
-  await loadAll(); autoRealizarVideos(); render();
+  try{ var u=await sb.auth.getUser(); var em=(u&&u.data&&u.data.user)?(u.data.user.email||''):''; if(em){ var r=await sb.from('app_usuarios').select('*').eq('email',em).maybeSingle(); if(r&&r.data){ userRol=r.data.rol||'admin'; userEquipoId=r.data.equipo_id||''; userNombre=r.data.nombre||''; } } }catch(e){ console.error('rol',e); }
+  if(userRol==='agendador') tab='videollamadas';
+  await loadAll(); autoRealizarVideos(); render(); aplicarRol();
   var s=document.getElementById('storeState'); if(s){ s.textContent='nube · Supabase'; s.style.color='var(--accent)'; }
 }
 function tickClock(){ var el=document.getElementById('clockTime'), ed=document.getElementById('clockDate'); if(!el) return; var n=new Date(); function p(x){return String(x).padStart(2,'0');} el.textContent=p(n.getHours())+':'+p(n.getMinutes()); if(ed) ed.textContent=n.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); }

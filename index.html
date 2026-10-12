@@ -1505,7 +1505,7 @@ function viewVideo(){
       <div class="field"><label>Tipo de lead</label><select id="v-lead">${LEADS.map(l=>`<option>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Tipo de videollamada</label><select id="v-tll"><option value="">—</option><option value="venta">De venta</option><option value="inicial">Inicial</option><option value="control">De control</option></select></div>
       <div class="field"><label>Realizada por</label><select id="v-por"><option value="">—</option>${eq.map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('')}</select></div>
-      <div class="field"><label>Agendada por</label><select id="v-agen"><option value="">—</option>${eq.map(m=>`<option value="${m.id}"${(userRol==='agendador'&&userEquipoId===m.id)?' selected':''}>${esc(m.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>Agendada por</label><select id="v-agen"><option value="">—</option>${eq.map(m=>`<option value="${m.id}"${(userEquipoId&&userEquipoId===m.id)?' selected':''}>${esc(m.nombre)}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha</label><input type="date" id="v-fecha" value="${hoy()}"></div>
       <div class="field"><label>Hora</label><input type="time" id="v-hora" value="17:00"></div>
       <div class="field"><label>Plataforma</label><select id="v-plat"><option>Zoom</option><option>Google Meet</option><option>WhatsApp</option><option>FaceTime</option><option>Otra</option></select></div>
@@ -2447,7 +2447,7 @@ async function doLogin(){
   if(res.error){ err.textContent='No se pudo entrar: '+res.error.message; return; }
   await entrar();
 }
-function aplicarRol(){ if(userRol!=='agendador') return; document.querySelectorAll('.nav-btn').forEach(function(b){ var t=b.dataset.tab; if(t!=='videollamadas'&&t!=='calendario') b.style.display='none'; }); }
+function aplicarRol(){ if(userRol!=='agendador') return; document.querySelectorAll('.nav-btn').forEach(function(b){ var t=b.dataset.tab; if(t!=='videollamadas'&&t!=='calendario') b.style.display='none'; }); var av=document.querySelector('.pf-avatar'); if(av) av.style.display='none'; }
 async function entrar(){
   var g=document.getElementById('login-gate'); if(g) g.style.display='none';
   try{ var u=await sb.auth.getUser(); var em=(u&&u.data&&u.data.user)?(u.data.user.email||''):''; if(em){ var r=await sb.from('app_usuarios').select('*').eq('email',em).maybeSingle(); if(r&&r.data){ userRol=r.data.rol||'admin'; userEquipoId=r.data.equipo_id||''; userNombre=r.data.nombre||''; } } }catch(e){ console.error('rol',e); }

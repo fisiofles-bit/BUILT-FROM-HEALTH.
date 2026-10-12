@@ -335,7 +335,7 @@ tr:hover td{background:#1D232B}
 </nav>
 
 <div class="main-scroll">
-<div id="topbar-profile"><label class="pf-avatar" title="Subir foto de perfil"><img id="pf-img" alt=""><span class="pf-ph">+</span><input type="file" accept="image/*" onchange="subirFotoPerfil(this)" hidden></label><div class="pf-name">Fabián García Taibo</div></div>
+<div id="topbar-profile"><label class="pf-avatar" title="Subir foto de perfil"><img id="pf-img" alt=""><span class="pf-ph">+</span><input type="file" accept="image/*" onchange="subirFotoPerfil(this)" hidden></label><div class="pf-name" id="pfName">Fabián García Taibo</div></div>
 <main class="main" id="main"></main>
 </div>
 <script>try{var _pf=localStorage.getItem('pf_foto');if(_pf){var _pi=document.getElementById('pf-img');_pi.src=_pf;if(_pi.parentElement)_pi.parentElement.classList.add('has-photo');}}catch(e){}</script>
@@ -1455,14 +1455,16 @@ function guardarAlta(){
   if(altaEdit&&altaEdit.id){ var _oldNom=altaEdit.nombre; var _oldFact=altaEdit.nombreFacturacion; Object.assign(altaEdit,obj); sincronizarFacturasCliente(altaEdit, _oldNom, _oldFact); } else { obj.id=uid(); if(!state.altas)state.altas=[]; state.altas.push(obj); if(window._pagoPendiente){ var _fp=(state.finanzas||[]).find(function(x){return x.id===window._pagoPendiente;}); if(_fp){ _fp.cliente=obj.id; try{ if(typeof generarFacturaDesdePago==='function') generarFacturaDesdePago(_fp); }catch(e){} } window._pagoPendiente=null; } else { registrarIngresoAlta(obj); } }
   altaEdit=null; save(); render();
 }
-var vidMes=hoy().slice(0,7), vidSort='fecha', vidEstado='';
+var vidMes=hoy().slice(0,7), vidSort='fecha', vidEstado='', vidPersona='';
 function setVidEstado(v){ vidEstado=v; render(); }
+function setVidPersona(v){ vidPersona=v; render(); }
 function setVidMes(v){ vidMes=v; render(); }
 function setVidSort(v){ vidSort=v; render(); }
 function viewVideo(){
   var mesKpi=vidMes||hoy().slice(0,7);
   var rows=[...state.videollamadas]; if(vidMes) rows=rows.filter(v=>(v.fecha||'').slice(0,7)===vidMes);
   if(vidEstado) rows=rows.filter(function(v){return v.estado===vidEstado;});
+  if(vidPersona) rows=rows.filter(function(v){return v.realizadaPor===vidPersona||v.agendadoPor===vidPersona;});
   if(vidSort==='tipo') rows.sort((a,b)=>((a.tipoLlamada||'zzz').localeCompare(b.tipoLlamada||'zzz'))||((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||''))); else rows.sort(function(a,b){ var pa=(a.estado==='pendiente')?0:1, pb=(b.estado==='pendiente')?0:1; if(pa!==pb) return pa-pb; var ka=(a.fecha||'')+(a.hora||''), kb=(b.fecha||'')+(b.hora||''); return pa===0? ka.localeCompare(kb) : kb.localeCompare(ka); });
   const bE={pendiente:'b-amber',realizada:'b-cyan',cancelada:'b-red',no_show:'b-impago'};
   const bTxt={pendiente:'Pendiente',realizada:'Realizada',cancelada:'Cancelada',no_show:'No show'};
@@ -1472,7 +1474,7 @@ function viewVideo(){
   const eq=(state.equipo||[]);
   const ahora=new Date(), mm=ahora.getMonth(), yy=ahora.getFullYear();
   const delMes=state.videollamadas.filter(v=>(v.fecha||'').slice(0,7)===mesKpi);
-  const delMesVenta=delMes.filter(v=>!v.tipoLlamada || v.tipoLlamada==='venta');
+  const delMesVenta=delMes.filter(v=>(!v.tipoLlamada || v.tipoLlamada==='venta') && (!vidPersona || v.realizadaPor===vidPersona || v.agendadoPor===vidPersona));
   const agendas=delMesVenta.length;
   const realizadas=delMesVenta.filter(v=>v.estado==='realizada').length;
   const noShows=delMesVenta.filter(v=>v.estado==='no_show').length;
@@ -1488,7 +1490,7 @@ function viewVideo(){
   return `
   <div class="page-head"><div><div class="eyebrow">Sales · Follow-up</div><h1>Calls</h1>
   <p>Cada llamada con su tipo de lead, quién la realizó y su resultado. Arriba, tus métricas de cierre del mes.</p></div>
-  <input type="month" value="${vidMes}" onchange="setVidMes(this.value)" title="Filtrar por mes" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${vidMes?`<button class="btn ghost sm" onclick="setVidMes('')" style="margin-right:8px">Ver todo</button>`:''}<select onchange="setVidEstado(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="">Todos los estados</option><option value="pendiente"${vidEstado==='pendiente'?' selected':''}>Pendientes</option><option value="realizada"${vidEstado==='realizada'?' selected':''}>Realizadas</option><option value="no_show"${vidEstado==='no_show'?' selected':''}>No shows</option><option value="cancelada"${vidEstado==='cancelada'?' selected':''}>Canceladas</option></select><select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
+  <input type="month" value="${vidMes}" onchange="setVidMes(this.value)" title="Filtrar por mes" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${vidMes?`<button class="btn ghost sm" onclick="setVidMes('')" style="margin-right:8px">Ver todo</button>`:''}<select onchange="setVidPersona(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="">Toda persona</option>${(state.equipo||[]).map(m=>`<option value="${m.id}"${vidPersona===m.id?' selected':''}>${esc(m.nombre)}</option>`).join('')}</select><select onchange="setVidEstado(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="">Todos los estados</option><option value="pendiente"${vidEstado==='pendiente'?' selected':''}>Pendientes</option><option value="realizada"${vidEstado==='realizada'?' selected':''}>Realizadas</option><option value="no_show"${vidEstado==='no_show'?' selected':''}>No shows</option><option value="cancelada"${vidEstado==='cancelada'?' selected':''}>Canceladas</option></select><select onchange="setVidSort(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px"><option value="fecha"${vidSort==='fecha'?' selected':''}>Orden: fecha</option><option value="tipo"${vidSort==='tipo'?' selected':''}>Orden: tipo</option></select><button class="btn" onclick="toggleForm('v-form')">+ Videollamada</button></div>
   <div class="kpis">
     <div class="kpi"><div class="label">Agendas de venta del mes</div><div class="val">${agendas}</div><div class="sub">${realizadas} realizadas</div></div>
     <div class="kpi pos"><div class="label">% de cierre</div><div class="val">${cierre}%</div><div class="sub">${cerradas} de ${decididas} decididas</div></div>
@@ -1514,8 +1516,8 @@ function viewVideo(){
       <div class="form-actions"><button class="btn ghost sm" onclick="toggleForm('v-form')">Cancelar</button><button class="btn sm" onclick="addVideo()">Guardar</button></div>
     </div>
     <div class="panel-body">
-      ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo</th><th>Tipo lead</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
-      ${rows.map(v=>`<tr${v.estado==='realizada'?' style="background:rgba(0,178,255,.09)"':''}><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}${v.agendadoPor?`<br><span style="color:var(--muted);font-size:11px">agendó: ${esc(miembroNombre(v.agendadoPor))}</span>`:''}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${bTxt[v.estado]||esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
+      ${rows.length?`<table><thead><tr><th>Nombre</th><th>Tipo</th><th>Tipo lead</th><th>Agendó</th><th>Realizó</th><th>Fecha</th><th>Estado</th><th>Resultado</th><th style="text-align:right">Facturación</th><th></th></tr></thead><tbody>
+      ${rows.map(v=>`<tr${v.estado==='realizada'?' style="background:rgba(0,178,255,.09)"':''}><td><b>${esc(v.atleta)}</b></td><td>${v.tipoLlamada?`<span style="color:${tllColor(v.tipoLlamada)};font-weight:600">${tipoLlamadaLabel(v.tipoLlamada)}</span>`:'—'}</td><td>${v.tipoLead?`<span class="badge b-gray">${esc(v.tipoLead)}</span>`:'—'}</td><td>${v.agendadoPor?esc(miembroNombre(v.agendadoPor)):'—'}</td><td>${v.realizadaPor?esc(miembroNombre(v.realizadaPor)):'—'}</td><td class="num">${fFecha(v.fecha)}</td><td><span class="badge ${bE[v.estado]||'b-gray'}">${bTxt[v.estado]||esc(v.estado)}</span></td><td><span class="badge ${rE[v.resultado]||'b-gray'}">${rTxt[v.resultado]||'—'}</span></td><td class="num" style="text-align:right">${v.importe? eur(v.importe):'—'}</td><td style="text-align:right"><button class="btn ghost sm" onclick="editarVideo('${v.id}')">Editar</button> <button class="del" onclick="delItem('videollamadas','${v.id}')">✕</button></td></tr>`).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin videollamadas</b>Programa la primera con «+ Videollamada».</div>`}
     </div>
   </div>`;
@@ -2450,6 +2452,7 @@ async function entrar(){
   var g=document.getElementById('login-gate'); if(g) g.style.display='none';
   try{ var u=await sb.auth.getUser(); var em=(u&&u.data&&u.data.user)?(u.data.user.email||''):''; if(em){ var r=await sb.from('app_usuarios').select('*').eq('email',em).maybeSingle(); if(r&&r.data){ userRol=r.data.rol||'admin'; userEquipoId=r.data.equipo_id||''; userNombre=r.data.nombre||''; } } }catch(e){ console.error('rol',e); }
   if(userRol==='agendador') tab='videollamadas';
+  try{ var _pn=document.getElementById('pfName'); if(_pn && userNombre) _pn.textContent=userNombre; }catch(e){}
   await loadAll(); autoRealizarVideos(); render(); aplicarRol();
   var s=document.getElementById('storeState'); if(s){ s.textContent='nube · Supabase'; s.style.color='var(--accent)'; }
 }

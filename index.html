@@ -356,7 +356,7 @@ const SB_URL='https://vxxhkuizeceutbowxcmq.supabase.co';
 const SB_KEY='sb_publishable_czwCWuPJQYKiZzvHRaQlVQ_Z9EsbAP3';
 const sb=window.supabase.createClient(SB_URL, SB_KEY);
 let loaded=false;
-let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[], publicidad:[], renovLog:[] };
+let state={ finanzas:[], altas:[], videollamadas:[], eventos:[], tareas:[], tareaCats:[], equipo:[], emisor:{}, facturas:[], leads:[], documentos:[], publicidad:[], renovLog:[], tiposLead:[] };
 
 const SPECS={
   altas:{table:'clientes',cols:[['nombre','nombre'],['deporte','deporte'],['lesion','lesion'],['entrenador','entrenador_id'],['fechaAlta','fecha_alta'],['tarifa','tarifa','num'],['estado','estado'],['nif','nif'],['direccion','direccion'],['ultimoContacto','ultimo_contacto'],['email','email'],['diaCobro','dia_cobro','num'],['fechaVencimiento','fecha_vencimiento'],['tipoCliente','tipo_cliente'],['duracionPlan','duracion_plan','num'],['telefono','telefono'],['notas','notas'],['nombreFacturacion','nombre_facturacion'],['pagador','pagador'],['renovaciones','renovaciones','num'],['pagoUnico','pago_unico','bool'],['fuentePago','fuente_pago'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['pagoManual','pago_manual']]},
@@ -372,6 +372,7 @@ const SPECS={
   renovLog:{table:'renovaciones',cols:[['clienteId','cliente_id'],['fecha','fecha'],['meses','meses','num'],['bajaAnterior','baja_anterior'],['bajaNueva','baja_nueva'],['planAnterior','plan_anterior','num'],['tarifa','tarifa','num']]},
   gastosFuturos:{table:'gastos_futuros',cols:[['nombre','nombre'],['importe','importe','num'],['fecha','fecha'],['tipo','tipo'],['hecho','hecho','bool'],['movId','mov_id'],['link','link']]},
   studioPerfiles:{table:'studio_perfiles',cols:[['nombre','nombre'],['perfil','perfil'],['angulo','angulo'],['objecion','objecion'],['disparador','disparador'],['fuente','fuente']]},
+  tiposLead:{table:'tipos_lead',cols:[['nombre','nombre'],['problema','problema'],['dolor','dolor'],['objeccion','objeccion'],['descripcion','descripcion'],['orden','orden','num'],['archivado','archivado','bool']]},
   studioCarpetas:{table:'studio_carpetas',cols:[['nombre','nombre'],['canal','canal'],['modo','modo'],['archivada','archivada','bool']]},
   studioGuiones:{table:'studio_guiones',cols:[['carpetaId','carpeta_id'],['titulo','titulo'],['cuerpo','cuerpo'],['etiqueta','etiqueta'],['canal','canal'],['modo','modo'],['perfilId','perfil_id'],['archivado','archivado','bool'],['creado','creado'],['editado','editado']]}
 };
@@ -925,20 +926,50 @@ function plantillaGuionStudio(tipo, p){
   };
   return T[tipo]||T['Gancho'];
 }
-function generarGuionStudio(){
+function generarGuionStudio(btn){
   var pe=document.getElementById('gen-perfil'), tp=document.getElementById('gen-tipo');
   var pid=pe?pe.value:'', tipo=tp?tp.value:'Gancho';
-  if(!pid){ alert('Elige un perfil de cliente.'); return; }
-  var p=(state.studioPerfiles||[]).find(function(x){return x.id===pid;}); if(!p){ alert('Perfil no encontrado.'); return; }
+  if(!pid){ alert('Elige un tipo de lead.'); return; }
+  var p=(state.tiposLead||[]).find(function(x){return x.id===pid;}); if(!p){ alert('Tipo de lead no encontrado.'); return; }
   var cars=(state.studioCarpetas||[]).filter(function(c){return c.canal===studioCanal && c.modo===studioModo && !c.archivada;});
   var cid=studioCarpeta || (cars[0]?cars[0].id:null);
   if(!cid){ alert('Crea primero una carpeta para guardar el guion.'); return; }
   var et='Gancho';
-  if(tipo==='Educativo') et='Educativo'; else if(tipo==='Oferta') et='Oferta'; else if(tipo==='Historia'||tipo==='Rompe-objeción') et='Prueba social';
+  if(tipo==='Educativo') et='Educativo'; else if(tipo==='Oferta') et='Oferta'; else if(tipo==='Historia'||tipo==='Rompe-objeci\u00f3n') et='Prueba social';
   if(!state.studioGuiones) state.studioGuiones=[];
   var id=uid(); var now=nowStamp();
-  state.studioGuiones.push({id:id, carpetaId:cid, titulo:tipo+' · '+(p.nombre||''), cuerpo:plantillaGuionStudio(tipo,p), etiqueta:et, canal:studioCanal, modo:studioModo, perfilId:pid, archivado:false, creado:now, editado:now});
+  state.studioGuiones.push({id:id, carpetaId:cid, titulo:tipo+' \u00b7 '+(p.nombre||''), cuerpo:plantillaAnuncioLead(tipo,p), etiqueta:et, canal:studioCanal, modo:studioModo, perfilId:pid, archivado:false, creado:now, editado:now});
   save(); abrirGuion(id);
+}
+function plantillaAnuncioLead(enfoque, t){
+  var prob=(t.problema||'(define el problema en el CRM)');
+  var dolor=(t.dolor||'(define el dolor en el CRM)');
+  var obj=(t.objeccion||'(define la objeci\u00f3n en el CRM)');
+  var pub=(t.descripcion||'Futbolista lesionado que encaja con este perfil.');
+  var nl='\n';
+  var guia={
+    'Gancho':{hook:'Abre con una situaci\u00f3n reconocible de su d\u00eda a d\u00eda (NO con "somos..."). Describe el momento exacto en que aparece el problema.',cambio:'Mete una idea \u00fatil que le haga ver que necesita otro enfoque (criterio funcional, no solo tiempo).',cta:'Escr\u00edbeme la palabra JUGAR por mensaje directo y te digo si encajas.'},
+    'Historia':{hook:'Empieza por la mitad de una historia real: "Un jugador me escribi\u00f3 porque\u2026" (sin inventar resultados).',cambio:'Lo que marc\u00f3 la diferencia en su proceso: el acompa\u00f1amiento diario y la individualizaci\u00f3n.',cta:'Si te sientes identificado, m\u00e1ndame un mensaje y te cuento c\u00f3mo ser\u00eda tu caso.'},
+    'Educativo':{hook:'Arranca con un error frecuente o una idea contraintuitiva sobre la recuperaci\u00f3n.',cambio:'Explica por qu\u00e9 pasar del gimnasio al campo necesita exposici\u00f3n progresiva a las demandas del f\u00fatbol.',cta:'Comenta "INFO" y te paso c\u00f3mo estructuramos esa vuelta.'},
+    'Rompe-objeci\u00f3n':{hook:'Nombra la objeci\u00f3n en alto, tal cual la piensa: "'+obj+'".',cambio:'Desm\u00f3ntala con honestidad: c\u00f3mo funciona el seguimiento y la individualizaci\u00f3n online (sin prometer nada).',cta:'Preg\u00fantame sin compromiso y te explico c\u00f3mo lo hacemos.'},
+    'Oferta':{hook:'Situaci\u00f3n reconocible + que hay un paso concreto para empezar (una valoraci\u00f3n).',cambio:'Qu\u00e9 incluye trabajar juntos: plan individual, seguimiento diario y criterios para volver.',cta:'Reserva una valoraci\u00f3n inicial y vemos si tu caso encaja.'}
+  };
+  var g=guia[enfoque]||guia['Gancho'];
+  return 'ANUNCIO \u00b7 '+enfoque+' \u00b7 '+(t.nombre||'')+nl+nl
+    +'P\u00daBLICO: '+pub+nl+nl
+    +'\u2014 MATERIA PRIMA (del CRM) \u2014'+nl
+    +'\u2022 Problema: '+prob+nl
+    +'\u2022 Dolor: '+dolor+nl
+    +'\u2022 Objeci\u00f3n a vencer: '+obj+nl+nl
+    +'\u2014 ESTRUCTURA DEL V\u00cdDEO (15-30s) \u2014'+nl
+    +'1) HOOK (1-3s): '+g.hook+nl+'   \u203a Escr\u00edbelo: '+nl+nl
+    +'2) DESARROLLO (4-12s): c\u00f3mo se manifiesta el problema en su d\u00eda a d\u00eda ('+prob+') y lo que le est\u00e1 costando ('+dolor+').'+nl+'   \u203a Escr\u00edbelo: '+nl+nl
+    +'3) CAMBIO DE PERSPECTIVA (4-8s): '+g.cambio+nl+'   \u203a Escr\u00edbelo: '+nl+nl
+    +'4) SOLUCI\u00d3N (3-5s): plan individualizado + seguimiento diario online, pensado justo para eso. Sin prometer plazos ni recuperaci\u00f3n garantizada.'+nl+'   \u203a Escr\u00edbelo: '+nl+nl
+    +'5) CTA: '+g.cta+nl+nl
+    +'\u2014 GRABACI\u00d3N \u2014'+nl
+    +'Qui\u00e9n: t\u00fa a c\u00e1mara (o el jugador). D\u00f3nde: gimnasio o campo. Primeros segundos: entra ya en acci\u00f3n, sin intro. Texto en pantalla: el hook. Edici\u00f3n: cortes r\u00e1pidos, sin relleno.'+nl+nl
+    +'NOTA: nada de garantizar recuperaci\u00f3n/plazos, ni "bro", ni desacreditar a otros. Identificaci\u00f3n antes que venta.';
 }
 
 function viewStudio(){
@@ -956,7 +987,7 @@ function viewStudio(){
   var folHTML=carpetas.map(function(c){ return '<div class="sfol'+(c.id===carSel?' on':'')+'" onclick="setStudioCarpeta(\''+c.id+'\')"><span>'+esc(c.nombre)+'</span><span class="sfc">'+gCount(c.id)+'</span></div>'; }).join('');
   var guionHTML = carSel ? (guiones.length? guiones.map(function(g){ var col=etiquetaColor(g.etiqueta); var snip=(g.cuerpo||'').replace(/\s+/g,' ').slice(0,90); return '<div class="scard" style="border-left:3px solid '+col+'" onclick="abrirGuion(\''+g.id+'\')"><div class="sct">'+esc(g.titulo)+'</div><div class="scs">'+esc(snip)+(snip.length>=90?'\u2026':'')+'</div><div class="scf"><span class="stag" style="background:'+col+'22;color:'+col+'">'+esc(g.etiqueta||'')+'</span><span class="stm">'+esc(g.editado||'')+'</span></div></div>'; }).join('') : '<div class="empty"><b>Sin guiones aqu\u00ed</b>Pulsa \u00ab+ Nuevo guion\u00bb para empezar.</div>') : '<div class="empty"><b>Crea una carpeta</b>Organiza tus guiones por campa\u00f1a o mes.</div>';
   var perfilPanel = (modo==='ads') ? ('<div class="sinsight"><div class="sit">Perfiles de cliente \u00b7 del cuestionario y propios <button class="btn sm" style="float:right;margin-top:-3px" onclick="addPerfil()">+ Nuevo perfil</button></div>'+(perfs.length? '<div class="pgrid">'+perfs.map(function(p){ return '<div class="pcard" onclick="editarPerfil(\''+p.id+'\')"><div class="pn">'+esc(p.nombre)+(p.fuente==='cuestionario'?' <span class="pfz">cuestionario</span>':'')+'</div><div class="pl"><span>\u00c1ngulo:</span> '+esc(p.angulo||'\u2014')+'</div><div class="pl"><span>Objeci\u00f3n:</span> '+esc(p.objecion||'\u2014')+'</div></div>'; }).join('')+'</div>' : '<div style="color:var(--muted);font-size:12px;padding:6px 0">A\u00fan no hay perfiles. Crea uno con \u00ab+ Nuevo perfil\u00bb o p\u00eddeme que analice tu cuestionario.</div>')+'</div>') : '';
-  var genPanel = (modo==='ads') ? ('<div class="sinsight" style="border-color:#00b2ff;background:rgba(0,178,255,.06)"><div class="sit" style="color:#00b2ff">\u26a1 Generador de guiones</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="gen-perfil" style="'+FLD+'"><option value="">\u2014 Perfil \u2014</option>'+perfs.map(function(p){return '<option value="'+p.id+'">'+esc(p.nombre)+'</option>';}).join('')+'</select><select id="gen-tipo" style="'+FLD+'"><option>Gancho</option><option>Historia</option><option>Educativo</option><option>Rompe-objeci\u00f3n</option><option>Oferta</option></select><button class="btn" onclick="generarGuionStudio()">Generar guion</button></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Crea un borrador a partir del perfil y los datos del cuestionario. Luego lo editas y guardas.</div></div>') : '';
+  var genPanel = (modo==='ads') ? ('<div class="sinsight" style="border-color:#00b2ff;background:rgba(0,178,255,.06)"><div class="sit" style="color:#00b2ff">\u26a1 Generador de guiones</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="gen-perfil" style="'+FLD+'"><option value="">\u2014 Tipo de lead \u2014</option>'+(state.tiposLead||[]).filter(function(p){return !p.archivado;}).map(function(p){return '<option value="'+p.id+'">'+esc(p.nombre)+'</option>';}).join('')+'</select><select id="gen-tipo" style="'+FLD+'"><option>Gancho</option><option>Historia</option><option>Educativo</option><option>Rompe-objeci\u00f3n</option><option>Oferta</option></select><button class="btn" onclick="generarGuionStudio(this)">Generar guion</button></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Crea un borrador a partir del perfil y los datos del cuestionario. Luego lo editas y guardas.</div></div>') : '';
   return '<div class="page-head"><div><div class="eyebrow">Content \u00b7 Guiones</div><h1>Studio</h1></div><span style="display:inline-flex;gap:4px">'+canalBtn('instagram','Instagram')+canalBtn('youtube','YouTube')+'</span></div>'
     +'<div class="spills">'+modoPills+'</div>'
     +'<div class="scols"><div class="sfolders"><div class="sfol-new" onclick="addCarpeta()">+ Nueva carpeta</div>'+folHTML+'<div class="sarch" onclick="toggleStudioArch()">'+(studioArch?'\u2190 Volver a activas':'Ver archivadas')+'</div>'+(carSel?'<div style="margin-top:8px;display:flex;gap:6px"><button class="btn ghost sm" onclick="archivarCarpeta(\''+carSel+'\')">Archivar</button><button class="btn ghost sm" style="color:#FF3547" onclick="delCarpeta(\''+carSel+'\')">Eliminar</button></div>':'')+'</div>'
@@ -2319,7 +2350,70 @@ function viewPublicidad(){
   </div>
   ${clasifAngulos()}`;
 }
+var crmSub='pipeline';
+function setCrmSub(v){ crmSub=v; render(); }
+function crmTabsHTML(){
+  function b(k,l){ return '<button class="btn sm'+(crmSub===k?'':' ghost')+'" onclick="setCrmSub(\''+k+'\')" style="margin-right:6px">'+l+'</button>'; }
+  return '<div style="margin-bottom:14px">'+b('pipeline','Pipeline')+b('clientes','Clientes')+'</div>';
+}
+function campoLead(label,val,color){
+  if(!val) return '';
+  return '<div style="border-left:3px solid '+color+';padding-left:10px;margin-top:8px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:'+color+';font-weight:700;margin-bottom:2px">'+label+'</div><div style="font-size:13px;line-height:1.5">'+esc(val)+'</div></div>';
+}
+function viewCRMClientes(){
+  var items=(state.tiposLead||[]).filter(function(t){return !t.archivado;}).sort(function(a,b){return (a.orden||0)-(b.orden||0);});
+  var cards=items.map(function(t){
+    return '<div style="border:1px solid var(--line);border-radius:12px;background:#0d1119;padding:16px;margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+      +'<div style="font-weight:700;font-size:16px">'+esc(t.nombre||'(sin nombre)')+'</div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0"><button class="btn ghost sm" onclick="editarTipoLead(\''+t.id+'\')">Editar</button>'
+      +'<button class="btn ghost sm" onclick="borrarTipoLead(\''+t.id+'\')">\u2715</button></div></div>'
+      +(t.descripcion?'<div style="color:var(--muted);font-size:13px;margin-top:6px">'+esc(t.descripcion)+'</div>':'')
+      +campoLead('Problema', t.problema, '#00b2ff')
+      +campoLead('Dolor', t.dolor, '#F59E0B')
+      +campoLead('Objeci\u00f3n', t.objeccion, '#FF3547')
+      +'</div>';
+  }).join('');
+  return crmTabsHTML()
+    +'<div class="page-head"><div><div class="eyebrow">Acquisition</div><h1>CRM \u00b7 Clientes</h1>'
+    +'<p>Los tipos de lead que te compran, con su problema, dolor y objeci\u00f3n. Esta lista alimenta el generador de anuncios del Studio.</p></div>'
+    +'<button class="btn" onclick="editarTipoLead(\'\')">\u2795 Nuevo tipo</button></div>'
+    +(cards||'<div style="border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--muted)">A\u00fan no hay tipos de lead. Crea el primero.</div>');
+}
+function editarTipoLead(id){
+  var t=(state.tiposLead||[]).find(function(x){return x.id===id;})||{};
+  var isNew=!id;
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit"><h3 style="margin:0 0 12px">'+(isNew?'Nuevo tipo de lead':'Editar tipo de lead')+'</h3>'
+    +'<div class="field full"><label>Nombre</label><input id="tl-nombre" value="'+esc(t.nombre||'')+'"></div>'
+    +'<div class="field full"><label>Descripci\u00f3n (p\u00fablico objetivo)</label><textarea id="tl-desc" rows="2">'+esc(t.descripcion||'')+'</textarea></div>'
+    +'<div class="field full"><label>Problema</label><textarea id="tl-prob" rows="2">'+esc(t.problema||'')+'</textarea></div>'
+    +'<div class="field full"><label>Dolor</label><textarea id="tl-dolor" rows="2">'+esc(t.dolor||'')+'</textarea></div>'
+    +'<div class="field full"><label>Objeci\u00f3n</label><textarea id="tl-obj" rows="2">'+esc(t.objeccion||'')+'</textarea></div>'
+    +'<div class="fx-actions" style="margin-top:14px"><button class="btn" onclick="guardarTipoLead(\''+(id||'')+'\')">Guardar</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+function guardarTipoLead(id){
+  function V(x){var e=document.getElementById(x);return e?e.value.trim():'';}
+  var nombre=V('tl-nombre'); if(!nombre){ alert('Ponle un nombre al tipo de lead'); return; }
+  state.tiposLead=state.tiposLead||[];
+  if(id){
+    var t=state.tiposLead.find(function(x){return x.id===id;});
+    if(t){ t.nombre=nombre; t.descripcion=V('tl-desc'); t.problema=V('tl-prob'); t.dolor=V('tl-dolor'); t.objeccion=V('tl-obj'); }
+  } else {
+    var orden=state.tiposLead.reduce(function(a,x){return Math.max(a,x.orden||0);},0)+1;
+    state.tiposLead.push({id:uid(),nombre:nombre,descripcion:V('tl-desc'),problema:V('tl-prob'),dolor:V('tl-dolor'),objeccion:V('tl-obj'),orden:orden,archivado:false});
+  }
+  cerrarFactura(); save(); render();
+}
+function borrarTipoLead(id){
+  if(!confirm('\u00bfBorrar este tipo de lead?')) return;
+  state.tiposLead=(state.tiposLead||[]).filter(function(x){return x.id!==id;});
+  dbDelete('tiposLead', id); save(); render();
+}
 function viewCRM(){
+  if(crmSub==='clientes') return viewCRMClientes();
   const ETAPAS=[['nuevo','Nuevo'],['contactado','Contactado'],['agendado','Agendado'],['llamada','Llamada'],['ganado','Ganado'],['perdido','Perdido']];
   const eq=(state.equipo||[]);
   const leadsAll=(state.leads||[]);
@@ -2330,6 +2424,7 @@ function viewCRM(){
   const activos=leads.filter(l=>l.etapa!=='ganado'&&l.etapa!=='perdido');
   const valorPipe=activos.reduce((a,l)=>a+ +(l.valor||0),0);
   return `
+  ${crmTabsHTML()}
   <div class="page-head"><div><div class="eyebrow">Acquisition</div><h1>CRM · Pipeline</h1>
   <p>Tus leads por etapa, desde que entran hasta que cierran. Muévelos de fase y conviértelos en cliente.</p></div>
   <input type="month" value="${crmMes}" onchange="setCrmMes(this.value)" title="Filtrar por mes" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${crmMes?`<button class="btn ghost sm" onclick="setCrmMes('')">Ver todos</button> `:''}<button class="btn" onclick="toggleForm('l-form')">+ Lead</button></div>

@@ -1331,6 +1331,37 @@ function avisoDuplicados(){
   return '<div class="panel" style="border:1px solid #FF3547;background:rgba(255,53,71,.07);margin:14px 0"><div class="panel-head"><h3 style="color:#FF3547;margin:0">\u26a0 Clientes duplicados ('+dp.length+')</h3><span class="muted-mini">mismo nombre en varias fichas \u00b7 revisa y elimina el repetido</span></div><div class="panel-body">'+dp.map(function(k){ var g=bn[k]; return '<div style="margin-bottom:8px"><b style="color:#fff">'+esc(g[0].nombre)+'</b> <span class="muted-mini">'+g.length+' fichas:</span> '+g.map(function(a){ return '<span onclick="fichaCliente(\''+a.id+'\')" style="cursor:pointer;color:#00b2ff;margin-left:8px">ver \u203a ('+esc(a.estado||'-')+')</span>'; }).join('')+'</div>'; }).join('')+'</div></div>';
 }
 
+function ceModoLbl(v){ var l=document.getElementById('ce-imp-lbl'); if(l) l.textContent=(v==='fraccionado'?'Cuantía al mes (€)':'Cuantía total (€)'); }
+function copiarCeUrl(){ var u=document.getElementById('ce-url'); if(!u) return; u.select(); try{document.execCommand('copy');}catch(e){} showToast('Enlace copiado',false,2000); }
+function abrirCrearEnlace(){
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit"><h3 style="margin:0 0 12px">💳 Crear enlace de pago</h3>'
+    +'<div class="field full"><label>Nombre del nuevo cliente</label><input id="ce-nombre" placeholder="Nombre y apellidos"></div>'
+    +'<div class="field full"><label>Email (opcional)</label><input id="ce-email" placeholder="email@cliente.com"></div>'
+    +'<div class="field full"><label>Tipo de servicio</label><select id="ce-serv"><option>Rehabilitación/Readaptación</option><option>Prevención y rendimiento</option></select></div>'
+    +'<div class="field full"><label>Duración del programa</label><select id="ce-dur"><option value="3">3 meses</option><option value="6">6 meses</option><option value="9">9 meses</option></select></div>'
+    +'<div class="field full"><label>Forma de pago</label><select id="ce-modo" onchange="ceModoLbl(this.value)"><option value="contado">Al contado</option><option value="fraccionado">Fraccionado</option></select></div>'
+    +'<div class="field full"><label id="ce-imp-lbl">Cuantía total (€)</label><input id="ce-imp" type="number" placeholder="0"></div>'
+    +'<div id="ce-link" style="display:none;margin-top:10px"></div>'
+    +'<div class="fx-actions" style="margin-top:14px"><button class="btn" id="ce-gen" onclick="crearEnlacePago()">Generar enlace</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+async function crearEnlacePago(){
+  function V(x){var e=document.getElementById(x);return e?e.value.trim():'';}
+  var nombre=V('ce-nombre'); if(!nombre){ alert('Pon el nombre del cliente'); return; }
+  var imp=parseFloat(V('ce-imp'))||0; if(imp<=0){ alert('Pon la cuantía'); return; }
+  var reg={nombre_cliente:nombre, email:V('ce-email'), tipo_servicio:document.getElementById('ce-serv').value, duracion_meses:parseInt(document.getElementById('ce-dur').value,10), modo_pago:document.getElementById('ce-modo').value, importe:imp, estado:'pendiente'};
+  var btn=document.getElementById('ce-gen'); if(btn){btn.disabled=true;btn.textContent='Generando…';}
+  try{
+    var r=await sb.from('contratos').insert(reg).select('id').single();
+    if(r.error) throw r.error;
+    var link=window.location.origin+'/contrato.html?c='+r.data.id;
+    var box=document.getElementById('ce-link'); box.style.display='block';
+    box.innerHTML='<div style="font-size:13px;color:var(--muted);margin-bottom:4px">Enlace listo. Envíaselo al cliente:</div><div style="display:flex;gap:6px"><input id="ce-url" readonly value="'+link+'" style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:8px"><button class="btn" onclick="copiarCeUrl()">Copiar</button><button class="btn ghost" onclick="window.open(\''+link+'\',\'_blank\')">Abrir</button></div>';
+    if(btn){btn.disabled=false;btn.textContent='Generar otro';}
+  }catch(e){ if(btn){btn.disabled=false;btn.textContent='Generar enlace';} alert('No se pudo crear el enlace: '+((e&&e.message)||e)); }
+}
 function viewAltas(){
   const ae=altaEdit||{};
   const rows=[...state.altas]; if(altaSort==='alfabetico') rows.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='plan') rows.sort((a,b)=>((a.duracionPlan||99)-(b.duracionPlan||99))||(a.nombre||'').localeCompare(b.nombre||'')); else if(altaSort==='alta_desc') rows.sort((a,b)=>(b.fechaAlta||'').localeCompare(a.fechaAlta||'')); else if(altaSort==='alta_asc') rows.sort((a,b)=>(a.fechaAlta||'9999').localeCompare(b.fechaAlta||'9999')); else if(altaSort==='baja_asc') rows.sort((a,b)=>(a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999')); else if(altaSort==='baja_desc') rows.sort((a,b)=>(b.fechaVencimiento||'').localeCompare(a.fechaVencimiento||'')); else rows.sort((a,b)=>((a.fechaVencimiento||'9999').localeCompare(b.fechaVencimiento||'9999'))||(a.nombre||'').localeCompare(b.nombre||''));
@@ -1340,9 +1371,8 @@ function viewAltas(){
   return `
   <div class="page-head"><div><div class="eyebrow">Clients</div><h1>Clients</h1>
   <p>Ficha de cada atleta: lesión, tarifa, entrenador asignado y datos para facturación.</p></div>
-  <button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
+  <button class="btn" onclick="abrirCrearEnlace()" style="background:#00b2ff;color:#fff;border-color:#00b2ff;margin-right:8px">💳 Crear enlace de pago</button><button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
   ${avisoDuplicados()}
-  <details class="panel" ${segOpen?'open':''} ontoggle="segOpen=this.open"><summary class="panel-head" style="cursor:pointer"><h3>Seguimiento de contacto</h3><span class="muted-mini">azul=hoy · verde <24h · naranja 1 día · rojo 2+</span></summary><div class="panel-body" style="padding:6px 0">${segRows()}</div></details>
   
   <div class="panel">
     <div class="form-grid ${altaEdit?'':'hidden'}" id="a-form">

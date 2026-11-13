@@ -27,6 +27,7 @@
   .chk{display:flex;align-items:flex-start;gap:10px;margin-top:12px;font-size:13.5px;cursor:pointer}
   .chk input{width:20px;height:20px;flex-shrink:0;margin-top:1px;accent-color:var(--accent)}
   .req{color:#e24b4a}
+  .vercon{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:4px}
   .pay{width:100%;height:48px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
   .pay:disabled{opacity:.6;cursor:default}
   .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:10px}
@@ -82,10 +83,10 @@ function render(ct){
     +'<div class="plan"><b>'+esc(ct.tipo_servicio)+'</b> · '+ct.duracion_meses+' meses · '+importeTxt+'</div>'
     +'<h2>Tus datos</h2>'
     +'<label>Nombre y apellidos *</label><input id="f-nombre">'
-    +'<div class="grid"><div><label>DNI / pasaporte *</label><input id="f-dni"></div><div><label>Teléfono</label><input id="f-tel"></div></div>'
-    +'<label>Lugar de residencia</label><input id="f-res">'
-    +'<div class="grid"><div><label>Email *</label><input id="f-email" type="email"></div><div><label>Fecha de nacimiento</label><input id="f-nac" type="date"></div></div>'
-    +'<h2>El contrato</h2><div class="contract">'+contratoHTML()+'</div>'
+    +'<div class="grid"><div><label>DNI / pasaporte *</label><input id="f-dni"></div><div><label>Teléfono *</label><input id="f-tel"></div></div>'
+    +'<label>Lugar de residencia *</label><input id="f-res">'
+    +'<div class="grid"><div><label>Email *</label><input id="f-email" type="email"></div><div><label>Fecha de nacimiento *</label><input id="f-nac" type="date"></div></div>'
+    +'<h2>El contrato</h2><button type="button" class="vercon" id="vercon" onclick="toggleContrato()">Ver el contrato completo ▾</button><div class="contract" id="contract" style="display:none">'+contratoHTML()+'</div>'
     +'<label class="chk"><input type="checkbox" id="a-contrato"><span>He leído y acepto el <b>contrato completo</b> <span class="req">*</span></span></label>'
     +'<label class="chk"><input type="checkbox" id="a-consent"><span>Acepto el <b>consentimiento informado</b> <span class="req">*</span></span></label>'
     +'<label class="chk"><input type="checkbox" id="a-datos"><span>Acepto el <b>tratamiento de datos</b> conforme al RGPD <span class="req">*</span></span></label>'
@@ -98,12 +99,13 @@ function render(ct){
     +'<div class="foot">Pago seguro con Stripe · El cobro va a Built From Health</div>';
 }
 
+function toggleContrato(){ var c=document.getElementById('contract'); var b=document.getElementById('vercon'); if(!c)return; var abierto=c.style.display!=='none'; c.style.display=abierto?'none':'block'; b.textContent=abierto?'Ver el contrato completo ▾':'Ocultar el contrato ▴'; }
 function showErr(m){ var e=document.getElementById('err'); if(e){ e.textContent=m; e.style.display='block'; e.scrollIntoView({behavior:'smooth',block:'center'}); } }
 
 async function pagar(){
   function V(x){ var e=document.getElementById(x); return e?e.value.trim():''; }
   var e=document.getElementById('err'); if(e) e.style.display='none';
-  if(!V('f-nombre')||!V('f-dni')||!V('f-email')){ showErr('Rellena al menos nombre, DNI y email.'); return; }
+  var faltan=[]; if(!V('f-nombre'))faltan.push('nombre'); if(!V('f-dni'))faltan.push('DNI'); if(!V('f-res'))faltan.push('residencia'); if(!V('f-email'))faltan.push('email'); if(!V('f-tel'))faltan.push('teléfono'); if(!V('f-nac'))faltan.push('fecha de nacimiento'); if(!V('f-firma'))faltan.push('firma'); if(faltan.length){ showErr('Faltan datos obligatorios: '+faltan.join(', ')+'.'); return; }
   if(!document.getElementById('a-contrato').checked || !document.getElementById('a-consent').checked || !document.getElementById('a-datos').checked){
     showErr('Debes marcar las tres aceptaciones obligatorias.'); return;
   }
@@ -140,3 +142,4 @@ function cancelado(){ showErr('El pago se canceló. Puedes volver a intentarlo c
 </script>
 </body>
 </html>
+

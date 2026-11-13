@@ -421,6 +421,7 @@ async function loadAll(){
   }
   var tc=await sb.from('tarea_categorias').select('nombre');
   state.tareaCats=(tc.data||[]).map(function(x){return x.nombre;});
+  var _ctr=await sb.from('contratos').select('*').order('creado',{ascending:false}); state.contratos=_ctr.data||[];
   var cf=await sb.from('config').select('*').eq('id',1).single();
   var c=cf.data||{};
   state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto',saldoBanco:(c.saldo_banco!=null?Number(c.saldo_banco):0),fotoPerfil:c.foto_perfil||''};
@@ -1333,6 +1334,56 @@ function avisoDuplicados(){
 
 function ceModoLbl(v){ var l=document.getElementById('ce-imp-lbl'); if(l) l.textContent=(v==='fraccionado'?'Cuantía al mes (€)':'Cuantía total (€)'); }
 function copiarCeUrl(){ var u=document.getElementById('ce-url'); if(!u) return; u.select(); try{document.execCommand('copy');}catch(e){} showToast('Enlace copiado',false,2000); }
+function conceptoContrato(meses, nombre){ var b = meses===3?'Pago Trimestre' : (meses===6?'Pago Semestre' : ('Pago '+(meses||'')+' meses')); return b+' - '+(nombre||''); }
+function contratosPendientesHTML(){
+  var pend=(state.contratos||[]).filter(function(c){return c.metodo==='transferencia' && c.estado==='aceptado';});
+  if(!pend.length) return '';
+  var rows=pend.map(function(c){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#0d1119">'
+      +'<div><div style="font-weight:600">'+esc(c.nombre_cliente||'(sin nombre)')+'</div><div style="font-size:12px;color:var(--muted)">'+esc(c.tipo_servicio||'')+' \u00b7 '+(c.duracion_meses||'')+' meses \u00b7 '+eur(c.importe)+' \u00b7 por transferencia</div></div>'
+      +'<button class="btn sm" onclick="marcarContratoCobrado(\''+c.id+'\')" style="background:#22D07B;border-color:#22D07B;color:#04221A">\u2713 Cobrado</button></div>';
+  }).join('');
+  return '<details class="panel" open><summary class="panel-head" style="cursor:pointer"><h3>Contratos pendientes de cobro (transferencia)</h3><span class="muted-mini">'+pend.length+' pendiente(s)</span></summary><div class="panel-body" style="padding:8px 0">'+rows+'</div></details>';
+}
+async function marcarContratoCobrado(id){
+  var c=(state.contratos||[]).find(function(x){return x.id===id;}); if(!c) return;
+  if(!confirm('\u00bfMarcar como cobrada la transferencia de '+eur(c.importe)+' de '+(c.nombre_cliente||'')+'?')) return;
+  var hy=hoy();
+  try{
+    await sb.from('finanzas').insert({fecha:hy, tipo:'ingreso', concepto:conceptoContrato(c.duracion_meses, c.nombre_cliente), categoria:'Contrato', fuente_pago:'Transferencia', importe:Number(c.importe||0), cliente_id:c.cliente_id||null});
+    await sb.from('contratos').update({estado:'pagado', pagado_fecha:new Date().toISOString()}).eq('id', id);
+    showToast('Cobro registrado en Finanzas', false, 3000);
+    await loadAll(); render();
+  }catch(e){ alert('No se pudo registrar: '+((e&&e.message)||e)); }
+}
+function abrirCrearContrato(){
+  var ov=getOverlay();
+  ov.innerHTML='<div class="fx-overlay"><div class="fx-edit"><h3 style="margin:0 0 12px">📄 Crear contrato (pago por transferencia)</h3>'
+    +'<div class="field full"><label>Nombre del nuevo cliente</label><input id="cc-nombre" placeholder="Nombre y apellidos"></div>'
+    +'<div class="field full"><label>Email (opcional)</label><input id="cc-email" placeholder="email@cliente.com"></div>'
+    +'<div class="field full"><label>Tipo de servicio</label><select id="cc-serv"><option>Rehabilitaci\u00f3n/Readaptaci\u00f3n</option><option>Prevenci\u00f3n y rendimiento</option></select></div>'
+    +'<div class="field full"><label>Duraci\u00f3n del programa</label><select id="cc-dur"><option value="3">3 meses</option><option value="6">6 meses</option><option value="9">9 meses</option></select></div>'
+    +'<div class="field full"><label>Cuant\u00eda total (\u20ac)</label><input id="cc-imp" type="number" placeholder="0"></div>'
+    +'<div id="cc-link" style="display:none;margin-top:10px"></div>'
+    +'<div class="fx-actions" style="margin-top:14px"><button class="btn" id="cc-gen" onclick="crearContrato()">Generar enlace</button><button class="btn ghost" onclick="cerrarFactura()">Cerrar</button></div>'
+    +'</div></div>';
+  document.body.classList.add('printing');
+}
+async function crearContrato(){
+  function V(x){var e=document.getElementById(x);return e?e.value.trim():'';}
+  var nombre=V('cc-nombre'); if(!nombre){ alert('Pon el nombre del cliente'); return; }
+  var imp=parseFloat(V('cc-imp'))||0; if(imp<=0){ alert('Pon la cuant\u00eda total'); return; }
+  var reg={nombre_cliente:nombre, email:V('cc-email'), tipo_servicio:document.getElementById('cc-serv').value, duracion_meses:parseInt(document.getElementById('cc-dur').value,10), modo_pago:'contado', metodo:'transferencia', importe:imp, estado:'pendiente'};
+  var btn=document.getElementById('cc-gen'); if(btn){btn.disabled=true;btn.textContent='Generando\u2026';}
+  try{
+    var r=await sb.from('contratos').insert(reg).select('id').single();
+    if(r.error) throw r.error;
+    var link=window.location.origin+'/contrato.html?c='+r.data.id;
+    var box=document.getElementById('cc-link'); box.style.display='block';
+    box.innerHTML='<div style="font-size:13px;color:var(--muted);margin-bottom:4px">Contrato listo. Env\u00edaselo al cliente (firma y luego transfiere a tu IBAN):</div><div style="display:flex;gap:6px"><input id="cc-url" readonly value="'+link+'" style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:8px"><button class="btn" onclick="(function(){var u=document.getElementById(\'cc-url\');u.select();try{document.execCommand(\'copy\');}catch(e){} showToast(\'Enlace copiado\',false,2000);})()">Copiar</button><button class="btn ghost" onclick="window.open(\''+link+'\',\'_blank\')">Abrir</button></div>';
+    if(btn){btn.disabled=false;btn.textContent='Generar otro';}
+  }catch(e){ if(btn){btn.disabled=false;btn.textContent='Generar enlace';} alert('No se pudo crear el contrato: '+((e&&e.message)||e)); }
+}
 function abrirCrearEnlace(){
   var ov=getOverlay();
   ov.innerHTML='<div class="fx-overlay"><div class="fx-edit"><h3 style="margin:0 0 12px">💳 Crear enlace de pago</h3>'
@@ -1371,8 +1422,9 @@ function viewAltas(){
   return `
   <div class="page-head"><div><div class="eyebrow">Clients</div><h1>Clients</h1>
   <p>Ficha de cada atleta: lesión, tarifa, entrenador asignado y datos para facturación.</p></div>
-  <button class="btn" onclick="abrirCrearEnlace()" style="background:#00b2ff;color:#fff;border-color:#00b2ff;margin-right:8px">💳 Crear enlace de pago</button><button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
+  <button class="btn" onclick="abrirCrearEnlace()" style="background:#222222;color:#00b2ff;border-color:#00b2ff;margin-right:8px">💳 Crear enlace de pago</button><button class="btn" onclick="abrirCrearContrato()" style="background:#222222;color:#00b2ff;border-color:#00b2ff;margin-right:8px">📄 Crear contrato</button><button class="btn" onclick="toggleForm('a-form')">+ Alta</button></div>
   ${avisoDuplicados()}
+  ${contratosPendientesHTML()}
   
   <div class="panel">
     <div class="form-grid ${altaEdit?'':'hidden'}" id="a-form">

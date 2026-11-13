@@ -54,8 +54,9 @@ function eur(n){ return new Intl.NumberFormat('es-ES',{style:'currency',currency
 
 function render(ct){
   var frac = ct.modo_pago==='fraccionado';
-  var importeTxt = frac ? (eur(ct.importe)+' /mes durante '+ct.duracion_meses+' meses') : (eur(ct.importe)+' (pago único)');
-  var btnTxt = frac ? ('Aceptar y pagar 1ª cuota · '+eur(ct.importe)) : ('Aceptar y pagar '+eur(ct.importe));
+  var transfer = ct.metodo==='transferencia';
+  var importeTxt = transfer ? (eur(ct.importe)+' (por transferencia)') : (frac ? (eur(ct.importe)+' /mes durante '+ct.duracion_meses+' meses') : (eur(ct.importe)+' (pago único)'));
+  var btnTxt = transfer ? 'Aceptar contrato' : (frac ? ('Aceptar y pagar 1ª cuota · '+eur(ct.importe)) : ('Aceptar y pagar '+eur(ct.importe)));
   root.innerHTML =
     '<div class="sub">Contrato de prestación de servicios</div>'
     +'<div class="plan"><b>'+esc(PROGRAMA)+'</b>'+esc(ct.tipo_servicio)+' · '+ct.duracion_meses+' meses · '+importeTxt+'</div>'
@@ -72,7 +73,7 @@ function render(ct){
     +'<p class="note">Al marcar las casillas y pagar, tu aceptación queda registrada con validez legal equivalente a una firma manuscrita.</p>'
     +'<div class="err" id="err"></div>'
     +'<button class="pay" id="pay" onclick="pagar()"><span>'+btnTxt+'</span></button>'
-    +'<div class="foot">Pago seguro con Stripe · El cobro va a Built From Health</div>';
+    +'<div class="foot">'+(transfer?'Tras aceptar, te mostramos el IBAN para la transferencia':'Pago seguro con Stripe · El cobro va a Built From Health')+'</div>';
 }
 function showErr(m){ var e=document.getElementById('err'); if(e){ e.textContent=m; e.style.display='block'; e.scrollIntoView({behavior:'smooth',block:'center'}); } }
 async function pagar(){
@@ -81,17 +82,28 @@ async function pagar(){
   var faltan=[]; if(!V('f-nombre'))faltan.push('nombre'); if(!V('f-dni'))faltan.push('DNI'); if(!V('f-res'))faltan.push('residencia'); if(!V('f-email'))faltan.push('email'); if(!V('f-tel'))faltan.push('teléfono'); if(!V('f-nac'))faltan.push('fecha de nacimiento');
   if(faltan.length){ showErr('Faltan datos obligatorios: '+faltan.join(', ')+'.'); return; }
   if(!document.getElementById('a-contrato').checked || !document.getElementById('a-consent').checked || !document.getElementById('a-datos').checked){ showErr('Debes marcar las tres aceptaciones obligatorias.'); return; }
-  var btn=document.getElementById('pay'); btn.disabled=true; btn.querySelector('span').textContent='Redirigiendo al pago…';
+  var btn=document.getElementById('pay'); btn.disabled=true; btn.querySelector('span').textContent='Procesando…';
   try{
     var payload={ c:CID, nombre:V('f-nombre'), dni:V('f-dni'), residencia:V('f-res'), email:V('f-email'), telefono:V('f-tel'), fecha_nac:V('f-nac'),
       acepta_contrato:true, acepta_consentimiento:true, acepta_datos:true, acepta_imagenes:document.getElementById('a-img').checked, origin:location.origin };
     var r=await fetch(FN+'aceptar-contrato',{method:'POST',headers:H(),body:JSON.stringify(payload)});
     var d=await r.json();
     if(!d.ok) throw new Error(d.error||'No se pudo procesar.');
+    if(d.transferencia){ graciasTransferencia(d.iban, d.importe); return; }
     location.href=d.url;
   }catch(err){ btn.disabled=false; btn.querySelector('span').textContent='Reintentar pago'; showErr('No se pudo procesar: '+(err.message||err)); }
 }
 function gracias(){ root.innerHTML='<div class="state"><div class="big">✓</div><h1>¡Pago recibido!</h1><p>Gracias. Tu contrato ha quedado registrado y nos pondremos en contacto contigo para empezar.</p></div>'; }
+function copiarIban(iban){ try{ navigator.clipboard.writeText(iban); }catch(e){ var t=document.createElement('textarea'); t.value=iban; document.body.appendChild(t); t.select(); try{document.execCommand('copy');}catch(_){} document.body.removeChild(t); } var b=document.getElementById('cpib'); if(b){ b.textContent='Copiado ✓'; setTimeout(function(){ b.textContent='Copiar IBAN'; },1800); } }
+function graciasTransferencia(iban, importe){
+  root.innerHTML='<div class="state"><div class="big">✓</div><h1>¡Contrato aceptado!</h1>'
+    +'<p>Para completarlo, realiza una transferencia de <b>'+eur(importe)+'</b> a este IBAN:</p>'
+    +'<div style="background:#f3f6fa;border:1px solid var(--line);border-radius:10px;padding:14px;margin:16px auto;max-width:420px">'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">IBAN · Built From Health</div>'
+    +'<div style="font-size:17px;font-weight:700;letter-spacing:.5px;word-break:break-all">'+esc(iban||'')+'</div>'
+    +'<button id="cpib" onclick="copiarIban(\''+esc(iban||'')+'\')" style="margin-top:12px;height:40px;padding:0 18px;border:0;border-radius:9px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Copiar IBAN</button></div>'
+    +'<p style="font-size:13px;color:var(--muted)">Pon tu nombre en el concepto. En cuanto recibamos la transferencia nos pondremos en contacto para empezar.</p></div>';
+}
 (async function(){
   if(qp('ok')){ gracias(); return; }
   if(!CID){ root.innerHTML='<div class="state"><h1>Enlace no válido</h1><p>Falta el identificador del contrato.</p></div>'; return; }

@@ -398,7 +398,7 @@ const SPECS={
   videollamadas:{table:'videollamadas',cols:[['atleta','atleta'],['fecha','fecha'],['hora','hora'],['plataforma','plataforma'],['estado','estado'],['notas','notas'],['tipoLead','tipo_lead'],['realizadaPor','realizada_por'],['agendadoPor','agendado_por'],['resultado','resultado'],['importe','importe','num'],['tipoLlamada','tipo_llamada'],['pagoTipo','pago_tipo'],['mesesContratados','meses_contratados','num'],['ingresoGenerado','ingreso_generado','bool']]},
   eventos:{table:'eventos',cols:[['titulo','titulo'],['fecha','fecha'],['hora','hora'],['duracion','duracion','num'],['notas','notas'],['origen','origen'],['fechaFin','fecha_fin']]},
   tareas:{table:'tareas',cols:[['titulo','titulo'],['categoria','categoria'],['asignado','asignado_id'],['fecha','fecha'],['hecha','hecha','bool'],['urgencia','urgencia'],['fechaFin','fecha_fin'],['horaInicio','hora_inicio'],['horaFin','hora_fin']]},
-  equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas']]},
+  equipo:{table:'equipo',cols:[['nombre','nombre'],['rol','rol'],['email','email'],['notas','notas'],['whatsapp','whatsapp'],['callmebot_key','callmebot_key'],['telegram_chat','telegram_chat']]},
   facturas:{table:'facturas',cols:[['numero','numero'],['fecha','fecha'],['tipo','tipo'],['periodo','periodo'],['concepto','concepto'],['clienteNombre','cliente_nombre'],['clienteNif','cliente_nif'],['clienteDir','cliente_dir'],['base','base','num'],['ivaPct','iva_pct','num'],['ivaCuota','iva_cuota','num'],['irpfPct','irpf_pct','num'],['irpfCuota','irpf_cuota','num'],['total','total','num'],['origen','origen_id'],['estado','estado']]},
   leads:{table:'leads',cols:[['nombre','nombre'],['email','email'],['telefono','telefono'],['fuente','fuente'],['etapa','etapa'],['valor','valor','num'],['tipo','tipo'],['asignado','asignado_id'],['notas','notas'],['fecha','fecha']]},
   documentos:{table:'documentos',cols:[['clienteId','cliente_id'],['categoria','categoria'],['nombre','nombre'],['path','path']]},
@@ -2027,6 +2027,22 @@ function setTareaCat(v){ tareaFiltroCat=v; render(); }
 function viewEquipo(){
   const eq=state.equipo||[];
   const rolB={Entrenador:'b-cyan',Nutricionista:'b-amber',Fisio:'b-ink',Closer:'b-red',Setter:'b-gray',Admin:'b-gray',Otro:'b-gray'};
+  const setterAct=eq.find(function(m){return (m.rol||'').toLowerCase()==='setter';})||{};
+  const avisoBlock=`
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Avisos del Setter IA · WhatsApp</h3></div>
+    <div class="panel-body">
+      <p class="muted-mini" style="margin:0 0 10px">Cuando el Setter IA propone una llamada o deriva un lead, avisa por WhatsApp al setter asignado. Elige a quién avisar y pega su número y su clave de CallMeBot. Para hacer pruebas, pon tus datos; luego lo cambias a Guille.</p>
+      <div class="form-grid">
+        <div class="field"><label>Avisar a (setter)</label><select id="av-mid">${eq.length?eq.map(m=>`<option value="${m.id}"${setterAct.id===m.id?' selected':''}>${esc(m.nombre)} (${esc(m.rol||'—')})</option>`).join(''):'<option value="">Añade un miembro arriba primero</option>'}</select></div>
+        <div class="field"><label>WhatsApp (con prefijo, ej. +34600111222)</label><input id="av-wa" value="${esc(setterAct.whatsapp||'')}" placeholder="+34..."></div>
+        <div class="field"><label>Clave CallMeBot (apikey)</label><input id="av-key" value="${esc(setterAct.callmebot_key||'')}" placeholder="123456"></div>
+        <div class="field"><label>Telegram chat id (opcional, alternativa)</label><input id="av-tg" value="${esc(setterAct.telegram_chat||'')}" placeholder="opcional"></div>
+        <div class="form-actions"><button class="btn sm" onclick="guardarAvisoSetter()">Guardar como setter</button> <button class="btn ghost sm" onclick="probarAvisoSetter()">📲 Probar aviso</button></div>
+      </div>
+      <div class="muted-mini" style="margin-top:8px">Clave CallMeBot: en tu móvil, guarda en contactos el número de CallMeBot (lo ves en callmebot.com/whatsapp), mándale por WhatsApp el mensaje <b>"I allow callmebot to send me messages to this number"</b> y te responde con tu apikey. Pégala aquí y pulsa Probar aviso.</div>
+    </div>
+  </div>`;
   return `
   <div class="page-head"><div><div class="eyebrow">Team</div><h1>Team</h1>
   <p>Tu equipo y su rol. Para entrenadores verás su volumen de clientes y su retención. Asigna tareas desde la pestaña Tareas.</p></div>
@@ -2045,7 +2061,31 @@ function viewEquipo(){
         return `<tr><td><b>${esc(m.nombre)}</b>${m.email?`<br><span style="color:var(--muted);font-size:12px">${esc(m.email)}</span>`:''}</td><td><span class="badge ${rolB[m.rol]||'b-gray'}">${esc(m.rol)}</span></td><td>${esEnt?`${clientes.length} <span style="color:var(--muted);font-size:12px">(${activos} act.)</span>`:'—'}</td><td>${esEnt&&ret!==null?`<span class="${ret>=70?'pos':(ret>=40?'':'neg')}">${ret}%</span>`:'—'}</td><td class="num">${pend||'—'}</td><td style="text-align:right"><button class="del" onclick="delItem('equipo','${m.id}')">✕</button></td></tr>`;}).join('')}
       </tbody></table>`:`<div class="empty"><b>Sin miembros</b>Añade a tu equipo con «+ Miembro».</div>`}
     </div>
-  </div>`;
+  </div>
+  ${avisoBlock}`;
+}
+async function guardarAvisoSetter(silent){
+  var id=document.getElementById('av-mid').value;
+  var m=(state.equipo||[]).find(function(x){return x.id===id;});
+  if(!m){ showToast('Elige a quién avisar (o añade un miembro primero).',true,5000); return false; }
+  m.whatsapp=(document.getElementById('av-wa').value||'').trim();
+  m.callmebot_key=(document.getElementById('av-key').value||'').trim();
+  m.telegram_chat=(document.getElementById('av-tg').value||'').trim();
+  m.rol='Setter';
+  try{ await sb.from('equipo').update({whatsapp:m.whatsapp,callmebot_key:m.callmebot_key,telegram_chat:m.telegram_chat,rol:'Setter'}).eq('id',id); }
+  catch(e){ showToast('No se pudo guardar: '+((e&&e.message)||e),true,7000); return false; }
+  if(!silent){ showToast('Setter de avisos guardado ✓',false,2500); render(); }
+  return true;
+}
+async function probarAvisoSetter(){
+  var ok=await guardarAvisoSetter(true); if(!ok) return;
+  showToast('Enviando aviso de prueba…',false,2000);
+  try{
+    var r=await fetch(SB_URL+'/functions/v1/instagram-webhook',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({notifytest:true})});
+    var j=await r.json().catch(function(){return {};});
+    if(j&&j.ok){ showToast('Aviso enviado por '+(j.via||'')+' ✓ Revisa el WhatsApp de '+(j.setter||'')+'.',false,7000); }
+    else{ showToast('No se envió. '+((j&&(j.error||j.respuesta))||('status '+(j&&j.status||'?')))+(j&&j.setter?(' · setter: '+j.setter):''),true,10000); }
+  }catch(e){ showToast('Error llamando al webhook: '+e,true,8000); }
 }
 function addMiembro(){
   const nombre=document.getElementById('e-nombre').value.trim();

@@ -2503,6 +2503,32 @@ function igEstadoColor(e){ return e==='caliente'?'#FF3547':(e==='templado'?'#F59
 function igEstadoLabel(e){ return {frio:'Frío',templado:'Templado',caliente:'Caliente',agendado:'Agendado',cliente:'Cliente',descartado:'Descartado'}[e]||e; }
 var igFiltro='';
 function setIgFiltro(v){ igFiltro=v; render(); }
+var igTipoFiltro='', igSegFiltro='';
+function setIgTipoFiltro(v){ igTipoFiltro=v; render(); }
+function setIgSegFiltro(v){ igSegFiltro=v; render(); }
+function limpiarIgSeg(){ igTipoFiltro=''; igSegFiltro=''; render(); }
+function igVcLink(l){ return l.videollamada_id?(state.videollamadas||[]).find(function(v){return v.id===l.videollamada_id;}):null; }
+function igVcHecha(l){ if(l.videollamada_hecha) return true; var v=igVcLink(l); return !!(v&&v.estado==='realizada'); }
+function igComprado(l){ if(l.comprado) return true; var v=igVcLink(l); return !!(v&&v.resultado==='cerrada'); }
+async function setIgTipoLesion(id,v){ var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(l) l.tipo_lesion=v; try{ await sb.from('ig_leads').update({tipo_lesion:v}).eq('id',id); }catch(e){} render(); }
+async function toggleIgFlag(id,campo){ var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(!l) return; var nv=!l[campo]; l[campo]=nv; var patch={}; patch[campo]=nv; try{ await sb.from('ig_leads').update(patch).eq('id',id); }catch(e){} render(); }
+function tipoLesionToPerfil(t){ return t==='LCA'?'LCA':(t==='Pubalgia'?'Pubalgia':(t==='Rendimiento'?'Rendimiento':'Otra lesión')); }
+async function crearLlamadaDesdeLead(id){
+  var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(!l) return;
+  var eqId=(typeof userEquipoId!=='undefined'&&userEquipoId)?userEquipoId:'';
+  var v={id:uid(),atleta:(l.nombre||l.username||'Lead IG'),tipoLead:tipoLesionToPerfil(l.tipo_lesion||''),tipoLlamada:'inicial',realizadaPor:eqId,agendadoPor:eqId,fecha:hoy(),hora:'17:00',plataforma:'Zoom',estado:'pendiente',resultado:'pendiente',importe:0,notas:'Desde CRM · lead '+(l.username?('@'+l.username):'')+(l.resumen?(' · '+l.resumen):'')};
+  if(!state.videollamadas) state.videollamadas=[]; state.videollamadas.push(v);
+  syncEventoVid(v);
+  l.estado='agendado'; l.videollamada_id=v.id;
+  try{
+    var up=await sb.from('videollamadas').upsert([rowToDB('videollamadas',v)]); if(up.error) throw up.error;
+    var evg=(state.eventos||[]).filter(function(e){return e.origen==='vid:'+v.id;}).map(function(e){return rowToDB('eventos',e);});
+    if(evg.length){ await sb.from('eventos').upsert(evg); }
+    await sb.from('ig_leads').update({estado:'agendado',videollamada_id:v.id}).eq('id',id);
+    showToast('Llamada creada y enviada a My Calls ✓', false, 3000);
+  }catch(e){ console.error('crearLlamadaDesdeLead',e); showToast('No se pudo crear la llamada: '+((e&&e.message)||e), true, 8000); }
+  irTab('videollamadas');
+}
 async function setIgEstado(id,v){
   var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(l) l.estado=v;
   try{ await sb.from('ig_leads').update({estado:v}).eq('id',id); }catch(e){}
@@ -2522,26 +2548,48 @@ function copiarYabrir(username, plid){
 function viewCRMLeads(){
   var leads=(state.igLeads||[]).slice();
   if(igFiltro) leads=leads.filter(function(l){return l.estado===igFiltro;});
+  if(igTipoFiltro) leads=leads.filter(function(l){return (l.tipo_lesion||'')===igTipoFiltro;});
+  if(igSegFiltro) leads=leads.filter(function(l){ var vc=igVcHecha(l), cp=igComprado(l); if(igSegFiltro==='vc_si')return vc; if(igSegFiltro==='vc_no')return !vc; if(igSegFiltro==='compro_si')return cp; if(igSegFiltro==='compro_no')return !cp; if(igSegFiltro==='vc_si_compro_no')return vc&&!cp; return true; });
   var cont=function(e){ return (state.igLeads||[]).filter(function(l){return l.estado===e;}).length; };
   var estados=['frio','templado','caliente','agendado','cliente','descartado'];
   var chips=estados.map(function(e){ return '<button class="btn sm'+(igFiltro===e?'':' ghost')+'" onclick="setIgFiltro(\''+e+'\')" style="margin-right:6px;border-color:'+igEstadoColor(e)+';color:'+(igFiltro===e?'#fff':igEstadoColor(e))+(igFiltro===e?';background:'+igEstadoColor(e):'')+'">'+igEstadoLabel(e)+' ('+cont(e)+')</button>'; }).join('');
   var plOpts=function(l){ return (state.igPlantillas||[]).map(function(p){return '<option value="'+p.id+'">'+esc(p.titulo)+'</option>';}).join(''); };
   var estOpts=function(l){ return estados.map(function(e){return '<option value="'+e+'"'+(l.estado===e?' selected':'')+'>'+igEstadoLabel(e)+'</option>';}).join(''); };
+  var tiposLesion=['LCA','Pubalgia','Menisco','Rendimiento','Otra'];
+  var tlOpts=function(l){ return '<option value="">Lesión…</option>'+tiposLesion.map(function(t){return '<option value="'+t+'"'+(((l.tipo_lesion||'')===t)?' selected':'')+'>'+t+'</option>';}).join(''); };
   var rows=leads.map(function(l){
     var nombre=l.nombre||l.username||'(sin nombre)';
     var user=l.username?('@'+l.username):'—';
-    return '<div style="border:1px solid var(--line);border-left:4px solid '+igEstadoColor(l.estado)+';border-radius:10px;background:#0d1119;padding:12px 14px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">'
-      +'<div style="min-width:160px"><div style="font-weight:600">'+esc(nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(user)+' · '+l.mensajes_count+' msg</div></div>'
+    var vc=igVcHecha(l), cp=igComprado(l);
+    var resumen=l.resumen||l.lesion||'';
+    return '<div style="border:1px solid var(--line);border-left:4px solid '+igEstadoColor(l.estado)+';border-radius:10px;background:#0d1119;padding:12px 14px;margin-bottom:8px">'
+      +'<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">'
+      +'<div style="min-width:160px"><div style="font-weight:600">'+esc(nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(user)+' · '+(l.mensajes_count||0)+' msg</div></div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
       +'<select onchange="setIgEstado(\''+l.id+'\',this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+estOpts(l)+'</select>'
       +'<select id="pl-'+l.id+'" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+plOpts(l)+'</select>'
       +'<button class="btn sm" onclick="copiarYabrir(\''+esc(l.username||'')+'\',document.getElementById(\'pl-'+l.id+'\').value)" style="background:#00b2ff;border-color:#00b2ff;color:#fff">Copiar + abrir chat</button>'
+      +'</div></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'
+      +'<select onchange="setIgTipoLesion(\''+l.id+'\',this.value)" title="Tipo de lesión" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+tlOpts(l)+'</select>'
+      +'<button class="btn sm" onclick="crearLlamadaDesdeLead(\''+l.id+'\')" title="Crea la videollamada y la manda a My Calls" style="background:#22D07B;border-color:#22D07B;color:#07210f;font-weight:700">📹 Crear llamada</button>'
+      +'<button class="btn sm'+(vc?'':' ghost')+'" onclick="toggleIgFlag(\''+l.id+'\',\'videollamada_hecha\')" style="'+(vc?'background:#00b2ff;border-color:#00b2ff;color:#fff':'')+'">'+(vc?'✓ ':'')+'VC hecha</button>'
+      +'<button class="btn sm'+(cp?'':' ghost')+'" onclick="toggleIgFlag(\''+l.id+'\',\'comprado\')" style="'+(cp?'background:#22D07B;border-color:#22D07B;color:#07210f;font-weight:700':'')+'">'+(cp?'✓ ':'')+'Compró</button>'
+      +(resumen?'<span style="font-size:12px;color:var(--muted);flex:1;min-width:140px">'+esc(resumen)+'</span>':'')
       +'</div></div>';
   }).join('');
   return crmTabsHTML()
     +'<div class="page-head"><div><div class="eyebrow">Acquisition</div><h1>CRM · Leads de Instagram</h1>'
     +'<p>Los leads que te escriben por DM entran aquí y se clasifican solos (Frío 0-1 · Templado 2-3 · Caliente 4+). Elige una plantilla y \"Copiar + abrir chat\".</p></div></div>'
-    +'<div style="margin-bottom:12px">'+'<button class="btn sm'+(igFiltro===''?'':' ghost')+'" onclick="setIgFiltro(\'\')" style="margin-right:6px">Todos ('+(state.igLeads||[]).length+')</button>'+chips+'</div>'
+    +'<div style="margin-bottom:10px">'+'<button class="btn sm'+(igFiltro===''?'':' ghost')+'" onclick="setIgFiltro(\'\')" style="margin-right:6px">Todos ('+(state.igLeads||[]).length+')</button>'+chips+'</div>'
+    +'<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+      +'<span style="font-size:12px;color:var(--muted)">Seguimiento:</span>'
+      +'<select onchange="setIgTipoFiltro(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+['','LCA','Pubalgia','Menisco','Rendimiento','Otra'].map(function(t){return '<option value="'+t+'"'+(igTipoFiltro===t?' selected':'')+'>'+(t||'Toda lesión')+'</option>';}).join('')+'</select>'
+      +'<select onchange="setIgSegFiltro(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'
+        +[['','Todo estado'],['vc_si','Hizo videollamada'],['vc_no','No hizo videollamada'],['compro_si','Compró'],['compro_no','No compró'],['vc_si_compro_no','Hizo VC pero no compró']].map(function(o){return '<option value="'+o[0]+'"'+(igSegFiltro===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')
+      +'</select>'
+      +((igTipoFiltro||igSegFiltro)?'<button class="btn ghost sm" onclick="limpiarIgSeg()">Limpiar</button>':'')
+    +'</div>'
     +(rows||'<div style="border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--muted)">Aún no hay leads. En cuanto alguien te escriba por Instagram (y esté activa la conexión), aparecerá aquí.</div>')
     +'<details class="panel" style="margin-top:16px"><summary class="panel-head" style="cursor:pointer"><h3>Plantillas de mensaje</h3><span class="muted-mini">'+(state.igPlantillas||[]).length+'</span></summary><div class="panel-body" style="padding:8px 0">'+(state.igPlantillas||[]).map(function(p){return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px">'+'<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input value="'+esc(p.titulo||'')+'" onchange="guardarPlantillaTitulo(\''+p.id+'\',this.value)" placeholder="T\u00edtulo" style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;font-weight:600;padding:7px 9px"><button class="btn ghost sm" onclick="borrarPlantilla(\''+p.id+'\')">\u2715</button></div>'+'<textarea onchange="guardarPlantilla(\''+p.id+'\',this.value)" style="width:100%;min-height:56px;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:8px">'+esc(p.cuerpo||'')+'</textarea></div>';}).join('')+'<button class="btn sm" onclick="nuevaPlantilla()" style="background:#00b2ff;border-color:#00b2ff;color:#fff;margin-top:4px">\u2795 Nueva plantilla</button>'+'<div class="muted-mini" style="margin-top:8px">Crea las que quieras, ponles t\u00edtulo y edita el texto (se guarda al salir del campo). Usa [TU_LANDING] donde quieras tu enlace.</div></div></details>';
 }

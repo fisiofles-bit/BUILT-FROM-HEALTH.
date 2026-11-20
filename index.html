@@ -2529,11 +2529,11 @@ function viewPublicidad(){
   </div>
   ${clasifAngulos()}`;
 }
-var crmSub='pipeline';
+var crmSub='leads';
 function setCrmSub(v){ crmSub=v; render(); }
 function crmTabsHTML(){
   function b(k,l){ return '<button class="btn sm'+(crmSub===k?'':' ghost')+'" onclick="setCrmSub(\''+k+'\')" style="margin-right:6px">'+l+'</button>'; }
-  return '<div style="margin-bottom:14px">'+b('pipeline','Pipeline')+b('clientes','Clientes')+b('leads','Leads IG')+'</div>';
+  return '<div style="margin-bottom:14px">'+b('leads','Leads IG')+b('clientes','Clientes')+'</div>';
 }
 function campoLead(label,val,color){
   if(!val) return '';
@@ -2543,10 +2543,21 @@ function igEstadoColor(e){ return e==='caliente'?'#FF3547':(e==='templado'?'#F59
 function igEstadoLabel(e){ return {frio:'Frío',templado:'Templado',caliente:'Caliente',agendado:'Agendado',cliente:'Cliente',descartado:'Descartado'}[e]||e; }
 var igFiltro='';
 function setIgFiltro(v){ igFiltro=v; render(); }
-var igTipoFiltro='', igSegFiltro='';
+var igTipoFiltro='', igSegFiltro='', igTiempoFiltro='';
 function setIgTipoFiltro(v){ igTipoFiltro=v; render(); }
 function setIgSegFiltro(v){ igSegFiltro=v; render(); }
-function limpiarIgSeg(){ igTipoFiltro=''; igSegFiltro=''; render(); }
+function setIgTiempoFiltro(v){ igTiempoFiltro=v; render(); }
+function limpiarIgSeg(){ igFiltro=''; igTipoFiltro=''; igSegFiltro=''; igTiempoFiltro=''; render(); }
+function igDentroTiempo(l){
+  if(!igTiempoFiltro) return true;
+  var ref=l.ultimo_mensaje||l.creado; if(!ref) return false;
+  var dias=(Date.now()-new Date(ref).getTime())/86400000;
+  if(igTiempoFiltro==='hoy') return dias<1;
+  if(igTiempoFiltro==='7') return dias<=7;
+  if(igTiempoFiltro==='30') return dias<=30;
+  if(igTiempoFiltro==='90') return dias<=90;
+  return true;
+}
 function igVcLink(l){ return l.videollamada_id?(state.videollamadas||[]).find(function(v){return v.id===l.videollamada_id;}):null; }
 function igVcHecha(l){ if(l.videollamada_hecha) return true; var v=igVcLink(l); return !!(v&&v.estado==='realizada'); }
 function igComprado(l){ if(l.comprado) return true; var v=igVcLink(l); return !!(v&&v.resultado==='cerrada'); }
@@ -2590,9 +2601,10 @@ function viewCRMLeads(){
   if(igFiltro) leads=leads.filter(function(l){return l.estado===igFiltro;});
   if(igTipoFiltro) leads=leads.filter(function(l){return (l.tipo_lesion||'')===igTipoFiltro;});
   if(igSegFiltro) leads=leads.filter(function(l){ var vc=igVcHecha(l), cp=igComprado(l); if(igSegFiltro==='vc_si')return vc; if(igSegFiltro==='vc_no')return !vc; if(igSegFiltro==='compro_si')return cp; if(igSegFiltro==='compro_no')return !cp; if(igSegFiltro==='vc_si_compro_no')return vc&&!cp; return true; });
+  if(igTiempoFiltro) leads=leads.filter(igDentroTiempo);
   var cont=function(e){ return (state.igLeads||[]).filter(function(l){return l.estado===e;}).length; };
   var estados=['frio','templado','caliente','agendado','cliente','descartado'];
-  var chips=estados.map(function(e){ return '<button class="btn sm'+(igFiltro===e?'':' ghost')+'" onclick="setIgFiltro(\''+e+'\')" style="margin-right:6px;border-color:'+igEstadoColor(e)+';color:'+(igFiltro===e?'#fff':igEstadoColor(e))+(igFiltro===e?';background:'+igEstadoColor(e):'')+'">'+igEstadoLabel(e)+' ('+cont(e)+')</button>'; }).join('');
+  var selSty='background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px';
   var plOpts=function(l){ return (state.igPlantillas||[]).map(function(p){return '<option value="'+p.id+'">'+esc(p.titulo)+'</option>';}).join(''); };
   var estOpts=function(l){ return estados.map(function(e){return '<option value="'+e+'"'+(l.estado===e?' selected':'')+'>'+igEstadoLabel(e)+'</option>';}).join(''); };
   var tiposLesion=['LCA','Pubalgia','Menisco','Rendimiento','Otra'];
@@ -2621,14 +2633,13 @@ function viewCRMLeads(){
   return crmTabsHTML()
     +'<div class="page-head"><div><div class="eyebrow">Acquisition</div><h1>CRM · Leads de Instagram</h1>'
     +'<p>Los leads que te escriben por DM entran aquí y se clasifican solos (Frío 0-1 · Templado 2-3 · Caliente 4+). Elige una plantilla y \"Copiar + abrir chat\".</p></div></div>'
-    +'<div style="margin-bottom:10px">'+'<button class="btn sm'+(igFiltro===''?'':' ghost')+'" onclick="setIgFiltro(\'\')" style="margin-right:6px">Todos ('+(state.igLeads||[]).length+')</button>'+chips+'</div>'
     +'<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
-      +'<span style="font-size:12px;color:var(--muted)">Seguimiento:</span>'
-      +'<select onchange="setIgTipoFiltro(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+['','LCA','Pubalgia','Menisco','Rendimiento','Otra'].map(function(t){return '<option value="'+t+'"'+(igTipoFiltro===t?' selected':'')+'>'+(t||'Toda lesión')+'</option>';}).join('')+'</select>'
-      +'<select onchange="setIgSegFiltro(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'
-        +[['','Todo estado'],['vc_si','Hizo videollamada'],['vc_no','No hizo videollamada'],['compro_si','Compró'],['compro_no','No compró'],['vc_si_compro_no','Hizo VC pero no compró']].map(function(o){return '<option value="'+o[0]+'"'+(igSegFiltro===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')
-      +'</select>'
-      +((igTipoFiltro||igSegFiltro)?'<button class="btn ghost sm" onclick="limpiarIgSeg()">Limpiar</button>':'')
+      +'<span style="font-size:12px;color:var(--muted)">Filtrar:</span>'
+      +'<select onchange="setIgFiltro(this.value)" title="Situación" style="'+selSty+'"><option value="">Toda situación ('+(state.igLeads||[]).length+')</option>'+estados.map(function(e){return '<option value="'+e+'"'+(igFiltro===e?' selected':'')+'>'+igEstadoLabel(e)+' ('+cont(e)+')</option>';}).join('')+'</select>'
+      +'<select onchange="setIgTipoFiltro(this.value)" title="Tipo de lesión" style="'+selSty+'">'+['','LCA','Pubalgia','Menisco','Rendimiento','Otra'].map(function(t){return '<option value="'+t+'"'+(igTipoFiltro===t?' selected':'')+'>'+(t||'Toda lesión')+'</option>';}).join('')+'</select>'
+      +'<select onchange="setIgSegFiltro(this.value)" title="Seguimiento" style="'+selSty+'">'+[['','Todo seguimiento'],['vc_si','Hizo videollamada'],['vc_no','No hizo videollamada'],['compro_si','Compró'],['compro_no','No compró'],['vc_si_compro_no','Hizo VC pero no compró']].map(function(o){return '<option value="'+o[0]+'"'+(igSegFiltro===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'
+      +'<select onchange="setIgTiempoFiltro(this.value)" title="Tiempo" style="'+selSty+'">'+[['','Cualquier fecha'],['hoy','Hoy'],['7','Últimos 7 días'],['30','Últimos 30 días'],['90','Últimos 90 días']].map(function(o){return '<option value="'+o[0]+'"'+(igTiempoFiltro===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'
+      +((igFiltro||igTipoFiltro||igSegFiltro||igTiempoFiltro)?'<button class="btn ghost sm" onclick="limpiarIgSeg()">Limpiar</button>':'')
     +'</div>'
     +(rows||'<div style="border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--muted)">Aún no hay leads. En cuanto alguien te escriba por Instagram (y esté activa la conexión), aparecerá aquí.</div>')
     +'<details class="panel" style="margin-top:16px"><summary class="panel-head" style="cursor:pointer"><h3>Plantillas de mensaje</h3><span class="muted-mini">'+(state.igPlantillas||[]).length+'</span></summary><div class="panel-body" style="padding:8px 0">'+(state.igPlantillas||[]).map(function(p){return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px">'+'<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input value="'+esc(p.titulo||'')+'" onchange="guardarPlantillaTitulo(\''+p.id+'\',this.value)" placeholder="T\u00edtulo" style="flex:1;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;font-weight:600;padding:7px 9px"><button class="btn ghost sm" onclick="borrarPlantilla(\''+p.id+'\')">\u2715</button></div>'+'<textarea onchange="guardarPlantilla(\''+p.id+'\',this.value)" style="width:100%;min-height:56px;background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:8px">'+esc(p.cuerpo||'')+'</textarea></div>';}).join('')+'<button class="btn sm" onclick="nuevaPlantilla()" style="background:#00b2ff;border-color:#00b2ff;color:#fff;margin-top:4px">\u2795 Nueva plantilla</button>'+'<div class="muted-mini" style="margin-top:8px">Crea las que quieras, ponles t\u00edtulo y edita el texto (se guarda al salir del campo). Usa [TU_LANDING] donde quieras tu enlace.</div></div></details>';
@@ -2706,7 +2717,7 @@ function borrarTipoLead(id){
 }
 function viewCRM(){
   if(crmSub==='clientes') return viewCRMClientes();
-  if(crmSub==='leads') return viewCRMLeads();
+  if(crmSub!=='__pipeline_oculto__') return viewCRMLeads();
   const ETAPAS=[['nuevo','Nuevo'],['contactado','Contactado'],['agendado','Agendado'],['llamada','Llamada'],['ganado','Ganado'],['perdido','Perdido']];
   const eq=(state.equipo||[]);
   const leadsAll=(state.leads||[]);

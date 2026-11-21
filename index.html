@@ -424,6 +424,7 @@ async function loadAll(){
   var _ctr=await sb.from('contratos').select('*').order('creado',{ascending:false}); state.contratos=_ctr.data||[];
   var _igl=await sb.from('ig_leads').select('*').order('ultimo_mensaje',{ascending:false,nullsFirst:false}); state.igLeads=_igl.data||[];
   var _igp=await sb.from('ig_plantillas').select('*').order('orden'); state.igPlantillas=_igp.data||[];
+  var _iac=await sb.from('ia_config').select('activa').eq('id',1).maybeSingle(); state.iaActiva=!!(_iac.data&&_iac.data.activa);
   var cf=await sb.from('config').select('*').eq('id',1).single();
   var c=cf.data||{};
   state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto',saldoBanco:(c.saldo_banco!=null?Number(c.saldo_banco):0),fotoPerfil:c.foto_perfil||''};
@@ -2596,6 +2597,32 @@ function copiarYabrir(username, plid){
   showToast('Mensaje copiado ✓ Abriendo chat…', false, 2500);
   abrirChatIg(username);
 }
+function igBotSwitchHTML(){
+  var on=!!state.iaActiva;
+  var col=on?'#22D07B':'#6b7280';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-left:4px solid '+col+';border-radius:12px;background:#0d1119;padding:14px 16px;margin-bottom:14px">'
+    +'<div style="display:flex;align-items:center;gap:14px">'
+      +'<div onclick="toggleIaBot()" title="Encender / apagar el Setter IA" style="cursor:pointer;width:54px;height:30px;border-radius:999px;background:'+(on?'#22D07B':'#3a3f47')+';position:relative;transition:background .2s;flex:0 0 auto">'
+        +'<div style="position:absolute;top:3px;left:'+(on?'27px':'3px')+';width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>'
+      +'</div>'
+      +'<div><div style="font-weight:700">Setter IA · <span style="color:'+col+'">'+(on?'ENCENDIDO':'APAGADO')+'</span></div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+(on?'La IA responde sola a los DMs de Instagram.':'La IA no responde. Los DMs entran al CRM pero respondéis a mano.')+'</div></div>'
+    +'</div>'
+    +'<button class="btn sm'+(on?' ghost':'')+'" onclick="toggleIaBot()" style="'+(on?'':'background:#22D07B;border-color:#22D07B;color:#07210f;font-weight:700')+'">'+(on?'Apagar bot':'Encender bot')+'</button>'
+  +'</div>';
+}
+async function toggleIaBot(){
+  var nv=!state.iaActiva;
+  state.iaActiva=nv; render();
+  try{
+    var r=await sb.from('ia_config').update({activa:nv}).eq('id',1);
+    if(r.error) throw r.error;
+    showToast(nv?'Setter IA encendido':'Setter IA apagado',false,2200);
+  }catch(e){
+    state.iaActiva=!nv; render();
+    alert('No se pudo cambiar el estado del bot: '+((e&&e.message)||e));
+  }
+}
 function viewCRMLeads(){
   var leads=(state.igLeads||[]).slice();
   if(igFiltro) leads=leads.filter(function(l){return l.estado===igFiltro;});
@@ -2633,6 +2660,7 @@ function viewCRMLeads(){
   return crmTabsHTML()
     +'<div class="page-head"><div><div class="eyebrow">Acquisition</div><h1>CRM · Leads de Instagram</h1>'
     +'<p>Los leads que te escriben por DM entran aquí y se clasifican solos (Frío 0-1 · Templado 2-3 · Caliente 4+). Elige una plantilla y \"Copiar + abrir chat\".</p></div></div>'
+    +igBotSwitchHTML()
     +'<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
       +'<span style="font-size:12px;color:var(--muted)">Filtrar:</span>'
       +'<select onchange="setIgFiltro(this.value)" title="Situación" style="'+selSty+'"><option value="">Toda situación ('+(state.igLeads||[]).length+')</option>'+estados.map(function(e){return '<option value="'+e+'"'+(igFiltro===e?' selected':'')+'>'+igEstadoLabel(e)+' ('+cont(e)+')</option>';}).join('')+'</select>'

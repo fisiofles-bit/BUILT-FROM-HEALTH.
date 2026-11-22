@@ -1162,7 +1162,7 @@ function viewFinanzas(){
   var numAltas=altasMes.length;
   var ingresosAltas=base.filter(function(f){ return f.tipo==='ingreso' && altasMes.some(function(a){return a.id===f.cliente;}); }).reduce(function(s,f){return s+ +f.importe;},0);
   var facturacionAltas=altasMes.reduce(function(s,a){ return s + (+(a.tarifa||0) * (parseInt(a.duracionPlan,10)||1)); },0);
-  var invAds=(state.publicidad||[]).filter(function(c){return mesActivo(c.mes||'');}).reduce(function(s,c){return s+ +(c.inversion||0);},0)+(state.finanzas||[]).filter(function(m){return m.tipo==='gasto' && esInversionAnuncios(m) && mesActivo((m.fecha||'').slice(0,7));}).reduce(function(s,m){return s+ +(m.importe||0);},0);
+  var invAds=(state.finanzas||[]).filter(function(m){return m.tipo==='gasto' && esInversionAnuncios(m) && mesActivo((m.fecha||'').slice(0,7));}).reduce(function(s,m){return s+ +(m.importe||0);},0);
   var roasTotal=invAds>0 ? (fact/invAds) : 0;
   var roasAds=invAds>0 ? (facturacionAltas/invAds) : 0;
   const gas=base.filter(f=>f.tipo==='gasto').reduce((a,f)=>a+ +f.importe,0);
@@ -1647,7 +1647,7 @@ function viewVideo(){
   const decididas=delMesVenta.filter(v=>v.estado==='realizada'&&(v.resultado==='cerrada'||v.resultado==='no_cerrada')).length;
   const cerradas=delMesVenta.filter(v=>v.estado==='realizada'&&v.resultado==='cerrada').length;
   const cierre=decididas? Math.round(cerradas/decididas*100):0;
-  const invAds=(state.publicidad||[]).filter(function(c){return !vidMes || (c.mes||'')===mesKpi;}).reduce(function(s,c){return s+ +(c.inversion||0);},0)+(state.finanzas||[]).filter(function(m){return m.tipo==='gasto' && esInversionAnuncios(m) && (!vidMes || (m.fecha||'').slice(0,7)===vidMes);}).reduce(function(s,m){return s+ +(m.importe||0);},0);
+  const invAds=(state.finanzas||[]).filter(function(m){return m.tipo==='gasto' && esInversionAnuncios(m) && (!vidMes || (m.fecha||'').slice(0,7)===vidMes);}).reduce(function(s,m){return s+ +(m.importe||0);},0);
   const costeAgenda=agendas? Math.round(invAds/agendas) : 0;
   const costeLlamada=realizadas? Math.round(invAds/realizadas) : 0;
   const factLlamada=delMes.filter(v=>v.resultado==='cerrada').reduce((a,v)=>a+ +(v.importe||0),0);

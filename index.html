@@ -424,7 +424,7 @@ async function loadAll(){
   var _ctr=await sb.from('contratos').select('*').order('creado',{ascending:false}); state.contratos=_ctr.data||[];
   var _igl=await sb.from('ig_leads').select('*').order('ultimo_mensaje',{ascending:false,nullsFirst:false}); state.igLeads=_igl.data||[];
   var _igp=await sb.from('ig_plantillas').select('*').order('orden'); state.igPlantillas=_igp.data||[];
-  var _iac=await sb.from('ia_config').select('activa').eq('id',1).maybeSingle(); state.iaActiva=!!(_iac.data&&_iac.data.activa);
+  var _iac=await sb.from('ia_config').select('activa,ig_followers,ig_media_count').eq('id',1).maybeSingle(); state.iaActiva=!!(_iac.data&&_iac.data.activa); state.igFollowers=(_iac.data&&_iac.data.ig_followers)||0; state.igMedia=(_iac.data&&_iac.data.ig_media_count)||0;
   var _ads=await sb.from('ads_insights').select('*'); state.adsInsights=_ads.data||[];
   var cf=await sb.from('config').select('*').eq('id',1).single();
   var c=cf.data||{};
@@ -2534,12 +2534,65 @@ function metaAdsHTML(){
       +'<div class="kpi neg"><div class="label">Gasto</div><div class="val mono">'+eur(tot.spend)+'</div><div class="sub">'+rows.length+' campañas</div></div>'
       +'<div class="kpi"><div class="label">Leads (formulario)</div><div class="val">'+tot.leads+'</div><div class="sub">CPL '+(tot.leads?eur(cpl):'—')+'</div></div>'
       +'<div class="kpi"><div class="label">Conversaciones</div><div class="val">'+tot.conv+'</div><div class="sub">mensajes iniciados</div></div>'
-      +'<div class="kpi"><div class="label">Clics de enlace</div><div class="val">'+tot.link+'</div><div class="sub">a landing/web</div></div>'
+      +'<div class="kpi"><div class="label">Clics de enlace</div><div class="val">'+tot.link+'</div><div class="sub">'+(tot.link?('CPC '+eur(tot.spend/tot.link)):'a landing/web')+'</div></div>'
+      +'<div class="kpi"><div class="label">Seguidores IG</div><div class="val">'+((state.igFollowers||0).toLocaleString('es-ES'))+'</div><div class="sub">'+(state.igMedia||0)+' publicaciones</div></div>'
     +'</div>'
     +'<div class="panel-body">'
       +(rows.length?'<table><thead><tr><th>Campaña</th><th style="text-align:right">Gasto</th><th style="text-align:right">Leads</th><th style="text-align:right">Conversac.</th><th style="text-align:right">Clics enlace</th><th style="text-align:right">CPL</th></tr></thead><tbody>'+trs+'</tbody></table>':'<div class="empty"><b>Sin datos en este periodo</b>Pulsa «Sincronizar» para traer tus campañas de Meta.</div>')
     +'</div>'
   +'</div>';
+}
+function adsRecomendacionesHTML(){
+  var rows=(state.adsInsights||[]).filter(function(r){return r.preset===adsPeriodo && (+r.spend)>0;});
+  if(!rows.length) return '';
+  var al=[];
+  var fugas=rows.filter(function(r){return (+r.spend)>=40 && (+r.leads)===0 && (+r.conversaciones)===0;}).sort(function(a,b){return (+b.spend)-(+a.spend);}).slice(0,3);
+  fugas.forEach(function(r){ al.push({t:'warn',txt:'<b>'+esc(r.campaign)+'</b> lleva '+eur(+r.spend)+' sin leads ni conversaciones directas. Si no es de tráfico a propósito, revísala o pausa.'}); });
+  var conLeads=rows.filter(function(r){return (+r.leads)>0;}).map(function(r){return {c:r.campaign,cpl:(+r.spend)/(+r.leads),leads:+r.leads};}).sort(function(a,b){return a.cpl-b.cpl;});
+  if(conLeads.length){ var best=conLeads[0]; al.push({t:'ok',txt:'Mejor coste por lead: <b>'+esc(best.c)+'</b> a '+eur(best.cpl)+'/lead ('+best.leads+' leads).'}); }
+  if(!al.length) al.push({t:'ok',txt:'Nada urgente: ninguna campaña gasta de más sin resultados en este periodo.'});
+  var items=al.map(function(a){ var c=a.t==='warn'?'#f0b429':'#22D07B'; return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)"><div style="color:'+c+';font-weight:800;font-size:15px">'+(a.t==='warn'?'!':'✓')+'</div><div style="font-size:13px;line-height:1.5">'+a.txt+'</div></div>'; }).join('');
+  return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #f0b429"><div style="padding:14px 16px 2px"><h3 style="margin:0">🧭 Decisiones</h3><div class="muted-mini">Avisos automáticos de tus campañas. ¿Quieres cambiar algo (pausar, subir presupuesto…)? Pídemelo por el chat (ej: «pausa la campaña X») y lo hago con tu OK.</div></div><div class="panel-body" style="padding-top:2px">'+items+'</div></div>';
+}
+var adsDrill={open:false,loading:false,path:[],rows:[],activeOnly:true,err:''};
+function adsDrillLevel(){ var d=adsDrill.path.length; return d===0?'campaign':(d===1?'adset':'ad'); }
+async function adsDrillLoad(){
+  var d=adsDrill.path.length; var level=adsDrillLevel(); var parent=d===0?null:adsDrill.path[d-1].id;
+  adsDrill.loading=true; adsDrill.err=''; render();
+  try{
+    var r=await fetch('https://vxxhkuizeceutbowxcmq.supabase.co/functions/v1/ads-tree',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({level:level,parent_id:parent,preset:adsPeriodo,active_only:adsDrill.activeOnly})});
+    var j=await r.json();
+    if(!j||!j.ok){ adsDrill.err=(j&&j.error)||'error'; adsDrill.rows=[]; } else adsDrill.rows=j.rows||[];
+  }catch(e){ adsDrill.err=String(e); adsDrill.rows=[]; }
+  adsDrill.loading=false; render();
+}
+function adsDrillToggle(){ adsDrill.open=!adsDrill.open; if(adsDrill.open) adsDrillLoad(); else render(); }
+function adsDrillOpenItem(id,name){ if(adsDrill.path.length>=2) return; adsDrill.path.push({id:id,name:name}); adsDrillLoad(); }
+function adsDrillCrumb(d){ adsDrill.path=adsDrill.path.slice(0,d); adsDrillLoad(); }
+function adsDrillActive(){ adsDrill.activeOnly=!adsDrill.activeOnly; adsDrillLoad(); }
+function adsStatusBadge(s){ var m={ACTIVE:['#22D07B','Activo'],PAUSED:['#6b7280','Pausado'],CAMPAIGN_PAUSED:['#6b7280','Pausado'],ADSET_PAUSED:['#6b7280','Pausado'],ARCHIVED:['#6b7280','Archivado'],DISAPPROVED:['#ff5c5c','Rechazado'],PENDING_REVIEW:['#f0b429','En revisión'],WITH_ISSUES:['#f0b429','Con avisos']}; var x=m[s]||['#6b7280',(s||'—')]; return '<span style="font-size:11px;font-weight:700;color:'+x[0]+';border:1px solid '+x[0]+';border-radius:999px;padding:1px 8px">'+x[1]+'</span>'; }
+function adsDrillHTML(){
+  if(!adsDrill.open) return '<div class="panel" style="margin-bottom:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px"><div><b>🔎 Explorar estructura</b><div class="muted-mini">Entra campaña → conjunto → anuncio, con filtro de activos.</div></div><button class="btn sm" onclick="adsDrillToggle()" style="background:#a855f7;border-color:#a855f7;color:#fff">Explorar</button></div></div>';
+  var niveles=['Campañas','Conjuntos','Anuncios'];
+  var d=adsDrill.path.length; var esHoja=d>=2;
+  var crumb='<span onclick="adsDrillCrumb(0)" style="cursor:pointer;color:#00b2ff">Campañas</span>';
+  adsDrill.path.forEach(function(p,i){ crumb+=' <span style="color:var(--muted)">›</span> '+(i===adsDrill.path.length-1?('<b>'+esc(p.name)+'</b>'):('<span onclick="adsDrillCrumb('+(i+1)+')" style="cursor:pointer;color:#00b2ff">'+esc(p.name)+'</span>')); });
+  var head='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 6px"><div><h3 style="margin:0">🔎 Explorar estructura</h3><div class="muted-mini">'+crumb+'</div></div><div style="display:flex;gap:10px;align-items:center"><label style="font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" '+(adsDrill.activeOnly?'checked':'')+' onchange="adsDrillActive()"> Solo activos</label><button class="btn ghost sm" onclick="adsDrillToggle()">Cerrar</button></div></div>';
+  var body;
+  if(adsDrill.loading) body='<div style="padding:20px;color:var(--muted)">Cargando…</div>';
+  else if(adsDrill.err) body='<div style="padding:16px;color:#ff5c5c">No se pudo cargar: '+esc(adsDrill.err)+'</div>';
+  else if(!adsDrill.rows.length) body='<div class="empty"><b>Nada aquí</b>'+(adsDrill.activeOnly?'Prueba a desmarcar «Solo activos».':'No hay elementos en este nivel.')+'</div>';
+  else {
+    var trs=adsDrill.rows.map(function(r){
+      var safeName=(r.name||'').replace(/'/g,'');
+      var nameCell=(!esHoja)?('<span onclick="adsDrillOpenItem(\''+r.id+'\',\''+esc(safeName)+'\')" style="cursor:pointer;color:#00b2ff;font-weight:600">'+esc(r.name||'—')+' ›</span>'):('<b>'+esc(r.name||'—')+'</b>');
+      var res=(+r.leads)?(r.leads+' leads'):((+r.conversaciones)?(r.conversaciones+' conv.'):((+r.link_clicks||0)+' clics'));
+      var budget=r.daily_budget?('<td class="num" style="text-align:right">'+eur(r.daily_budget)+'/día</td>'):'<td class="num" style="text-align:right;color:var(--muted)">—</td>';
+      return '<tr><td>'+nameCell+'</td><td>'+adsStatusBadge(r.status)+'</td><td class="num" style="text-align:right">'+eur(+r.spend)+'</td><td class="num" style="text-align:right">'+res+'</td>'+budget+'</tr>';
+    }).join('');
+    body='<div class="panel-body"><table><thead><tr><th>'+niveles[d]+'</th><th>Estado</th><th style="text-align:right">Gasto</th><th style="text-align:right">Resultado</th><th style="text-align:right">Presup.</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+  }
+  return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #a855f7">'+head+body+'</div>';
 }
 function viewPublicidad(){
   var all=(state.publicidad||[]);
@@ -2554,6 +2607,8 @@ function viewPublicidad(){
   }).join('');
   return `
   ${metaAdsHTML()}
+  ${adsRecomendacionesHTML()}
+  ${adsDrillHTML()}
   <div class="page-head"><div><div class="eyebrow">Marketing</div><h1>Seguimiento manual</h1>
   <p>Tu registro propio por ángulo/campaña: inversión, coste por lead (CPL) y coste por cliente (CPA). El bloque de arriba trae los números reales de Meta; este es tu seguimiento manual de resultados de negocio.</p></div>
   <div><input type="month" value="${pubMes}" onchange="setPubMes(this.value)" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px;margin-right:8px">${pubMes?`<button class="btn ghost sm" onclick="setPubMes('')">Ver todo</button> `:''}<button class="btn" onclick="toggleForm('c-form')">+ Campaña</button></div></div>
@@ -2583,7 +2638,7 @@ var crmSub='leads';
 function setCrmSub(v){ crmSub=v; render(); }
 function crmTabsHTML(){
   function b(k,l){ return '<button class="btn sm'+(crmSub===k?'':' ghost')+'" onclick="setCrmSub(\''+k+'\')" style="margin-right:6px">'+l+'</button>'; }
-  return '<div style="margin-bottom:14px">'+b('leads','Leads IG')+b('clientes','Clientes')+'</div>';
+  return '<div style="margin-bottom:14px">'+b('leads','Leads IG')+b('clientes','Clientes')+b('metricas','Métricas')+'</div>';
 }
 function campoLead(label,val,color){
   if(!val) return '';
@@ -2740,6 +2795,37 @@ async function borrarPlantilla(id){
   try{ await sb.from('ig_plantillas').delete().eq('id',id); }catch(e){}
   render();
 }
+function viewCRMMetricas(){
+  var L=(state.igLeads||[]);
+  var n=L.length;
+  var engaged=L.filter(function(l){return ['templado','caliente','agendado','cliente'].indexOf(l.estado)>=0;}).length;
+  var agendados=L.filter(function(l){return l.estado==='agendado'||l.estado==='cliente'||l.videollamada_hecha||l.listo_agendar;}).length;
+  var vcHechas=L.filter(function(l){return !!l.videollamada_hecha;}).length;
+  var clientes=L.filter(function(l){return l.estado==='cliente'||l.comprado;}).length;
+  var descart=L.filter(function(l){return l.estado==='descartado';}).length;
+  var pct=function(a,b){return b?Math.round(a/b*100):0;};
+  var stages=[['Leads',n,0],['Avanzaron',engaged,n],['Agendados',agendados,engaged],['VC hechas',vcHechas,agendados],['Clientes',clientes,vcHechas]];
+  var cols=['#6b7280','#00b2ff','#f0b429','#a855f7','#22D07B'];
+  var funnel=stages.map(function(s,i){
+    var conv=i===0?'':('<div style="font-size:11px;color:var(--muted);margin-top:2px">'+pct(s[1],s[2])+'% del paso previo</div>');
+    var arrow=i<stages.length-1?'<div style="align-self:center;color:var(--muted);font-size:20px;padding:0 2px">→</div>':'';
+    return '<div style="flex:1;min-width:120px;border:1px solid var(--line);border-top:3px solid '+cols[i]+';border-radius:10px;background:#0d1119;padding:12px 14px;text-align:center"><div style="font-size:12px;color:var(--muted)">'+s[0]+'</div><div style="font-size:26px;font-weight:800">'+s[1]+'</div>'+conv+'</div>'+arrow;
+  }).join('');
+  var lesiones=['LCA','Pubalgia','Menisco','Rendimiento','Otra'];
+  var filas=lesiones.map(function(t){ var ls=L.filter(function(l){return (l.tipo_lesion||'')===t;}); var cl=ls.filter(function(l){return l.estado==='cliente'||l.comprado;}).length; var vc=ls.filter(function(l){return !!l.videollamada_hecha;}).length; return {t:t,leads:ls.length,vc:vc,cl:cl,conv:pct(cl,ls.length)}; }).filter(function(x){return x.leads>0;}).sort(function(a,b){return b.leads-a.leads;});
+  var sinLesion=L.filter(function(l){return !l.tipo_lesion;}).length;
+  var lesHTML=filas.length?('<table><thead><tr><th>Lesión</th><th style="text-align:right">Leads</th><th style="text-align:right">VC hechas</th><th style="text-align:right">Clientes</th><th style="text-align:right">Conversión</th></tr></thead><tbody>'+filas.map(function(x){return '<tr><td><b>'+x.t+'</b></td><td class="num" style="text-align:right">'+x.leads+'</td><td class="num" style="text-align:right">'+x.vc+'</td><td class="num" style="text-align:right">'+x.cl+'</td><td class="num" style="text-align:right;color:'+(x.conv>0?'#22D07B':'var(--muted)')+'">'+x.conv+'%</td></tr>';}).join('')+'</tbody></table>'+(sinLesion?'<div class="muted-mini" style="margin-top:6px">'+sinLesion+' leads sin tipo de lesión asignado.</div>':'')):'<div class="empty"><b>Sin datos por lesión aún</b>Asigna el tipo de lesión a los leads para ver qué convierte mejor.</div>';
+  return crmTabsHTML()
+    +'<div class="page-head"><div><div class="eyebrow">CRM</div><h1>Métricas de leads</h1><p>El embudo de tus leads de Instagram y qué tipo de lesión convierte mejor. Se actualiza solo con cada conversación.</p></div></div>'
+    +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px">'+funnel+'</div>'
+    +'<div class="kpis">'
+      +'<div class="kpi"><div class="label">Tasa de avance</div><div class="val">'+pct(engaged,n)+'%</div><div class="sub">de lead a conversación</div></div>'
+      +'<div class="kpi"><div class="label">Tasa de VC</div><div class="val">'+pct(vcHechas,agendados)+'%</div><div class="sub">agendados que la hacen</div></div>'
+      +'<div class="kpi pos"><div class="label">Tasa de cierre</div><div class="val">'+pct(clientes,vcHechas)+'%</div><div class="sub">VC que compran</div></div>'
+      +'<div class="kpi"><div class="label">Descartados</div><div class="val">'+descart+'</div><div class="sub">'+pct(descart,n)+'% del total</div></div>'
+    +'</div>'
+    +'<div class="panel"><div class="panel-head"><h3>Conversión por tipo de lesión</h3></div><div class="panel-body">'+lesHTML+'</div></div>';
+}
 function viewCRMClientes(){
   var items=(state.tiposLead||[]).filter(function(t){return !t.archivado;}).sort(function(a,b){return (a.orden||0)-(b.orden||0);});
   var cards=items.map(function(t){
@@ -2794,6 +2880,7 @@ function borrarTipoLead(id){
 }
 function viewCRM(){
   if(crmSub==='clientes') return viewCRMClientes();
+  if(crmSub==='metricas') return viewCRMMetricas();
   if(crmSub!=='__pipeline_oculto__') return viewCRMLeads();
   const ETAPAS=[['nuevo','Nuevo'],['contactado','Contactado'],['agendado','Agendado'],['llamada','Llamada'],['ganado','Ganado'],['perdido','Perdido']];
   const eq=(state.equipo||[]);

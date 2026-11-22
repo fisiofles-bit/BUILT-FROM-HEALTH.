@@ -2694,6 +2694,14 @@ function igVcHecha(l){ if(l.videollamada_hecha) return true; var v=igVcLink(l); 
 function igComprado(l){ if(l.comprado) return true; var v=igVcLink(l); return !!(v&&v.resultado==='cerrada'); }
 async function setIgTipoLesion(id,v){ var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(l) l.tipo_lesion=v; try{ await sb.from('ig_leads').update({tipo_lesion:v}).eq('id',id); }catch(e){} render(); }
 async function toggleIgFlag(id,campo){ var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(!l) return; var nv=!l[campo]; l[campo]=nv; var patch={}; patch[campo]=nv; try{ await sb.from('ig_leads').update(patch).eq('id',id); }catch(e){} render(); }
+async function borrarLead(id){
+  var l=(state.igLeads||[]).find(function(x){return x.id===id;});
+  var nombre=l?(l.nombre||(l.username?('@'+l.username):'este lead')):'este lead';
+  if(!confirm('¿Eliminar '+nombre+' y toda su conversación? No se puede deshacer.')) return;
+  state.igLeads=(state.igLeads||[]).filter(function(x){return x.id!==id;});
+  render();
+  try{ if(l&&l.igsid){ try{ await sb.from('ig_mensajes').delete().eq('igsid',l.igsid); }catch(_){} } await sb.from('ig_leads').delete().eq('id',id); showToast('Lead eliminado',false,2000); }catch(e){ alert('No se pudo eliminar: '+((e&&e.message)||e)); }
+}
 function tipoLesionToPerfil(t){ return t==='LCA'?'LCA':(t==='Pubalgia'?'Pubalgia':(t==='Rendimiento'?'Rendimiento':'Otra lesión')); }
 async function crearLlamadaDesdeLead(id){
   var l=(state.igLeads||[]).find(function(x){return x.id===id;}); if(!l) return;
@@ -2782,9 +2790,10 @@ function viewCRMLeads(){
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'
       +'<select onchange="setIgTipoLesion(\''+l.id+'\',this.value)" title="Tipo de lesión" style="background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px">'+tlOpts(l)+'</select>'
       +'<button class="btn sm" onclick="crearLlamadaDesdeLead(\''+l.id+'\')" title="Crea la videollamada y la manda a My Calls" style="background:#22D07B;border-color:#22D07B;color:#07210f;font-weight:700">📹 Crear llamada</button>'
-      +'<button class="btn sm'+(vc?'':' ghost')+'" onclick="toggleIgFlag(\''+l.id+'\',\'videollamada_hecha\')" style="'+(vc?'background:#00b2ff;border-color:#00b2ff;color:#fff':'')+'">'+(vc?'✓ ':'')+'VC hecha</button>'
+      +'<button class="btn sm'+(vc?'':' ghost')+'" onclick="toggleIgFlag(\''+l.id+'\',\'videollamada_hecha\')" style="'+(vc?'background:#00b2ff;border-color:#00b2ff;color:#fff':'')+'">'+(vc?'✓ ':'')+'Videollamada</button>'
       +'<button class="btn sm'+(cp?'':' ghost')+'" onclick="toggleIgFlag(\''+l.id+'\',\'comprado\')" style="'+(cp?'background:#22D07B;border-color:#22D07B;color:#07210f;font-weight:700':'')+'">'+(cp?'✓ ':'')+'Compró</button>'
       +(resumen?'<span style="font-size:12px;color:var(--muted);flex:1;min-width:140px">'+esc(resumen)+'</span>':'')
+      +'<button class="btn ghost sm" onclick="borrarLead(\''+l.id+'\')" title="Eliminar lead y su conversación" style="color:#ff5c5c;border-color:#5a2230;margin-left:auto">🗑 Eliminar</button>'
       +'</div></div>';
   }).join('');
   return crmTabsHTML()
@@ -2830,7 +2839,7 @@ function viewCRMMetricas(){
   var clientes=L.filter(function(l){return l.estado==='cliente'||l.comprado;}).length;
   var descart=L.filter(function(l){return l.estado==='descartado';}).length;
   var pct=function(a,b){return b?Math.round(a/b*100):0;};
-  var stages=[['Leads',n,0],['Avanzaron',engaged,n],['Agendados',agendados,engaged],['VC hechas',vcHechas,agendados],['Clientes',clientes,vcHechas]];
+  var stages=[['Leads',n,0],['Avanzaron',engaged,n],['Agendados',agendados,engaged],['Videollamadas',vcHechas,agendados],['Clientes',clientes,vcHechas]];
   var cols=['#6b7280','#00b2ff','#f0b429','#a855f7','#22D07B'];
   var funnel=stages.map(function(s,i){
     var conv=i===0?'':('<div style="font-size:11px;color:var(--muted);margin-top:2px">'+pct(s[1],s[2])+'% del paso previo</div>');
@@ -2840,14 +2849,14 @@ function viewCRMMetricas(){
   var lesiones=['LCA','Pubalgia','Menisco','Rendimiento','Otra'];
   var filas=lesiones.map(function(t){ var ls=L.filter(function(l){return (l.tipo_lesion||'')===t;}); var cl=ls.filter(function(l){return l.estado==='cliente'||l.comprado;}).length; var vc=ls.filter(function(l){return !!l.videollamada_hecha;}).length; return {t:t,leads:ls.length,vc:vc,cl:cl,conv:pct(cl,ls.length)}; }).filter(function(x){return x.leads>0;}).sort(function(a,b){return b.leads-a.leads;});
   var sinLesion=L.filter(function(l){return !l.tipo_lesion;}).length;
-  var lesHTML=filas.length?('<table><thead><tr><th>Lesión</th><th style="text-align:right">Leads</th><th style="text-align:right">VC hechas</th><th style="text-align:right">Clientes</th><th style="text-align:right">Conversión</th></tr></thead><tbody>'+filas.map(function(x){return '<tr><td><b>'+x.t+'</b></td><td class="num" style="text-align:right">'+x.leads+'</td><td class="num" style="text-align:right">'+x.vc+'</td><td class="num" style="text-align:right">'+x.cl+'</td><td class="num" style="text-align:right;color:'+(x.conv>0?'#22D07B':'var(--muted)')+'">'+x.conv+'%</td></tr>';}).join('')+'</tbody></table>'+(sinLesion?'<div class="muted-mini" style="margin-top:6px">'+sinLesion+' leads sin tipo de lesión asignado.</div>':'')):'<div class="empty"><b>Sin datos por lesión aún</b>Asigna el tipo de lesión a los leads para ver qué convierte mejor.</div>';
+  var lesHTML=filas.length?('<table><thead><tr><th>Lesión</th><th style="text-align:right">Leads</th><th style="text-align:right">Videollamadas</th><th style="text-align:right">Clientes</th><th style="text-align:right">Conversión</th></tr></thead><tbody>'+filas.map(function(x){return '<tr><td><b>'+x.t+'</b></td><td class="num" style="text-align:right">'+x.leads+'</td><td class="num" style="text-align:right">'+x.vc+'</td><td class="num" style="text-align:right">'+x.cl+'</td><td class="num" style="text-align:right;color:'+(x.conv>0?'#22D07B':'var(--muted)')+'">'+x.conv+'%</td></tr>';}).join('')+'</tbody></table>'+(sinLesion?'<div class="muted-mini" style="margin-top:6px">'+sinLesion+' leads sin tipo de lesión asignado.</div>':'')):'<div class="empty"><b>Sin datos por lesión aún</b>Asigna el tipo de lesión a los leads para ver qué convierte mejor.</div>';
   return crmTabsHTML()
     +'<div class="page-head"><div><div class="eyebrow">CRM</div><h1>Métricas de leads</h1><p>El embudo de tus leads de Instagram y qué tipo de lesión convierte mejor. Se actualiza solo con cada conversación.</p></div></div>'
     +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px">'+funnel+'</div>'
     +'<div class="kpis">'
       +'<div class="kpi"><div class="label">Tasa de avance</div><div class="val">'+pct(engaged,n)+'%</div><div class="sub">de lead a conversación</div></div>'
-      +'<div class="kpi"><div class="label">Tasa de VC</div><div class="val">'+pct(vcHechas,agendados)+'%</div><div class="sub">agendados que la hacen</div></div>'
-      +'<div class="kpi pos"><div class="label">Tasa de cierre</div><div class="val">'+pct(clientes,vcHechas)+'%</div><div class="sub">VC que compran</div></div>'
+      +'<div class="kpi"><div class="label">Tasa de videollamada</div><div class="val">'+pct(vcHechas,agendados)+'%</div><div class="sub">agendados que la hacen</div></div>'
+      +'<div class="kpi pos"><div class="label">Tasa de cierre</div><div class="val">'+pct(clientes,vcHechas)+'%</div><div class="sub">videollamadas que compran</div></div>'
       +'<div class="kpi"><div class="label">Descartados</div><div class="val">'+descart+'</div><div class="sub">'+pct(descart,n)+'% del total</div></div>'
     +'</div>'
     +'<div class="panel"><div class="panel-head"><h3>Conversión por tipo de lesión</h3></div><div class="panel-body">'+lesHTML+'</div></div>';

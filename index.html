@@ -426,6 +426,7 @@ async function loadAll(){
   var _igp=await sb.from('ig_plantillas').select('*').order('orden'); state.igPlantillas=_igp.data||[];
   var _iac=await sb.from('ia_config').select('activa,ig_followers,ig_media_count').eq('id',1).maybeSingle(); state.iaActiva=!!(_iac.data&&_iac.data.activa); state.igFollowers=(_iac.data&&_iac.data.ig_followers)||0; state.igMedia=(_iac.data&&_iac.data.ig_media_count)||0;
   var _ads=await sb.from('ads_insights').select('*'); state.adsInsights=_ads.data||[];
+  var _md=await sb.from('metricas_diarias').select('*').order('fecha',{ascending:false}).limit(120); state.metricasDiarias=_md.data||[];
   var cf=await sb.from('config').select('*').eq('id',1).single();
   var c=cf.data||{};
   state.emisor={nombre:c.emisor_nombre||'',nif:c.emisor_nif||'',direccion:c.emisor_direccion||'',email:c.emisor_email||'',iban:c.emisor_iban||'',ivaDefault:(c.iva_default!=null?Number(c.iva_default):0),tipoDefault:c.tipo_default||'auto',saldoBanco:(c.saldo_banco!=null?Number(c.saldo_banco):0),fotoPerfil:c.foto_perfil||''};
@@ -2504,6 +2505,8 @@ async function sincronizarAds(){
     var j=await r.json();
     if(!j||!j.ok){ alert('No se pudo sincronizar: '+((j&&j.error)||'error')); return; }
     var _ads=await sb.from('ads_insights').select('*'); state.adsInsights=_ads.data||[];
+    var _md=await sb.from('metricas_diarias').select('*').order('fecha',{ascending:false}).limit(120); state.metricasDiarias=_md.data||[];
+    var _iac2=await sb.from('ia_config').select('ig_followers,ig_media_count').eq('id',1).maybeSingle(); if(_iac2.data){ state.igFollowers=_iac2.data.ig_followers||0; state.igMedia=_iac2.data.ig_media_count||0; }
     showToast('Anuncios actualizados',false,2200); render();
   }catch(e){ alert('Error al sincronizar: '+((e&&e.message)||e)); }
 }
@@ -2594,6 +2597,28 @@ function adsDrillHTML(){
   }
   return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #a855f7">'+head+body+'</div>';
 }
+function seguidoresInversionHTML(){
+  var md=(state.metricasDiarias||[]).slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  if(!md.length) return '';
+  var conGan=md.filter(function(d){return d.seguidores_delta!=null && (+d.seguidores_delta)>0;});
+  var totGan=conGan.reduce(function(s,d){return s+(+d.seguidores_delta||0);},0);
+  var totGasto=conGan.reduce(function(s,d){return s+(+d.gasto||0);},0);
+  var costeMedio=totGan>0?totGasto/totGan:null;
+  var filas=md.slice(0,14).map(function(d){
+    var g=d.seguidores_delta;
+    var coste=(g!=null&&(+g)>0)?(+d.gasto/(+g)):null;
+    var gTxt=(g==null)?'<span style="color:var(--muted)">—</span>':(((+g)>0?'+':'')+g);
+    return '<tr><td>'+d.fecha+'</td><td class="num" style="text-align:right;color:'+((g!=null&&(+g)>0)?'#22D07B':'var(--muted)')+'">'+gTxt+'</td><td class="num" style="text-align:right">'+eur(+d.gasto)+'</td><td class="num" style="text-align:right">'+(coste!=null?eur(coste):'<span style="color:var(--muted)">—</span>')+'</td></tr>';
+  }).join('');
+  return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #22D07B">'
+    +'<div style="padding:14px 16px 2px"><h3 style="margin:0">👥 Seguidores vs inversión</h3><div class="muted-mini">Seguidores ganados por día, inversión de ese día y coste por seguidor. El coste por seguidor empieza a calcularse desde hoy (mañana verás el primer dato).</div></div>'
+    +'<div class="kpis" style="padding:10px 16px">'
+      +'<div class="kpi pos"><div class="label">Coste por seguidor</div><div class="val mono">'+(costeMedio!=null?eur(costeMedio):'—')+'</div><div class="sub">'+(costeMedio!=null?('media · '+totGan+' seguidores'):'disponible desde mañana')+'</div></div>'
+      +'<div class="kpi"><div class="label">Seguidores (hoy)</div><div class="val">'+((state.igFollowers||0).toLocaleString('es-ES'))+'</div><div class="sub">total actual</div></div>'
+    +'</div>'
+    +'<div class="panel-body"><table><thead><tr><th>Día</th><th style="text-align:right">Seguidores ganados</th><th style="text-align:right">Inversión</th><th style="text-align:right">€ / seguidor</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
+  +'</div>';
+}
 function viewPublicidad(){
   var all=(state.publicidad||[]);
   var camps=(pubMes?all.filter(function(c){return c.mes===pubMes;}):all).slice().sort(function(a,b){return (b.mes||'').localeCompare(a.mes||'');});
@@ -2607,6 +2632,7 @@ function viewPublicidad(){
   }).join('');
   return `
   ${metaAdsHTML()}
+  ${seguidoresInversionHTML()}
   ${adsRecomendacionesHTML()}
   ${adsDrillHTML()}
   <div class="page-head"><div><div class="eyebrow">Marketing</div><h1>Seguimiento manual</h1>

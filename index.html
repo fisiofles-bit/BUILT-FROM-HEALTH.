@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
 :root{
   color-scheme:dark;
   --ink:#080b10;           /* barra lateral */
@@ -339,6 +339,72 @@ html[data-theme="light"] [style*="color:#AEB8C0"]{ color:#5b6672 !important; }
 .pf-theme:hover{background:rgba(255,255,255,.34)}
 .pf-ident{display:flex;flex-direction:column;justify-content:center}
 .pf-role{font-size:10px;color:rgba(255,255,255,.8);line-height:1.1;margin-top:1px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+
+/* ================= REDISEÑO MINIMAL (Sora · blanco/gris/negro + azul) ================= */
+:root{
+  color-scheme:dark;
+  --ink:#0a0c10; --bg:#0a0c10; --surface:#0f131a; --surface-2:#141922;
+  --text:#f2f4f7; --muted:#7e8794; --line:#1b212b;
+  --accent:#00B2FF; --accent-press:#33C1FF; --accent-tint:rgba(0,178,255,.14);
+  --on-accent:#04121c; --red-text:#FF5C5C; --shadow:none; --radius:10px;
+}
+html[data-theme="light"]{
+  color-scheme:light;
+  --ink:#ffffff; --bg:#ffffff; --surface:#ffffff; --surface-2:#f4f5f7;
+  --text:#0a0c10; --muted:#6b7280; --line:#ececef;
+  --accent:#0097e6; --accent-press:#0085cc; --accent-tint:rgba(0,151,230,.10);
+  --on-accent:#ffffff; --red-text:#e5484d; --shadow:none;
+}
+body{background:var(--bg)!important;color:var(--text)}
+#appwm{display:none!important}
+/* --- Tipografía Sora --- */
+body,h1,h2,h3,.display,.mono,.num,.brand,.page-head h1,.panel-head h3,.kpi .val,.brandtxt b,.crm-stage-h,.crm-val,.dayhead,.cal-top .month,.login-brand,.fx-title,.fx-tot .fx-total,.empty b{font-family:'Sora',system-ui,sans-serif!important}
+.mono,.num,.kpi .val,.crm-val{font-variant-numeric:tabular-nums}
+/* --- Sidebar minimal --- */
+.sidebar{background:var(--ink);color:var(--text);border-right:1px solid var(--line);box-shadow:none}
+.brand{border-bottom:1px solid var(--line)}
+.side-foot{border-top:1px solid var(--line);color:var(--muted)}
+.nav-btn{color:var(--muted)}
+.nav-btn:hover{background:var(--surface-2);color:var(--text)}
+.nav-btn.active{background:transparent;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.nav-btn.active::before{display:none}
+.profile-box{border-top:1px solid var(--line)}
+/* --- Tarjetas planas --- */
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:none;padding:16px 18px}
+.kpi .val{font-weight:800}
+.kpi.pos .val{color:var(--accent-press)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+.panel-head{border-bottom:1px solid var(--line)}
+.info{background:var(--surface);border-color:var(--line)}
+tr:hover td{background:var(--surface-2)}
+/* --- Botones / inputs --- */
+.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+.cal-nav button{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+.field input,.field select,.field textarea,.buscador,.crm-actions select,.login-card input,.inl{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+.form-grid{background:var(--surface-2)}
+/* --- Chips / pills --- */
+.pill,.mchip{background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.pill.on,.mchip.on{background:var(--accent-tint);border-color:var(--accent);color:var(--accent)}
+/* --- Sección contenido/social --- */
+.pcard,.scard,.sfol{background:var(--surface);border-color:var(--line);color:var(--text)}
+.sfol.on{border-color:var(--accent);background:var(--accent-tint)}
+.pn,.sct,.sgh h3,.scs{color:var(--text)}
+.pl,.pl span,.stm,.sfc{color:var(--muted)}
+.sinsight{background:var(--accent-tint);border-color:var(--accent)}
+.sit{color:var(--accent)}
+/* --- Login / toast / calendario --- */
+.login-card{background:var(--surface);border-color:var(--line);box-shadow:none}
+#login-gate{background:var(--bg)}
+.bfh-toast{background:var(--surface);border-color:var(--line);color:var(--text)}
+.cal-cell.today{background:var(--accent-tint)}
+.cal-cell.out{background:var(--surface-2)}
+#topbar-profile{box-shadow:0 6px 20px rgba(0,0,0,.18)}
+/* --- Aplanado en tema claro (gana a overrides previos) --- */
+html[data-theme="light"] .panel,html[data-theme="light"] .kpi{background:var(--surface);border-color:var(--line);box-shadow:none}
+html[data-theme="light"] .nav-btn.active{background:transparent;color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+html[data-theme="light"] .sidebar{box-shadow:none}
+html[data-theme="light"] .brand .wordmark{filter:invert(1)}
+html[data-theme="light"] .brand .logo{filter:invert(1) hue-rotate(180deg)}
 </style>
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('bfh_theme')||'dark');}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

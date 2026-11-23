@@ -2709,10 +2709,13 @@ async function asesorEnviar(){
   state.asesorChat.push({rol:'user',texto:q});
   state.asesorLoading=true; render();
   try{
-    var r=await fetch('https://vxxhkuizeceutbowxcmq.supabase.co/functions/v1/ads-asesor',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({pregunta:q,historia:state.asesorChat.slice(0,-1)})});
-    var j=await r.json();
-    state.asesorChat.push({rol:'assistant',texto:(j&&j.reply)||('No pude responder'+(j&&j.error?(': '+j.error):''))});
-  }catch(e){ state.asesorChat.push({rol:'assistant',texto:'Error de conexión: '+((e&&e.message)||e)}); }
+    var ctl=new AbortController(); var to=setTimeout(function(){ctl.abort();},60000);
+    var r=await fetch('https://vxxhkuizeceutbowxcmq.supabase.co/functions/v1/ads-asesor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pregunta:q,historia:state.asesorChat.slice(0,-1)}),signal:ctl.signal});
+    clearTimeout(to);
+    var txt=await r.text(); var j={}; try{ j=JSON.parse(txt); }catch(_){}
+    if(!r.ok){ state.asesorChat.push({rol:'assistant',texto:'El asesor devolvió un error ('+r.status+'). '+((txt||'').slice(0,160))}); }
+    else { state.asesorChat.push({rol:'assistant',texto:(j&&j.reply)||('No pude responder'+(j&&j.error?(': '+j.error):''))}); }
+  }catch(e){ state.asesorChat.push({rol:'assistant',texto:(e&&e.name==='AbortError')?'El asesor tardó demasiado (más de 60s). Vuelve a intentarlo.':'Error de conexión: '+((e&&e.message)||e)}); }
   state.asesorLoading=false; render();
   setTimeout(function(){ var c=document.getElementById('asesor-scroll'); if(c) c.scrollTop=c.scrollHeight; },60);
 }

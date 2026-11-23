@@ -2515,18 +2515,21 @@ function metaAdsHTML(){
   var tot={spend:0,leads:0,conv:0,link:0};
   rows.forEach(function(r){ tot.spend+= +r.spend; tot.leads+= +r.leads; tot.conv+= +r.conversaciones; tot.link+= +r.link_clicks; });
   var cpl=tot.leads?tot.spend/tot.leads:0;
+  var _md=(state.metricasDiarias||[]); var _hoy=new Date(); var _ym=_hoy.toISOString().slice(0,7); var _d30=new Date(_hoy.getTime()-30*864e5).toISOString().slice(0,10);
+  var _enP=function(f){ if(adsPeriodo==='this_month') return (f||'').slice(0,7)===_ym; if(adsPeriodo==='last_30d') return (f||'')>=_d30; return true; };
+  var segNuevos=0,gastoSeg=0; _md.forEach(function(x){ if(_enP(x.fecha)){ if(x.seguidores_delta!=null) segNuevos+= +x.seguidores_delta; gastoSeg+= +x.gasto||0; } });
+  var costeSeg=segNuevos>0?gastoSeg/segNuevos:null;
   var selSty='background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px';
   var act='';
   try{ var f=(state.adsInsights||[]).map(function(x){return x.actualizado;}).filter(Boolean).sort().pop(); if(f) act='Actualizado '+new Date(f).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){}
   var per=ADS_PERIODOS.map(function(p){return '<option value="'+p[0]+'"'+(adsPeriodo===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('');
+  var resDe=function(r){ if((+r.leads)>0)return{n:+r.leads,t:'leads'}; if((+r.conversaciones)>0)return{n:+r.conversaciones,t:'conv.'}; if((+r.landing_views)>0)return{n:+r.landing_views,t:'landing'}; if((+r.link_clicks)>0)return{n:+r.link_clicks,t:'clics'}; return{n:0,t:''}; };
   var trs=rows.map(function(r){
-    var ccpl=(+r.leads)?( +r.spend/ +r.leads):0;
+    var res=resDe(r); var cres=res.n>0?(+r.spend/res.n):null;
     return '<tr><td><b>'+esc(r.campaign||'—')+'</b></td>'
       +'<td class="num" style="text-align:right">'+eur(+r.spend)+'</td>'
-      +'<td class="num" style="text-align:right">'+(+r.leads||0)+'</td>'
-      +'<td class="num" style="text-align:right">'+(+r.conversaciones||0)+'</td>'
-      +'<td class="num" style="text-align:right">'+(+r.link_clicks||0)+'</td>'
-      +'<td class="num" style="text-align:right;color:'+((+r.leads)?'#22D07B':'var(--muted)')+'">'+((+r.leads)?eur(ccpl):'—')+'</td></tr>';
+      +'<td class="num" style="text-align:right">'+(res.n>0?(res.n+' '+res.t):'<span style="color:var(--muted)">—</span>')+'</td>'
+      +'<td class="num" style="text-align:right;color:'+(res.n>0?'#22D07B':'var(--muted)')+'">'+(cres!=null?eur(cres):'—')+'</td></tr>';
   }).join('');
   return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #00b2ff">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 2px">'
@@ -2537,11 +2540,11 @@ function metaAdsHTML(){
       +'<div class="kpi neg"><div class="label">Gasto</div><div class="val mono">'+eur(tot.spend)+'</div><div class="sub">'+rows.length+' campañas</div></div>'
       +'<div class="kpi"><div class="label">Leads (formulario)</div><div class="val">'+tot.leads+'</div><div class="sub">CPL '+(tot.leads?eur(cpl):'—')+'</div></div>'
       +'<div class="kpi"><div class="label">Conversaciones</div><div class="val">'+tot.conv+'</div><div class="sub">mensajes iniciados</div></div>'
-      +'<div class="kpi"><div class="label">Clics de enlace</div><div class="val">'+tot.link+'</div><div class="sub">'+(tot.link?('CPC '+eur(tot.spend/tot.link)):'a landing/web')+'</div></div>'
-      +'<div class="kpi"><div class="label">Seguidores IG</div><div class="val">'+((state.igFollowers||0).toLocaleString('es-ES'))+'</div><div class="sub">'+(state.igMedia||0)+' publicaciones</div></div>'
+      +'<div class="kpi pos"><div class="label">Seguidores nuevos</div><div class="val">'+(segNuevos||0)+'</div><div class="sub">en el periodo</div></div>'
+      +'<div class="kpi"><div class="label">Coste / seguidor</div><div class="val mono">'+(costeSeg!=null?eur(costeSeg):'—')+'</div><div class="sub">gasto ÷ seguidores</div></div>'
     +'</div>'
     +'<div class="panel-body">'
-      +(rows.length?'<table><thead><tr><th>Campaña</th><th style="text-align:right">Gasto</th><th style="text-align:right">Leads</th><th style="text-align:right">Conversac.</th><th style="text-align:right">Clics enlace</th><th style="text-align:right">CPL</th></tr></thead><tbody>'+trs+'</tbody></table>':'<div class="empty"><b>Sin datos en este periodo</b>Pulsa «Sincronizar» para traer tus campañas de Meta.</div>')
+      +(rows.length?'<table><thead><tr><th>Campaña</th><th style="text-align:right">Gasto</th><th style="text-align:right">Resultado</th><th style="text-align:right">Coste/resultado</th></tr></thead><tbody>'+trs+'</tbody></table>':'<div class="empty"><b>Sin datos en este periodo</b>Pulsa «Sincronizar» para traer tus campañas de Meta.</div>')
     +'</div>'
   +'</div>';
 }
@@ -2597,24 +2600,32 @@ function adsDrillHTML(){
   }
   return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #a855f7">'+head+body+'</div>';
 }
+var segMes=(new Date()).toISOString().slice(0,7);
+function setSegMes(v){ segMes=v; render(); }
+function segMesNom(m){ try{ var p=m.split('-'); return ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][(+p[1])-1]+' '+p[0]; }catch(e){ return m; } }
 function seguidoresInversionHTML(){
-  var md=(state.metricasDiarias||[]).slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
-  if(!md.length) return '';
-  var conGan=md.filter(function(d){return d.seguidores_delta!=null && (+d.seguidores_delta)>0;});
-  var totGan=conGan.reduce(function(s,d){return s+(+d.seguidores_delta||0);},0);
-  var totGasto=conGan.reduce(function(s,d){return s+(+d.gasto||0);},0);
+  var all=(state.metricasDiarias||[]).slice();
+  if(!all.length) return '';
+  var meses=Array.from(new Set(all.map(function(d){return (d.fecha||'').slice(0,7);}).filter(Boolean))).sort().reverse();
+  if(meses.indexOf(segMes)<0 && meses.length) segMes=meses[0];
+  var md=all.filter(function(d){return (d.fecha||'').slice(0,7)===segMes;}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  var totGan=md.reduce(function(s,d){return s+(d.seguidores_delta!=null?(+d.seguidores_delta):0);},0);
+  var totGasto=md.reduce(function(s,d){return s+(+d.gasto||0);},0);
   var costeMedio=totGan>0?totGasto/totGan:null;
-  var filas=md.slice(0,14).map(function(d){
+  var selSty='background:#10141A;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit;padding:6px 8px';
+  var opts=meses.map(function(m){return '<option value="'+m+'"'+(segMes===m?' selected':'')+'>'+segMesNom(m)+'</option>';}).join('');
+  var filas=md.map(function(d){
     var g=d.seguidores_delta;
     var coste=(g!=null&&(+g)>0)?(+d.gasto/(+g)):null;
     var gTxt=(g==null)?'<span style="color:var(--muted)">—</span>':(((+g)>0?'+':'')+g);
     return '<tr><td>'+d.fecha+'</td><td class="num" style="text-align:right;color:'+((g!=null&&(+g)>0)?'#22D07B':'var(--muted)')+'">'+gTxt+'</td><td class="num" style="text-align:right">'+eur(+d.gasto)+'</td><td class="num" style="text-align:right">'+(coste!=null?eur(coste):'<span style="color:var(--muted)">—</span>')+'</td></tr>';
   }).join('');
   return '<div class="panel" style="margin-bottom:18px;border-left:4px solid #22D07B">'
-    +'<div style="padding:14px 16px 2px"><h3 style="margin:0">👥 Seguidores vs inversión</h3><div class="muted-mini">Seguidores ganados por día, inversión de ese día y coste por seguidor. El coste por seguidor empieza a calcularse desde hoy (mañana verás el primer dato).</div></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 2px"><div><h3 style="margin:0">👥 Seguidores vs inversión</h3><div class="muted-mini">Seguidores ganados por día, inversión de ese día y coste por seguidor.</div></div><select onchange="setSegMes(this.value)" style="'+selSty+'">'+opts+'</select></div>'
     +'<div class="kpis" style="padding:10px 16px">'
-      +'<div class="kpi pos"><div class="label">Coste por seguidor</div><div class="val mono">'+(costeMedio!=null?eur(costeMedio):'—')+'</div><div class="sub">'+(costeMedio!=null?('media · '+totGan+' seguidores'):'disponible desde mañana')+'</div></div>'
-      +'<div class="kpi"><div class="label">Seguidores (hoy)</div><div class="val">'+((state.igFollowers||0).toLocaleString('es-ES'))+'</div><div class="sub">total actual</div></div>'
+      +'<div class="kpi pos"><div class="label">Coste por seguidor</div><div class="val mono">'+(costeMedio!=null?eur(costeMedio):'—')+'</div><div class="sub">media del mes</div></div>'
+      +'<div class="kpi"><div class="label">Seguidores ganados</div><div class="val">'+(totGan||0)+'</div><div class="sub">'+segMesNom(segMes)+'</div></div>'
+      +'<div class="kpi neg"><div class="label">Inversión</div><div class="val mono">'+eur(totGasto)+'</div><div class="sub">del mes</div></div>'
     +'</div>'
     +'<div class="panel-body"><table><thead><tr><th>Día</th><th style="text-align:right">Seguidores ganados</th><th style="text-align:right">Inversión</th><th style="text-align:right">€ / seguidor</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
   +'</div>';
